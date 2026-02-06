@@ -513,7 +513,7 @@ function calculateStreak(habitId: string, habitLogs: HabitLog[]): number {
 
   let streak = 0
   const today = getDateKey(new Date())
-  let currentDate = new Date()
+  const currentDate = new Date()
 
   for (let i = 0; i < 365; i++) {
     const dateKey = getDateKey(currentDate)

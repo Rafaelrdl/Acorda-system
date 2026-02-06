@@ -24,7 +24,7 @@ from .serializers import ENTITY_MODELS, ENTITY_SERIALIZERS
 
 
 class TestSyncEntitiesConfiguration(TestCase):
-    """Test that all 41 entities are properly configured for sync."""
+    """Test that all 42 entities are properly configured for sync."""
     
     EXPECTED_ENTITIES = [
         'tasks',
@@ -70,10 +70,10 @@ class TestSyncEntitiesConfiguration(TestCase):
         'dataExports',
     ]
     
-    def test_entity_count_is_41(self):
-        """Test that exactly 41 entities are configured."""
-        self.assertEqual(len(ENTITY_MODELS), 41, 
-            f"Expected 41 entities, got {len(ENTITY_MODELS)}: {list(ENTITY_MODELS.keys())}")
+    def test_entity_count_is_42(self):
+        """Test that exactly 42 entities are configured."""
+        self.assertEqual(len(ENTITY_MODELS), 42, 
+            f"Expected 42 entities, got {len(ENTITY_MODELS)}: {list(ENTITY_MODELS.keys())}")
     
     def test_all_expected_entities_have_models(self):
         """Test that all expected entities have models configured."""
@@ -237,8 +237,8 @@ class TestSyncEndpoints(APITestCase):
         self.assertTrue(response.data['success'])
         self.assertIn('changes', response.data)
         
-        # Should have all 41 entity types
-        self.assertEqual(len(response.data['changes']), 41)
+        # Should have all 42 entity types
+        self.assertEqual(len(response.data['changes']), 42)
     
     def test_sync_pull_with_since_parameter(self):
         """Test pull with since timestamp filter."""
@@ -298,8 +298,8 @@ class TestSyncEndpoints(APITestCase):
         self.assertTrue(response.data['success'])
         self.assertIn('data', response.data)
         
-        # Should have all 41 entity types
-        self.assertEqual(len(response.data['data']), 41)
+        # Should have all 42 entity types
+        self.assertEqual(len(response.data['data']), 42)
     
     def test_sync_full_excludes_deleted_items(self):
         """Test that full sync excludes soft-deleted items."""

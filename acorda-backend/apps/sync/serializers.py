@@ -11,6 +11,7 @@ from apps.core.models import (
     Subject, StudySession, ConsentLog, RecordedStudySession, ReviewScheduleItem,
     WellnessProgram, WellnessCheckIn, WellnessDayAction,
     WorkoutExercise, WorkoutPlan, WorkoutPlanItem, WorkoutSession, WorkoutSetLog,
+    WorkoutPlanDayStatus,
     DietMealTemplate, DietMealEntry, DataExport
 )
 
@@ -328,7 +329,7 @@ class WorkoutPlanSerializer(BaseSyncSerializer):
     class Meta(BaseSyncSerializer.Meta):
         model = WorkoutPlan
         fields = BaseSyncSerializer.Meta.fields + [
-            'name', 'notes', 'is_archived'
+            'name', 'notes', 'is_archived', 'scheduled_weekdays'
         ]
 
 
@@ -337,7 +338,8 @@ class WorkoutPlanItemSerializer(BaseSyncSerializer):
         model = WorkoutPlanItem
         fields = BaseSyncSerializer.Meta.fields + [
             'plan_id', 'exercise_id', 'order',
-            'target_sets', 'target_reps_min', 'target_reps_max'
+            'target_sets', 'target_reps_min', 'target_reps_max',
+            'prescription', 'technique'
         ]
 
 
@@ -380,6 +382,14 @@ class DataExportSerializer(BaseSyncSerializer):
         model = DataExport
         fields = BaseSyncSerializer.Meta.fields + [
             'export_type', 'status', 'data', 'completed_at'
+        ]
+
+
+class WorkoutPlanDayStatusSerializer(BaseSyncSerializer):
+    class Meta(BaseSyncSerializer.Meta):
+        model = WorkoutPlanDayStatus
+        fields = BaseSyncSerializer.Meta.fields + [
+            'plan_id', 'date', 'resolution', 'moved_to_date'
         ]
 
 
@@ -426,6 +436,7 @@ ENTITY_SERIALIZERS = {
     'dietMealTemplates': DietMealTemplateSerializer,
     'dietMeals': DietMealEntrySerializer,
     'dataExports': DataExportSerializer,
+    'workoutPlanDayStatuses': WorkoutPlanDayStatusSerializer,
 }
 
 # Mapping of entity types to models
@@ -471,6 +482,7 @@ ENTITY_MODELS = {
     'dietMealTemplates': DietMealTemplate,
     'dietMeals': DietMealEntry,
     'dataExports': DataExport,
+    'workoutPlanDayStatuses': WorkoutPlanDayStatus,
 }
 
 

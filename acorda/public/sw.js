@@ -77,21 +77,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // API requests: NEVER cache authentication or sync endpoints (sensitive data)
-  if (url.pathname.startsWith('/api/auth/') || url.pathname.startsWith('/api/sync/')) {
-    // Network-only for auth and sync – no caching at all
+  // API requests: NEVER cache – all API data is private/authenticated.
+  // Network-only prevents stale/private data persisting in cache after logout.
+  if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request).catch(() => new Response(
         JSON.stringify({ error: 'Você está offline.' }),
         { status: 503, headers: { 'Content-Type': 'application/json' } }
       ))
     );
-    return;
-  }
-
-  // Other API requests: Network-first with cache fallback, respecting Cache-Control
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(networkFirstWithCache(request, API_CACHE));
     return;
   }
 

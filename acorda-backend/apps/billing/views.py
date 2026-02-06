@@ -297,15 +297,29 @@ class WebhookView(APIView):
                 or ''
             )
 
-        # Create subscription
-        subscription = Subscription.objects.create(
+        # Upsert subscription: renew existing active/pending sub for user+plan,
+        # or create a new one.  Prevents duplicates on recurring payments.
+        existing_sub = Subscription.objects.filter(
             user=user,
             plan=plan,
-            status=Subscription.Status.ACTIVE,
-            started_at=timezone.now(),
-            current_period_start=timezone.now(),
-            mp_subscription_id=mp_subscription_id,
-        )
+            status__in=[Subscription.Status.ACTIVE, Subscription.Status.PENDING],
+        ).first()
+
+        if existing_sub:
+            subscription = existing_sub
+            subscription.status = Subscription.Status.ACTIVE
+            subscription.current_period_start = timezone.now()
+            if mp_subscription_id:
+                subscription.mp_subscription_id = mp_subscription_id
+        else:
+            subscription = Subscription(
+                user=user,
+                plan=plan,
+                status=Subscription.Status.ACTIVE,
+                started_at=timezone.now(),
+                current_period_start=timezone.now(),
+                mp_subscription_id=mp_subscription_id,
+            )
         
         # Set period end based on billing cycle
         if plan.billing_cycle == Plan.BillingCycle.MONTHLY:

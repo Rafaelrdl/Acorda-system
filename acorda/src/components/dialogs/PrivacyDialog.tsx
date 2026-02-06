@@ -94,7 +94,7 @@ export function PrivacyDialog({
             ) : (
               <div className="space-y-3 p-3 rounded-lg border border-destructive/50 bg-destructive/5">
                 <p className="text-sm text-destructive">
-                  Esta ação é irreversível. Digite <strong>APAGAR</strong> para confirmar.
+                  Esta ação apagará permanentemente todos os seus dados do servidor e deste dispositivo. É irreversível. Digite <strong>APAGAR</strong> para confirmar.
                 </p>
                 <div className="space-y-2">
                   <Label htmlFor="confirm-delete" className="sr-only">

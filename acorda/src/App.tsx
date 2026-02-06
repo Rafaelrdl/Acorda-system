@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react'
 import { useKV } from '@/lib/sync-storage'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthWrapper, useAuth } from '@/components/AuthWrapper'
@@ -6,17 +6,19 @@ import { AppHeader } from '@/components/AppHeader'
 import { BottomNav, TabType } from '@/components/BottomNav'
 import { FAB } from '@/components/FAB'
 import { QuickCapture } from '@/components/QuickCapture'
-import { HojeTab } from '@/components/tabs/HojeTab'
-import { PlanejarTab } from '@/components/tabs/PlanejarTab'
-import { EvolucaoTab } from '@/components/tabs/EvolucaoTab'
-import { CentralModule } from '@/components/CentralModule'
-import { PomodoroDialog } from '@/components/dialogs/PomodoroDialog'
-import { SettingsDialog } from '@/components/dialogs/SettingsDialog'
-import { ProfileDialog } from '@/components/dialogs/ProfileDialog'
-import { ModulesDialog } from '@/components/dialogs/ModulesDialog'
-import { PrivacyDialog } from '@/components/dialogs/PrivacyDialog'
-import { ExportDialog } from '@/components/dialogs/ExportDialog'
 import { applyTheme } from '@/lib/appearance'
+
+// Lazy-loaded heavy modules (split into separate chunks)
+const HojeTab = lazy(() => import('@/components/tabs/HojeTab').then(m => ({ default: m.HojeTab })))
+const PlanejarTab = lazy(() => import('@/components/tabs/PlanejarTab').then(m => ({ default: m.PlanejarTab })))
+const EvolucaoTab = lazy(() => import('@/components/tabs/EvolucaoTab').then(m => ({ default: m.EvolucaoTab })))
+const CentralModule = lazy(() => import('@/components/CentralModule').then(m => ({ default: m.CentralModule })))
+const PomodoroDialog = lazy(() => import('@/components/dialogs/PomodoroDialog').then(m => ({ default: m.PomodoroDialog })))
+const SettingsDialog = lazy(() => import('@/components/dialogs/SettingsDialog').then(m => ({ default: m.SettingsDialog })))
+const ProfileDialog = lazy(() => import('@/components/dialogs/ProfileDialog').then(m => ({ default: m.ProfileDialog })))
+const ModulesDialog = lazy(() => import('@/components/dialogs/ModulesDialog').then(m => ({ default: m.ModulesDialog })))
+const PrivacyDialog = lazy(() => import('@/components/dialogs/PrivacyDialog').then(m => ({ default: m.PrivacyDialog })))
+const ExportDialog = lazy(() => import('@/components/dialogs/ExportDialog').then(m => ({ default: m.ExportDialog })))
 import { 
   InboxItem, 
   Task, 
@@ -137,10 +139,12 @@ function MainApp({ user }: { user: User }) {
 
   // Sync ALL user preferences from backend when user data loads (on login)
   useEffect(() => {
-    console.log('[App] Syncing preferences from backend. User:', user)
-    console.log('[App] Backend appearance:', user.appearance)
-    console.log('[App] Backend week_starts_on:', user.week_starts_on)
-    console.log('[App] Backend enabled_modules:', user.enabled_modules)
+    if (import.meta.env.DEV) {
+      console.log('[App] Syncing preferences from backend. User:', user)
+      console.log('[App] Backend appearance:', user.appearance)
+      console.log('[App] Backend week_starts_on:', user.week_starts_on)
+      console.log('[App] Backend enabled_modules:', user.enabled_modules)
+    }
     
     // Use backend values, fallback to defaults if not set
     const backendAppearance = user.appearance || 'light'
@@ -166,7 +170,7 @@ function MainApp({ user }: { user: User }) {
   // Apply theme when userSettings.appearance changes
   useEffect(() => {
     const theme = userSettings?.appearance ?? 'light'
-    console.log('[App] userSettings.appearance changed:', theme, 'Full settings:', userSettings)
+    if (import.meta.env.DEV) console.log('[App] userSettings.appearance changed:', theme)
     applyTheme(theme)
   }, [userSettings])
 
@@ -500,9 +504,9 @@ function MainApp({ user }: { user: User }) {
     
     // Sync with backend
     try {
-      console.log('[App] Syncing modules to backend:', updatedModules)
+      if (import.meta.env.DEV) console.log('[App] Syncing modules to backend:', updatedModules)
       const response = await api.updateEnabledModules(updatedModules)
-      console.log('[App] Backend response after module update:', response)
+      if (import.meta.env.DEV) console.log('[App] Backend response after module update:', response)
     } catch (error) {
       console.error('[App] Failed to sync modules with backend:', error)
       // Optionally revert on error
@@ -512,14 +516,14 @@ function MainApp({ user }: { user: User }) {
   }
 
   const handleUpdateSettings = async (settings: UserSettings) => {
-    console.log('[App] handleUpdateSettings called with:', settings)
+    if (import.meta.env.DEV) console.log('[App] handleUpdateSettings called with:', settings)
     
     // Update local state
     setUserSettings(settings)
     
     // Sync with backend
     try {
-      console.log('[App] Syncing settings to backend:', {
+      if (import.meta.env.DEV) console.log('[App] Syncing settings to backend:', {
         appearance: settings.appearance,
         week_starts_on: settings.weekStartsOn,
         enabled_modules: settings.modules
@@ -529,7 +533,7 @@ function MainApp({ user }: { user: User }) {
         week_starts_on: settings.weekStartsOn,
         enabled_modules: settings.modules
       })
-      console.log('[App] Backend response after settings update:', response)
+      if (import.meta.env.DEV) console.log('[App] Backend response after settings update:', response)
     } catch (error) {
       console.error('[App] Failed to sync settings with backend:', error)
     }
@@ -650,6 +654,7 @@ function MainApp({ user }: { user: User }) {
       />
 
       {/* Central ativa - renderizada full-screen acima das tabs */}
+      <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-pulse text-muted-foreground">Carregando...</div></div>}>
       {activeCentral && (
         <CentralModule
           moduleType={activeCentral}
@@ -804,6 +809,7 @@ function MainApp({ user }: { user: User }) {
         onExportHabits={handleExportHabits}
         onExportGoals={handleExportGoals}
       />
+      </Suspense>
     </div>
   )
 }

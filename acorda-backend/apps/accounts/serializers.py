@@ -120,11 +120,12 @@ class ForgotPasswordSerializer(serializers.Serializer):
         email = value.lower().strip()
         try:
             user = User.objects.get(email=email)
-            if user.status == User.Status.PENDING_ACTIVATION:
-                raise serializers.ValidationError(
-                    'Esta conta ainda não foi ativada.'
-                )
-            self.user = user
+            # Only allow reset for active accounts; silently ignore others
+            # to prevent account status enumeration.
+            if user.status == User.Status.ACTIVE:
+                self.user = user
+            else:
+                self.user = None
         except User.DoesNotExist:
             # Don't reveal if email exists or not
             self.user = None

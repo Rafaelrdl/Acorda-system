@@ -61,6 +61,7 @@ const SYNC_ENABLED_ENTITIES = [
   'workoutPlanItems',
   'workoutSessions',
   'workoutSetLogs',
+  'workoutPlanDayStatuses',
   // Wellness module
   'wellnessPrograms',
   'wellnessCheckIns',
@@ -478,9 +479,9 @@ class SyncManager {
     
     // Push to API
     try {
-      console.log('🚀 [Sync] Sending to API:', JSON.stringify(grouped, null, 2))
+      if (import.meta.env.DEV) console.log('🚀 [Sync] Sending to API:', JSON.stringify(grouped, null, 2))
       const result = await api.syncPush({ changes: grouped })
-      console.log('✅ [Sync] API response:', JSON.stringify(result, null, 2))
+      if (import.meta.env.DEV) console.log('✅ [Sync] API response:', JSON.stringify(result, null, 2))
       
       // Clear pushed changes
       for (const change of pending) {

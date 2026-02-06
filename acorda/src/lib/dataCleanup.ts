@@ -46,6 +46,15 @@ export async function deleteAllUserData(
   const storageImpl = options?.storage ?? await getStorage()
   const clearPDFImpl = options?.clearPDF ?? await getClearPDF()
 
+  // ─── Delete server-side data first (LGPD right-to-erasure) ───
+  try {
+    const { api } = await import('./api')
+    await api.deleteAccount()
+  } catch {
+    // If backend call fails (offline, etc.) still clean local data.
+    // The user can retry or will be cleaned up on next server contact.
+  }
+
   // Clear all user data from IndexedDB (DATA + PENDING_SYNC + SYNC_META)
   await storageImpl.clearUserData(userId)
 

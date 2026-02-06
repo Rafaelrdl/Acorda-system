@@ -167,6 +167,14 @@ class ApiClient {
     }
   }
 
+  /**
+   * Public wrapper so AuthWrapper can attempt a refresh during bootstrap
+   * (before _isAuthenticated is set to true).
+   */
+  async tryRefresh(): Promise<boolean> {
+    return this.refreshAccessToken()
+  }
+
   // ============ AUTH ============
 
   async login(email: string, password: string) {
@@ -402,6 +410,17 @@ class ApiClient {
 
   async deletePDF(documentId: string) {
     return this.request<{ detail: string }>(`/pdfs/${documentId}/`, {
+      method: 'DELETE',
+    })
+  }
+
+  // ============ ACCOUNT ============
+
+  /**
+   * Delete all server-side data and deactivate account (LGPD right-to-erasure).
+   */
+  async deleteAccount() {
+    return this.request<{ detail: string }>('/auth/delete-account/', {
       method: 'DELETE',
     })
   }

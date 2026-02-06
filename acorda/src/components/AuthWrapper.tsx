@@ -118,8 +118,21 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
       
       // Bootstrap sync for existing session
       await bootstrapSync(userData.id)
-    } catch (err) {
-      console.error('Auth check failed:', err)
+    } catch {
+      // Access token may be expired but refresh token still valid.
+      // Attempt a silent refresh before giving up.
+      try {
+        const refreshed = await api.tryRefresh()
+        if (refreshed) {
+          const userData = await api.getMe()
+          setUser(userData)
+          api.setAuthenticated(true)
+          await bootstrapSync(userData.id)
+          return
+        }
+      } catch {
+        // refresh also failed – fall through
+      }
       // Cookie expired or invalid - clear auth state
       api.clearAuth()
       setUser(null)

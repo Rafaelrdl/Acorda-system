@@ -2,6 +2,8 @@
 Views for sync app - offline sync support.
 """
 import time
+import datetime as _dt
+
 from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -35,7 +37,7 @@ def parse_since_param(value):
         return 0
 
     if timezone.is_naive(dt):
-        dt = timezone.make_aware(dt, timezone.utc)
+        dt = timezone.make_aware(dt, _dt.timezone.utc)
 
     return int(dt.timestamp() * 1000)
 

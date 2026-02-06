@@ -5,6 +5,7 @@ Falls back to Authorization header if cookies are not present.
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework.exceptions import AuthenticationFailed
 from django.conf import settings
 
 
@@ -24,7 +25,20 @@ COOKIE_SETTINGS = {
 class CookieJWTAuthentication(JWTAuthentication):
     """
     JWT authentication that reads from cookies first, then falls back to header.
+    Also enforces that the user account is active (status == 'active').
     """
+
+    def get_user(self, validated_token):
+        """Override to block suspended/cancelled users even if token is valid."""
+        user = super().get_user(validated_token)
+        # Import here to avoid circular imports
+        from .models import User
+        if user.status not in (User.Status.ACTIVE,):
+            raise AuthenticationFailed(
+                'Conta inativa ou suspensa.',
+                code='user_inactive',
+            )
+        return user
     
     def authenticate(self, request):
         # First, try to get token from cookie

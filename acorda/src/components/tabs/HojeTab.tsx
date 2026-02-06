@@ -311,7 +311,7 @@ export function HojeTab({
       if (expense.lastConfirmedMonth === currentMonth) return false
       
       // Calcular dias até o vencimento
-      let daysUntil = dayOfMonth - currentDay
+      const daysUntil = dayOfMonth - currentDay
       
       // Se for automático e já passou o dia, não mostrar (será processado automaticamente)
       if (expense.autoConfirm && daysUntil < 0) return false

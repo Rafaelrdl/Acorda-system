@@ -12,6 +12,7 @@ from .views import (
     ChangePasswordView,
     UploadAvatarView,
     RefreshTokenView,
+    DeleteAccountView,
 )
 
 urlpatterns = [
@@ -24,4 +25,5 @@ urlpatterns = [
     path('me/avatar/', UploadAvatarView.as_view(), name='upload-avatar'),
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
     path('refresh/', RefreshTokenView.as_view(), name='token-refresh'),
+    path('delete-account/', DeleteAccountView.as_view(), name='delete-account'),
 ]

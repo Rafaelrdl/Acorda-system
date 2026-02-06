@@ -9,11 +9,11 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.exceptions import TokenError
 from django.utils import timezone
 from django.core.files.base import ContentFile
 from django.conf import settings
+from django.db import transaction
 
 from .models import User, PasswordResetToken
 from .serializers import (
@@ -387,6 +387,18 @@ class RefreshTokenView(APIView):
             # Create new tokens
             user_id = old_refresh.payload.get('user_id')
             user = User.objects.get(id=user_id)
+
+            # Block refresh for suspended / cancelled / pending accounts
+            if user.status not in (User.Status.ACTIVE,):
+                clear_auth_cookies(Response(
+                    {'detail': 'Conta inativa ou suspensa.', 'code': 'user_inactive'},
+                    status=status.HTTP_403_FORBIDDEN
+                ))
+                return Response(
+                    {'detail': 'Conta inativa ou suspensa.', 'code': 'user_inactive'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
             new_refresh = RefreshToken.for_user(user)
             
             access_token = str(new_refresh.access_token)
@@ -417,3 +429,48 @@ class RefreshTokenView(APIView):
                 {'detail': 'Usuário não encontrado.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+
+
+class DeleteAccountView(APIView):
+    """
+    Delete all user data and deactivate the account.
+    This satisfies the LGPD/GDPR right-to-erasure requirement and ensures
+    "apagar todos os dados" really removes server-side data.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def delete(self, request):
+        user = request.user
+
+        # Delete all syncable entities for this user
+        from apps.sync.serializers import ENTITY_MODELS
+        for model in ENTITY_MODELS.values():
+            model.objects.filter(user=user).delete()
+
+        # Delete PDF files
+        from apps.core.models import PDFFile
+        for pdf in PDFFile.objects.filter(user=user):
+            if pdf.file:
+                pdf.file.delete(save=False)
+            pdf.delete()
+
+        # Cancel active subscriptions
+        from apps.billing.models import Subscription
+        Subscription.objects.filter(user=user).update(
+            status='cancelled',
+            cancelled_at=timezone.now(),
+        )
+
+        # Deactivate user (keep record for audit but mark as cancelled)
+        user.status = User.Status.CANCELLED
+        user.is_active = False
+        user.name = ''
+        user.avatar_url = None
+        user.enabled_modules = {}
+        user.save()
+
+        response = Response({'detail': 'Conta e dados excluídos com sucesso.'})
+        clear_auth_cookies(response)
+        return response

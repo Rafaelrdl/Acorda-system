@@ -501,7 +501,8 @@ class PDFHighlight(SyncableModel):
 class PDFFile(models.Model):
     """PDF file storage."""
 
-    document_id = models.UUIDField('Documento', primary_key=True)
+    id = models.BigAutoField(primary_key=True)
+    document_id = models.UUIDField('Documento', db_index=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -518,6 +519,7 @@ class PDFFile(models.Model):
     class Meta:
         verbose_name = 'Arquivo PDF'
         verbose_name_plural = 'Arquivos PDF'
+        unique_together = [['user', 'document_id']]
         ordering = ['-created_at']
 
 
@@ -663,6 +665,7 @@ class WorkoutPlan(SyncableModel):
     name = models.CharField('Nome', max_length=200)
     notes = models.TextField('Notas', blank=True)
     is_archived = models.BooleanField('Arquivado', default=False)
+    scheduled_weekdays = models.JSONField('Dias agendados', default=list, blank=True)
 
     class Meta:
         verbose_name = 'Plano de Treino'
@@ -679,6 +682,8 @@ class WorkoutPlanItem(SyncableModel):
     target_sets = models.IntegerField('Séries alvo', null=True, blank=True)
     target_reps_min = models.IntegerField('Reps mín', null=True, blank=True)
     target_reps_max = models.IntegerField('Reps máx', null=True, blank=True)
+    prescription = models.JSONField('Prescrição', null=True, blank=True)
+    technique = models.JSONField('Técnica', null=True, blank=True)
 
     class Meta:
         verbose_name = 'Item do Plano'
@@ -729,6 +734,20 @@ class DietMealTemplate(SyncableModel):
         verbose_name = 'Template de Refeição'
         verbose_name_plural = 'Templates de Refeição'
         ordering = ['name']
+
+
+class WorkoutPlanDayStatus(SyncableModel):
+    """Resolution status for a scheduled workout day."""
+
+    plan_id = models.UUIDField('Plano', db_index=True)
+    date = models.CharField('Data', max_length=10, db_index=True)
+    resolution = models.CharField('Resolução', max_length=10)  # 'done' | 'moved'
+    moved_to_date = models.CharField('Movido para', max_length=10, blank=True)
+
+    class Meta:
+        verbose_name = 'Status Dia Treino'
+        verbose_name_plural = 'Status Dias Treino'
+        ordering = ['-date']
 
 
 class DietMealEntry(SyncableModel):

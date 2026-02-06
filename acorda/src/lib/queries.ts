@@ -138,7 +138,7 @@ export function getHabitStreak(habitLogs: HabitLog[], userId: UserId, habitId: s
   if (logs.length === 0) return 0
   
   let streak = 0
-  let currentDate = new Date()
+  const currentDate = new Date()
   
   for (const log of logs) {
     const logDate = new Date(log.date)
@@ -754,7 +754,7 @@ export function getDietStreak(
   if (plannedPerDay === 0) return 0
   
   let streak = 0
-  let currentDate = new Date(today)
+  const currentDate = new Date(today)
 
   for (let i = 0; i < 365; i++) {
     const dateKey = getDateKey(currentDate)

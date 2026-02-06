@@ -3,6 +3,7 @@ Core API views for file handling and utilities.
 """
 import uuid
 
+from django.db import IntegrityError
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status
