@@ -1,0 +1,21 @@
+🎉 Conta ativada com sucesso! - Acorda
+
+Olá{% if user.name %}, {{ user.name }}{% endif %}!
+
+Sua conta no Acorda foi ativada e você já pode começar a usar o app. Seja bem-vindo à sua nova jornada de produtividade!
+
+✨ O que você pode fazer no Acorda:
+- 📋 Gerenciar tarefas com GTD e Matriz de Eisenhower
+- 🎯 Definir metas com OKRs
+- 🔥 Acompanhar hábitos diários
+- ⏱️ Focar com Pomodoro
+- 📅 Planejar sua semana com blocos de tempo
+- 📊 Visualizar seu progresso no dashboard
+
+Acesse agora: {{ app_url }}
+
+Dica: Instale o app no seu celular para ter acesso offline e notificações!
+
+---
+© Acorda. Todos os direitos reservados.
+Precisa de ajuda? Responda este e-mail.

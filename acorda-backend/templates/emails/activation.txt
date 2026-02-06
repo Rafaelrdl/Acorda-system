@@ -1,0 +1,17 @@
+🚀 Bem-vindo ao Acorda!
+
+Olá{% if user.name %}, {{ user.name }}{% endif %}!
+
+Sua compra foi confirmada com sucesso! Agora você tem acesso ao Acorda, seu sistema completo de produtividade pessoal.
+
+Para começar a usar, acesse o link abaixo para definir sua senha e ativar sua conta:
+
+{{ activation_url }}
+
+⏰ Importante: Este link expira em {{ expiry_hours }} horas.
+
+Se você não solicitou essa conta, pode ignorar este e-mail.
+
+---
+© Acorda. Todos os direitos reservados.
+Este é um e-mail automático, por favor não responda.

@@ -1,0 +1,47 @@
+# ===== Python / Django (acorda-backend) =====
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.sqlite3
+db.sqlite3
+
+# Media uploads (user-generated)
+acorda-backend/media/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# ===== Node / Frontend (acorda) =====
+node_modules/
+acorda/dist/
+acorda/.vite/
+
+# Build output
+*.tsbuildinfo
+
+# ===== IDE =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*.code-workspace
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ===== Misc =====
+*.log
+npm-debug.log*

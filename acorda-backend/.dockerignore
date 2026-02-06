@@ -1,0 +1,45 @@
+# Database
+db.sqlite3
+*.sqlite3
+
+# Media / uploaded files
+media/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environment / secrets
+.env
+.env.*
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+docker-compose*.yml
+
+# Tests / CI
+.pytest_cache/
+htmlcov/
+.coverage
+pytest.ini
+
+# OS
+.DS_Store
+Thumbs.db

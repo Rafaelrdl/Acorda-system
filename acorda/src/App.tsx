@@ -1,0 +1,812 @@
+import { useState, useMemo, useEffect } from 'react'
+import { useKV } from '@/lib/sync-storage'
+import { Toaster } from '@/components/ui/sonner'
+import { AuthWrapper, useAuth } from '@/components/AuthWrapper'
+import { AppHeader } from '@/components/AppHeader'
+import { BottomNav, TabType } from '@/components/BottomNav'
+import { FAB } from '@/components/FAB'
+import { QuickCapture } from '@/components/QuickCapture'
+import { HojeTab } from '@/components/tabs/HojeTab'
+import { PlanejarTab } from '@/components/tabs/PlanejarTab'
+import { EvolucaoTab } from '@/components/tabs/EvolucaoTab'
+import { CentralModule } from '@/components/CentralModule'
+import { PomodoroDialog } from '@/components/dialogs/PomodoroDialog'
+import { SettingsDialog } from '@/components/dialogs/SettingsDialog'
+import { ProfileDialog } from '@/components/dialogs/ProfileDialog'
+import { ModulesDialog } from '@/components/dialogs/ModulesDialog'
+import { PrivacyDialog } from '@/components/dialogs/PrivacyDialog'
+import { ExportDialog } from '@/components/dialogs/ExportDialog'
+import { applyTheme } from '@/lib/appearance'
+import { 
+  InboxItem, 
+  Task, 
+  Goal, 
+  KeyResult, 
+  Habit, 
+  HabitLog, 
+  PomodoroSession,
+  PomodoroPreset,
+  CalendarBlock,
+  DailyNote,
+  Project,
+  Reference,
+  UserSettings,
+  ModuleType,
+  WorkoutSession,
+  WorkoutSetLog,
+  DietMealEntry,
+  DietMealTemplate,
+  GoogleCalendarConnection,
+  GoogleCalendarEvent
+} from '@/lib/types'
+import { 
+  getSyncKey, 
+  getDateKey, 
+  createHabitLog, 
+  updateTimestamp, 
+  createUserSettings,
+  createGoogleCalendarConnection,
+  softDelete,
+  filterDeleted
+} from '@/lib/helpers'
+import { User, api } from '@/lib/api'
+import { deleteAllUserData } from '@/lib/dataCleanup'
+import { toast } from 'sonner'
+import type { UserId } from '@/lib/types'
+
+const CENTRAL_TITLES: Record<ModuleType, string> = {
+  financas: 'Finanças',
+  leitura: 'Leitura / PDF',
+  estudos: 'Estudos',
+  bemestar: 'Bem-estar',
+  treino: 'Treino',
+  integracoes: 'Integrações',
+  dieta: 'Dieta',
+}
+
+function App() {
+  return (
+    <>
+      <AuthWrapper>
+        {(user) => <MainApp user={user} />}
+      </AuthWrapper>
+      <Toaster />
+    </>
+  )
+}
+
+interface UserInfo {
+  id: UserId
+  login: string
+  avatarUrl?: string
+}
+
+function MainApp({ user }: { user: User }) {
+  const { user: authUser, refreshUser, logout } = useAuth()
+  // userId é sempre string - fonte única de verdade do usuário autenticado
+  const userId: UserId = user.id
+  const [activeTab, setActiveTab] = useState<TabType>('hoje')
+  const [activeCentral, setActiveCentral] = useState<ModuleType | null>(null)
+  const [showQuickCapture, setShowQuickCapture] = useState(false)
+  const [showPomodoro, setShowPomodoro] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [showModules, setShowModules] = useState(false)
+  const [showPrivacy, setShowPrivacy] = useState(false)
+  const [showExport, setShowExport] = useState(false)
+
+  // Memoize defaults to avoid recreating on each render
+  const defaultSettings = useMemo(() => createUserSettings(userId), [userId])
+  const defaultGoogleCalendarConnection = useMemo(
+    () => createGoogleCalendarConnection(userId),
+    [userId]
+  )
+
+  const [userSettings, setUserSettings] = useKV<UserSettings>(
+    getSyncKey(userId, 'userSettings'), 
+    defaultSettings
+  )
+  const [inboxItems, setInboxItems] = useKV<InboxItem[]>(getSyncKey(userId, 'inboxItems'), [])
+  const [tasks, setTasks] = useKV<Task[]>(getSyncKey(userId, 'tasks'), [])
+  const [goals, setGoals] = useKV<Goal[]>(getSyncKey(userId, 'goals'), [])
+  const [keyResults, setKeyResults] = useKV<KeyResult[]>(getSyncKey(userId, 'keyResults'), [])
+  const [habits, setHabits] = useKV<Habit[]>(getSyncKey(userId, 'habits'), [])
+  const [habitLogs, setHabitLogs] = useKV<HabitLog[]>(getSyncKey(userId, 'habitLogs'), [])
+  const [pomodoroSessions, setPomodoroSessions] = useKV<PomodoroSession[]>(getSyncKey(userId, 'pomodoroSessions'), [])
+  const [pomodoroPresets, setPomodoroPresets] = useKV<PomodoroPreset[]>(getSyncKey(userId, 'pomodoroPresets'), [])
+  const [calendarBlocks, setCalendarBlocks] = useKV<CalendarBlock[]>(getSyncKey(userId, 'calendarBlocks'), [])
+  const [dailyNotes, setDailyNotes] = useKV<DailyNote[]>(getSyncKey(userId, 'dailyNotes'), [])
+  const [projects, setProjects] = useKV<Project[]>(getSyncKey(userId, 'projects'), [])
+  const [references, setReferences] = useKV<Reference[]>(getSyncKey(userId, 'references'), [])
+  const [googleCalendarConnection, setGoogleCalendarConnection] = useKV<GoogleCalendarConnection>(
+    getSyncKey(userId, 'googleCalendarConnection'),
+    defaultGoogleCalendarConnection
+  )
+  const [googleCalendarEvents, setGoogleCalendarEvents] = useKV<GoogleCalendarEvent[]>(
+    getSyncKey(userId, 'googleCalendarEvents'),
+    []
+  )
+  
+  // Dados de Treino para o dashboard
+  const [workoutSessions] = useKV<WorkoutSession[]>(getSyncKey(userId, 'workoutSessions'), [])
+  const [workoutSetLogs] = useKV<WorkoutSetLog[]>(getSyncKey(userId, 'workoutSetLogs'), [])
+
+  // Dados de Dieta para o dashboard
+  const [dietMeals] = useKV<DietMealEntry[]>(getSyncKey(userId, 'dietMeals'), [])
+  const [dietTemplates] = useKV<DietMealTemplate[]>(getSyncKey(userId, 'dietMealTemplates'), [])
+
+  // Sync ALL user preferences from backend when user data loads (on login)
+  useEffect(() => {
+    console.log('[App] Syncing preferences from backend. User:', user)
+    console.log('[App] Backend appearance:', user.appearance)
+    console.log('[App] Backend week_starts_on:', user.week_starts_on)
+    console.log('[App] Backend enabled_modules:', user.enabled_modules)
+    
+    // Use backend values, fallback to defaults if not set
+    const backendAppearance = user.appearance || 'light'
+    const backendWeekStartsOn = user.week_starts_on ?? 1
+    const backendModules = user.enabled_modules || {}
+    
+    setUserSettings(current => {
+      const updated = {
+        ...(current || defaultSettings),
+        appearance: backendAppearance,
+        weekStartsOn: backendWeekStartsOn,
+        modules: {
+          ...defaultSettings.modules,
+          ...backendModules
+        },
+        updatedAt: Date.now()
+      }
+      console.log('[App] Updated settings from backend:', updated)
+      return updated
+    })
+  }, [user, defaultSettings, setUserSettings])
+
+  // Apply theme when userSettings.appearance changes
+  useEffect(() => {
+    const theme = userSettings?.appearance ?? 'light'
+    console.log('[App] userSettings.appearance changed:', theme, 'Full settings:', userSettings)
+    applyTheme(theme)
+  }, [userSettings])
+
+  const handleCapture = (item: InboxItem) => {
+    setInboxItems(current => [...(current || []), item])
+    toast.success('Adicionado à inbox')
+  }
+
+  const handleDeleteInboxItem = (id: string) => {
+    setInboxItems(current => 
+      (current || []).map(item => 
+        item.id === id ? softDelete(item) : item
+      )
+    )
+  }
+
+  const handleMarkInboxProcessed = (id: string) => {
+    setInboxItems(current => 
+      (current || []).map(item => 
+        item.id === id 
+          ? updateTimestamp({ ...item, isProcessed: true, processedAt: Date.now() }) 
+          : item
+      )
+    )
+  }
+
+  const handleAddTask = (task: Task) => {
+    setTasks(current => [...(current || []), task])
+    if (task.status === 'done' && task.isTwoMinuteTask) {
+      toast.success('Tarefa concluída! ✅')
+    } else {
+      toast.success('Tarefa criada')
+    }
+  }
+
+  const handleUpdateTask = (updatedTask: Task) => {
+    setTasks(current => (current || []).map(t => t.id === updatedTask.id ? updateTimestamp(updatedTask) : t))
+    toast.success('Tarefa atualizada')
+  }
+
+  const handleDeleteTask = (id: string) => {
+    setTasks(current => 
+      (current || []).map(t => 
+        t.id === id ? softDelete(t) : t
+      )
+    )
+    toast.success('Tarefa removida')
+  }
+
+  const handleToggleTask = (taskId: string) => {
+    setTasks(current => (current || []).map(task => {
+      if (task.id === taskId) {
+        const isDone = task.status === 'done'
+        return updateTimestamp({
+          ...task,
+          status: isDone ? 'next' : 'done',
+          completedAt: isDone ? undefined : Date.now(),
+        })
+      }
+      return task
+    }))
+  }
+
+  const handleSaveDailyNote = (note: DailyNote) => {
+    setDailyNotes(current => {
+      const list = current || []
+      const exists = list.some(n => n.id === note.id)
+      if (exists) {
+        return list.map(n => n.id === note.id ? updateTimestamp(note) : n)
+      }
+      return [...list, note]
+    })
+  }
+
+  const handleToggleTaskPriority = (taskId: string) => {
+    setTasks(current => {
+      const allTasks = current || []
+      const currentPriorities = allTasks.filter(t => t.isTopPriority && t.status !== 'done')
+      const task = allTasks.find(t => t.id === taskId)
+      
+      if (!task) return allTasks
+      
+      if (!task.isTopPriority && currentPriorities.length >= 3) {
+        toast.error('Você só pode ter 3 prioridades ativas')
+        return allTasks
+      }
+      
+      return allTasks.map(t => 
+        t.id === taskId ? updateTimestamp({ ...t, isTopPriority: !t.isTopPriority }) : t
+      )
+    })
+  }
+
+  const handleAddGoal = (payload: { 
+    goal: Goal
+    keyResults: KeyResult[]
+    project?: Project
+    tasks?: Task[]
+  }) => {
+    setGoals(current => [...(current || []), payload.goal])
+    setKeyResults(current => [...(current || []), ...payload.keyResults])
+    
+    if (payload.project) {
+      setProjects(current => [...(current || []), payload.project!])
+    }
+    
+    if (payload.tasks && payload.tasks.length > 0) {
+      setTasks(current => [...(current || []), ...payload.tasks!])
+      toast.success('Meta e plano criados')
+    } else {
+      toast.success('Meta criada')
+    }
+  }
+
+  const handleUpdateKeyResult = (kr: KeyResult) => {
+    setKeyResults(current => (current || []).map(k => k.id === kr.id ? updateTimestamp(kr) : k))
+  }
+
+  const handleUpdateGoalWithKRs = (payload: {
+    goal: Goal
+    updatedKeyResults: KeyResult[]
+    deletedKeyResultIds: string[]
+    updatedTasks: Task[]
+    newTasks: Task[]
+    deletedTaskIds: string[]
+  }) => {
+    // Atualizar a meta
+    setGoals(current => (current || []).map(g => 
+      g.id === payload.goal.id ? payload.goal : g
+    ))
+
+    // Atualizar/adicionar KRs
+    setKeyResults(current => {
+      let updated = current || []
+      
+      // Atualizar KRs existentes e adicionar novos
+      payload.updatedKeyResults.forEach(kr => {
+        const existingIndex = updated.findIndex(k => k.id === kr.id)
+        if (existingIndex >= 0) {
+          updated = updated.map(k => k.id === kr.id ? kr : k)
+        } else {
+          updated = [...updated, kr]
+        }
+      })
+      
+      // Soft delete de KRs removidos
+      payload.deletedKeyResultIds.forEach(krId => {
+        updated = updated.map(k => k.id === krId ? softDelete(k) : k)
+      })
+      
+      return updated
+    })
+
+    // Atualizar/adicionar tasks
+    setTasks(current => {
+      let updated = current || []
+      
+      // Atualizar tasks existentes
+      payload.updatedTasks.forEach(task => {
+        updated = updated.map(t => t.id === task.id ? task : t)
+      })
+      
+      // Adicionar novas tasks
+      updated = [...updated, ...payload.newTasks]
+      
+      // Soft delete de tasks removidas
+      payload.deletedTaskIds.forEach(taskId => {
+        updated = updated.map(t => t.id === taskId ? softDelete(t) : t)
+      })
+      
+      return updated
+    })
+
+    toast.success('Meta atualizada')
+  }
+
+  const handleDeleteGoal = (id: string) => {
+    // Soft delete da meta
+    setGoals(current => 
+      (current || []).map(g => 
+        g.id === id ? softDelete({ ...g, status: 'abandoned' as const }) : g
+      )
+    )
+    // Soft delete dos key results associados
+    setKeyResults(current => 
+      (current || []).map(kr => 
+        kr.goalId === id ? softDelete(kr) : kr
+      )
+    )
+    toast.success('Meta removida')
+  }
+
+  const handleToggleHabit = (habitId: string) => {
+    const today = getDateKey(new Date())
+    
+    setHabitLogs(current => {
+      const allLogs = current || []
+      const existing = allLogs.find(log => log.habitId === habitId && log.date === today)
+      
+      if (existing) {
+        return allLogs.filter(log => log.id !== existing.id)
+      } else {
+        const newLog = createHabitLog(userId, habitId, today)
+        return [...allLogs, newLog]
+      }
+    })
+  }
+
+  const handleAddHabit = (habit: Habit) => {
+    setHabits(current => [...(current || []), habit])
+    toast.success('Hábito criado')
+  }
+
+  const handleUpdateHabit = (habit: Habit) => {
+    setHabits(current => (current || []).map(h => h.id === habit.id ? updateTimestamp(habit) : h))
+    toast.success('Hábito atualizado')
+  }
+
+  const handleDeleteHabit = (id: string) => {
+    setHabits(current => 
+      (current || []).map(h => 
+        h.id === id ? softDelete({ ...h, isActive: false }) : h
+      )
+    )
+    toast.success('Hábito removido')
+  }
+
+  const handlePomodoroComplete = (session: PomodoroSession) => {
+    setPomodoroSessions(current => [...(current || []), session])
+  }
+
+  const handleAddProject = (project: Project) => {
+    setProjects(current => [...(current || []), project])
+    toast.success('Projeto criado')
+  }
+
+  const handleUpdateProject = (project: Project) => {
+    setProjects(current => (current || []).map(p => p.id === project.id ? updateTimestamp(project) : p))
+    toast.success('Projeto atualizado')
+  }
+
+  const handleDeleteProject = (id: string) => {
+    setProjects(current => 
+      (current || []).map(p => 
+        p.id === id ? softDelete(p) : p
+      )
+    )
+    toast.success('Projeto removido')
+  }
+
+  const handleAddCalendarBlock = (block: CalendarBlock) => {
+    setCalendarBlocks(current => [...(current || []), block])
+    toast.success('Bloco adicionado')
+  }
+
+  const handleUpdateCalendarBlock = (block: CalendarBlock) => {
+    setCalendarBlocks(current => (current || []).map(b => b.id === block.id ? updateTimestamp(block) : b))
+    toast.success('Bloco atualizado')
+  }
+
+  const handleDeleteCalendarBlock = (id: string) => {
+    setCalendarBlocks(current => 
+      (current || []).map(b => 
+        b.id === id ? softDelete(b) : b
+      )
+    )
+    toast.success('Bloco removido')
+  }
+
+  const handleAddReference = (reference: Reference) => {
+    setReferences(current => [...(current || []), reference])
+    toast.success('Anotação salva')
+  }
+
+  const handleUpdateReference = (reference: Reference) => {
+    setReferences(current => (current || []).map(r => r.id === reference.id ? reference : r))
+    toast.success('Anotação atualizada')
+  }
+
+  const handleDeleteReference = (id: string) => {
+    setReferences(current => 
+      (current || []).map(r => 
+        r.id === id ? softDelete(r) : r
+      )
+    )
+    toast.success('Anotação removida')
+  }
+
+  const handleAddPomodoroPreset = (preset: PomodoroPreset) => {
+    setPomodoroPresets(current => [...(current || []), preset])
+    toast.success('Preset criado')
+  }
+
+  const handleUpdatePomodoroPreset = (preset: PomodoroPreset) => {
+    setPomodoroPresets(current => (current || []).map(p => p.id === preset.id ? preset : p))
+    toast.success('Preset atualizado')
+  }
+
+  const handleDeletePomodoroPreset = (id: string) => {
+    setPomodoroPresets(current => 
+      (current || []).map(p => 
+        p.id === id ? softDelete(p) : p
+      )
+    )
+    toast.success('Preset removido')
+  }
+
+  const handleSetDefaultPreset = (id: string) => {
+    setPomodoroPresets(current => 
+      (current || []).map(p => ({ ...p, isDefault: p.id === id, updatedAt: Date.now() }))
+    )
+    toast.success('Preset padrão atualizado')
+  }
+
+  const handleToggleModule = async (module: ModuleType, enabled: boolean) => {
+    const currentModules = userSettings?.modules || defaultSettings.modules
+    const updatedModules = {
+      ...currentModules,
+      [module]: enabled
+    }
+    
+    // Update local state immediately
+    setUserSettings(current => {
+      const updated: UserSettings = {
+        ...(current || defaultSettings),
+        modules: updatedModules,
+        updatedAt: Date.now()
+      }
+      return updated
+    })
+    
+    // Sync with backend
+    try {
+      console.log('[App] Syncing modules to backend:', updatedModules)
+      const response = await api.updateEnabledModules(updatedModules)
+      console.log('[App] Backend response after module update:', response)
+    } catch (error) {
+      console.error('[App] Failed to sync modules with backend:', error)
+      // Optionally revert on error
+    }
+    
+    toast.success(enabled ? 'Módulo ativado' : 'Módulo desativado')
+  }
+
+  const handleUpdateSettings = async (settings: UserSettings) => {
+    console.log('[App] handleUpdateSettings called with:', settings)
+    
+    // Update local state
+    setUserSettings(settings)
+    
+    // Sync with backend
+    try {
+      console.log('[App] Syncing settings to backend:', {
+        appearance: settings.appearance,
+        week_starts_on: settings.weekStartsOn,
+        enabled_modules: settings.modules
+      })
+      const response = await api.updatePreferences({
+        appearance: settings.appearance,
+        week_starts_on: settings.weekStartsOn,
+        enabled_modules: settings.modules
+      })
+      console.log('[App] Backend response after settings update:', response)
+    } catch (error) {
+      console.error('[App] Failed to sync settings with backend:', error)
+    }
+    
+    toast.success('Configurações salvas')
+  }
+
+  const handleLogout = () => {
+    // Cleanup legacy key and use auth flow to clear tokens + state
+    localStorage.removeItem('acorda_user')
+    void logout()
+  }
+
+  const handleOpenCentral = (moduleType: ModuleType) => {
+    setActiveCentral(moduleType)
+  }
+
+  const handleCloseCentral = () => {
+    setActiveCentral(null)
+  }
+
+  const handleOpenIntegrations = () => {
+    setActiveCentral('integracoes')
+  }
+
+  const handleDeleteAllData = async () => {
+    await deleteAllUserData(userId)
+    setInboxItems([])
+    setTasks([])
+    setGoals([])
+    setKeyResults([])
+    setHabits([])
+    setHabitLogs([])
+    setPomodoroSessions([])
+    setPomodoroPresets([])
+    setCalendarBlocks([])
+    setProjects([])
+    setReferences([])
+    setUserSettings(defaultSettings)
+    setGoogleCalendarEvents([])
+    setGoogleCalendarConnection(defaultGoogleCalendarConnection)
+  }
+
+  const handleExportTasks = () => {
+    const allTasks = tasks || []
+    const allProjects = projects || []
+    
+    const lines = ['## Tarefas\n']
+    allTasks.forEach(t => {
+      const status = t.status === 'done' ? '✅' : t.status === 'next' ? '🔜' : '📋'
+      lines.push(`- ${status} ${t.title}${t.description ? `: ${t.description}` : ''}`)
+    })
+    
+    if (allProjects.length > 0) {
+      lines.push('\n## Projetos\n')
+      allProjects.forEach(p => {
+        lines.push(`- ${p.name}${p.description ? `: ${p.description}` : ''}`)
+      })
+    }
+    
+    return lines.join('\n')
+  }
+
+  const handleExportHabits = () => {
+    const allHabits = habits || []
+    const allLogs = habitLogs || []
+    
+    const lines = ['## Hábitos\n']
+    allHabits.forEach(h => {
+      const logs = allLogs.filter(l => l.habitId === h.id)
+      lines.push(`- ${h.name} (${h.frequency}) - ${logs.length} registros`)
+    })
+    
+    return lines.join('\n')
+  }
+
+  const handleExportGoals = () => {
+    const allGoals = goals || []
+    const allKRs = keyResults || []
+    const allTasks = tasks || []
+    
+    const lines = ['## Metas e Key Results\n']
+    allGoals.forEach(g => {
+      lines.push(`### ${g.objective}`)
+      const gKRs = allKRs.filter(kr => kr.goalId === g.id)
+      gKRs.forEach(kr => {
+        const krCheckpoints = allTasks.filter(t => t.keyResultId === kr.id)
+        const completedCheckpoints = krCheckpoints.filter(t => t.status === 'done').length
+        lines.push(`- ${kr.description}: ${completedCheckpoints}/${krCheckpoints.length} checkpoints`)
+      })
+      lines.push('')
+    })
+    
+    return lines.join('\n')
+  }
+
+  // Adaptar user para a interface UserInfo usada no AppHeader
+  const userInfo: UserInfo = {
+    id: userId,
+    login: user.name || user.email,
+    avatarUrl: user.avatar_url || undefined,
+  }
+
+  return (
+    <div className="min-h-screen bg-background pt-12">
+      <AppHeader 
+        activeTab={activeTab} 
+        centralTitle={activeCentral ? CENTRAL_TITLES[activeCentral] : null}
+        user={userInfo}
+        moduleSettings={userSettings?.modules || defaultSettings.modules}
+        onOpenCentral={handleOpenCentral}
+        onOpenProfile={() => setShowProfile(true)}
+        onOpenSettings={() => setShowSettings(true)}
+        onOpenModules={() => setShowModules(true)}
+        onOpenPrivacy={() => setShowPrivacy(true)}
+        onOpenIntegrations={handleOpenIntegrations}
+        onLogout={handleLogout}
+      />
+
+      {/* Central ativa - renderizada full-screen acima das tabs */}
+      {activeCentral && (
+        <CentralModule
+          moduleType={activeCentral}
+          isEnabled={(userSettings?.modules || defaultSettings.modules)[activeCentral]}
+          userId={userId}
+          googleCalendarConnection={googleCalendarConnection}
+          onUpdateGoogleCalendarConnection={setGoogleCalendarConnection}
+          onUpdateGoogleCalendarEvents={setGoogleCalendarEvents}
+          onToggle={(enabled) => {
+            handleToggleModule(activeCentral, enabled)
+            if (!enabled) handleCloseCentral()
+          }}
+          onBack={handleCloseCentral}
+        />
+      )}
+
+      {/* Tabs - só mostrar quando não há central ativa */}
+      {!activeCentral && activeTab === 'hoje' && (
+        <HojeTab
+          tasks={tasks || []}
+          habits={habits || []}
+          habitLogs={habitLogs || []}
+          calendarBlocks={calendarBlocks || []}
+          pomodoroSessions={pomodoroSessions || []}
+          dailyNotes={dailyNotes || []}
+          onToggleTask={handleToggleTask}
+          onToggleHabit={handleToggleHabit}
+          onStartPomodoro={() => setShowPomodoro(true)}
+          onGoToPlanejar={() => setActiveTab('planejar')}
+          onGoToEstudos={() => setActiveCentral('estudos')}
+          onGoToLeituras={() => setActiveCentral('leitura')}
+          onGoToBemEstar={() => setActiveCentral('bemestar')}
+          onGoToTreino={() => setActiveCentral('treino')}
+          onSaveDailyNote={handleSaveDailyNote}
+          userId={userId}
+        />
+      )}
+
+      {!activeCentral && activeTab === 'planejar' && (
+        <PlanejarTab
+          inboxItems={inboxItems || []}
+          tasks={tasks || []}
+          goals={goals || []}
+          keyResults={keyResults || []}
+          habits={habits || []}
+          projects={projects || []}
+          calendarBlocks={calendarBlocks || []}
+          references={references || []}
+          userId={userId}
+          weekStartsOn={userSettings?.weekStartsOn ?? defaultSettings.weekStartsOn}
+          googleCalendarEvents={googleCalendarEvents || []}
+          onDeleteInboxItem={handleDeleteInboxItem}
+          onMarkInboxProcessed={handleMarkInboxProcessed}
+          onAddTask={handleAddTask}
+          onUpdateTask={handleUpdateTask}
+          onDeleteTask={handleDeleteTask}
+          onToggleTaskPriority={handleToggleTaskPriority}
+          onAddGoal={handleAddGoal}
+          onUpdateGoal={handleUpdateGoalWithKRs}
+          onDeleteGoal={handleDeleteGoal}
+          onUpdateKeyResult={handleUpdateKeyResult}
+          onAddHabit={handleAddHabit}
+          onUpdateHabit={handleUpdateHabit}
+          onDeleteHabit={handleDeleteHabit}
+          onAddProject={handleAddProject}
+          onUpdateProject={handleUpdateProject}
+          onDeleteProject={handleDeleteProject}
+          onAddCalendarBlock={handleAddCalendarBlock}
+          onUpdateCalendarBlock={handleUpdateCalendarBlock}
+          onDeleteCalendarBlock={handleDeleteCalendarBlock}
+          onAddReference={handleAddReference}
+          onUpdateReference={handleUpdateReference}
+          onDeleteReference={handleDeleteReference}
+        />
+      )}
+
+      {!activeCentral && activeTab === 'evolucao' && (
+        <EvolucaoTab
+          goals={goals || []}
+          keyResults={keyResults || []}
+          habits={habits || []}
+          habitLogs={habitLogs || []}
+          pomodoroSessions={pomodoroSessions || []}
+          calendarBlocks={calendarBlocks || []}
+          tasks={tasks || []}
+          userId={userId}
+          workoutSessions={workoutSessions || []}
+          workoutSetLogs={workoutSetLogs || []}
+          dietMeals={dietMeals || []}
+          dietTemplates={dietTemplates || []}
+        />
+      )}
+
+      <FAB onClick={() => setShowQuickCapture(true)} />
+      <BottomNav 
+        activeTab={activeTab} 
+        onTabChange={(tab) => {
+          setActiveCentral(null) // Fecha módulo central ao navegar
+          setActiveTab(tab)
+        }} 
+      />
+
+      <QuickCapture
+        open={showQuickCapture}
+        onOpenChange={setShowQuickCapture}
+        userId={userId}
+        onCapture={handleCapture}
+      />
+
+      <PomodoroDialog
+        open={showPomodoro}
+        onOpenChange={setShowPomodoro}
+        userId={userId}
+        presets={pomodoroPresets || []}
+        tasks={tasks || []}
+        onSessionComplete={handlePomodoroComplete}
+        onInterruptionCapture={handleCapture}
+      />
+
+      <ProfileDialog
+        open={showProfile}
+        onOpenChange={setShowProfile}
+        user={authUser || user}
+        onUserUpdated={refreshUser}
+      />
+
+      <SettingsDialog
+        open={showSettings}
+        onOpenChange={setShowSettings}
+        settings={userSettings || defaultSettings}
+        onUpdateSettings={handleUpdateSettings}
+      />
+
+      <ModulesDialog
+        open={showModules}
+        onOpenChange={setShowModules}
+        moduleSettings={userSettings?.modules || defaultSettings.modules}
+        onToggleModule={handleToggleModule}
+      />
+
+      <PrivacyDialog
+        open={showPrivacy}
+        onOpenChange={setShowPrivacy}
+        userId={userId}
+        onDeleteAllData={handleDeleteAllData}
+      />
+
+      <ExportDialog
+        open={showExport}
+        onOpenChange={setShowExport}
+        onExportTasks={handleExportTasks}
+        onExportHabits={handleExportHabits}
+        onExportGoals={handleExportGoals}
+      />
+    </div>
+  )
+}
+
+export default App
+
