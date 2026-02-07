@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { StudySession } from '@/lib/types'
-import { Circle, Plus, Trash, Warning } from '@phosphor-icons/react'
+import { Plus, Trash, Warning } from '@phosphor-icons/react'
 
 interface SelfTestDialogProps {
   open: boolean
@@ -19,7 +19,7 @@ const MAX_QUESTIONS = 5
 export function SelfTestDialog({
   open,
   onOpenChange,
-  session,
+  _session,
   initialQuestions = [],
   onSave,
 }: SelfTestDialogProps) {

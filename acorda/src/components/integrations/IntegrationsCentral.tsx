@@ -40,6 +40,7 @@ function loadGoogleIdentityScript(): Promise<void> {
   googleIdentityPromise = new Promise((resolve, reject) => {
     const existing = document.querySelector(`script[src="${GOOGLE_IDENTITY_SRC}"]`)
     if (existing) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Google Identity Services not typed
       const googleReady = (window as unknown as { google?: any }).google?.accounts?.oauth2
       if (googleReady) {
         resolve()
@@ -68,6 +69,7 @@ async function requestAccessToken(
 ): Promise<{ accessToken: string; expiresAt: number }> {
   await loadGoogleIdentityScript()
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Google Identity Services not typed
   const google = (window as unknown as { google?: any }).google
   if (!google?.accounts?.oauth2?.initTokenClient) {
     throw new Error('Google Identity Services indispon�vel')

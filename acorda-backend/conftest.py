@@ -31,3 +31,8 @@ def pytest_configure():
     if settings.configured:
         settings.DEBUG = not _prod_mode
         settings.SECURE_SSL_REDIRECT = False  # Never redirect in test runner
+
+    # Ensure STATIC_ROOT directory exists so whitenoise doesn't warn
+    import pathlib
+    static_root = pathlib.Path(settings.STATIC_ROOT)
+    static_root.mkdir(exist_ok=True)

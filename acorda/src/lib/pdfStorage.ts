@@ -169,7 +169,7 @@ export async function getPDFStorageInfo(userId: string | number): Promise<{ coun
   try {
     const db = await openDatabase()
     
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       const transaction = db.transaction(STORE_NAME, 'readonly')
       const store = transaction.objectStore(STORE_NAME)
       const index = store.index('userId')
@@ -235,7 +235,7 @@ export async function clearUserPDFStorage(userId: number | string): Promise<void
       }
     }
     
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       const txn = db.transaction(STORE_NAME, 'readwrite')
       const store = txn.objectStore(STORE_NAME)
       const index = store.index('userId')

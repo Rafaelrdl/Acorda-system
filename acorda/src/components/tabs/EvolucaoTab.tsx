@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Card } from '@/components/ui/card'
 import { SectionCard } from '@/components/ui/section-card'
 import { KpiTile } from '@/components/ui/kpi-tile'
 import type { UserId } from '@/lib/types'
@@ -77,7 +76,6 @@ export function EvolucaoTab({
   // Séries para o período anterior (para calcular tendência)
   const prevFocusSeries = getDailyFocusMinutesSeries(pomodoroSessions, userId, period * 2).slice(0, period)
   const prevTasksSeries = getDailyCompletedTasksSeries(tasks, userId, period * 2).slice(0, period)
-  const prevHabitsSeries = getDailyHabitCompletionSeries(habits, habitLogs, userId, period * 2, 'percentage').slice(0, period)
   
   // Totais
   const totalFocusMinutes = sumSeries(focusSeries)

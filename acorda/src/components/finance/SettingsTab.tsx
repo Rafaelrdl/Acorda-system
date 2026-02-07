@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import type { UserId } from '@/lib/types'
 import { FinanceCategory, FinanceAccount } from '@/lib/types'
-import { createFinanceCategory, createFinanceAccount, formatCurrency, updateTimestamp } from '@/lib/helpers'
+import { createFinanceCategory, createFinanceAccount, formatCurrency } from '@/lib/helpers'
 import { Plus, Trash } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 

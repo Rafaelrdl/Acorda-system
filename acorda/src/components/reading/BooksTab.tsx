@@ -35,11 +35,6 @@ export function BooksTab({
   const activeBooks = books.filter(b => b.status === 'reading')
   const completedBooks = books.filter(b => b.status === 'completed')
 
-  const handleEditBook = (book: Book) => {
-    setSelectedBook(book)
-    setShowBookDialog(true)
-  }
-
   const handleUpdateProgress = (book: Book) => {
     setSelectedBook(book)
     setShowProgressDialog(true)

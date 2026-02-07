@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useKV } from '@/lib/sync-storage'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
 import type { UserId } from '@/lib/types'
 import { 
   FinanceCategory, 
@@ -16,7 +15,6 @@ import { OverviewTab } from './OverviewTab'
 import { TransactionsTab } from './TransactionsTab'
 import { IncomeExpensesTab } from './IncomeExpensesTab'
 import { SettingsTab } from './SettingsTab'
-import { ChatInput } from './ChatInput'
 import { Wallet, Receipt, TrendUp, Gear } from '@phosphor-icons/react'
 
 interface FinanceCentralProps {

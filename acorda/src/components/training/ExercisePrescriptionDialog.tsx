@@ -713,6 +713,7 @@ export function ExercisePrescriptionDialog({
 
 // ========== Helpers para exibição ==========
 
+// eslint-disable-next-line react-refresh/only-export-components -- display helpers co-located with dialog
 export function formatPrescriptionBadge(item: WorkoutPlanItem): string | null {
   const { prescription, targetSets, targetRepsMin, targetRepsMax } = item
   
@@ -739,6 +740,7 @@ export function formatPrescriptionBadge(item: WorkoutPlanItem): string | null {
   return null
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function formatTechniqueBadge(technique?: WorkoutTechnique): string | null {
   if (!technique || technique.type === 'none') return null
   
@@ -755,6 +757,7 @@ export function formatTechniqueBadge(technique?: WorkoutTechnique): string | nul
   return labels[technique.type] || null
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function formatStructureBadge(prescription?: WorkoutPrescription): string | null {
   if (!prescription || prescription.mode !== 'warmup_feeder_work') return null
   

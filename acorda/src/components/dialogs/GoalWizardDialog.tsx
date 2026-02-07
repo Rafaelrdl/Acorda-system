@@ -10,7 +10,6 @@ import { Progress } from '@/components/ui/progress'
 import type { UserId, Goal, KeyResult, Project, Task } from '@/lib/types'
 import { createGoal, createKeyResult, createTask, generateId } from '@/lib/helpers'
 import { Plus, Trash, LightbulbFilament, Target } from '@phosphor-icons/react'
-import { toast } from 'sonner'
 
 interface GoalWizardDialogProps {
   open: boolean

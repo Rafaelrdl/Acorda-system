@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
 import { PDFDocument, PDFHighlight, HighlightColor } from '@/lib/types'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, CaretLeft, CaretRight, Highlighter, Note, List } from '@phosphor-icons/react'
+import { ArrowLeft, CaretLeft, CaretRight, Highlighter, List } from '@phosphor-icons/react'
 import { createPDFHighlight } from '@/lib/helpers'
 import { Card } from '@/components/ui/card'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
@@ -41,8 +41,8 @@ export function PDFReader({
   onClose,
   onSaveProgress,
   onAddHighlight,
-  onUpdateHighlight,
-  onDeleteHighlight,
+  _onUpdateHighlight,
+  _onDeleteHighlight,
 }: PDFReaderProps) {
   const [numPages, setNumPages] = useState<number>(0)
   const [currentPage, setCurrentPage] = useState(doc.currentPage || 1)

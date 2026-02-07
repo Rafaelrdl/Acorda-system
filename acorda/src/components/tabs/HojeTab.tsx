@@ -59,7 +59,7 @@ export function HojeTab({
   habitLogs,
   calendarBlocks,
   pomodoroSessions,
-  dailyNotes,
+  _dailyNotes,
   onToggleTask,
   onToggleHabit,
   onStartPomodoro,
@@ -68,11 +68,12 @@ export function HojeTab({
   onGoToLeituras,
   onGoToBemEstar,
   onGoToTreino,
-  onSaveDailyNote,
+  _onSaveDailyNote,
   userId,
 }: HojeTabProps) {
   // Carregar dados de finanças
   const [fixedExpenses, setFixedExpenses] = useKV<FixedExpense[]>(getSyncKey(userId, 'financeFixedExpenses'), [])
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- setTransactions used in handleConfirmExpense
   const [transactions, setTransactions] = useKV<Transaction[]>(getSyncKey(userId, 'financeTransactions'), [])
   const [categories] = useKV<FinanceCategory[]>(getSyncKey(userId, 'financeCategories'), [])
   
@@ -111,7 +112,7 @@ export function HojeTab({
   const topPriorities = activeTasks.filter(t => t.isTopPriority && t.status !== 'done').slice(0, 3)
   const completedTasks = activeTasks.filter(t => t.completedAt && isSameDay(new Date(t.completedAt), new Date()))
   
-  const today = new Date()
+  const today = useMemo(() => new Date(), [])
   const todayKey = getDateKey(today)
   const currentDay = today.getDate()
   const currentMonth = getMonthKey(today)

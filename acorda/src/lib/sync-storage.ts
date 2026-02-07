@@ -276,7 +276,8 @@ async function dbGetAll<T>(storeName: string): Promise<T[]> {
   })
 }
 
-async function dbClear(storeName: string): Promise<void> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- retained for future use
+async function _dbClear(storeName: string): Promise<void> {
   const db = await initDB()
   
   return new Promise((resolve, reject) => {
@@ -923,6 +924,7 @@ export function useStorage<T>(
         return newValue
       })
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- key ensures updateData identity resets when the storage key changes
     [key]
   )
   

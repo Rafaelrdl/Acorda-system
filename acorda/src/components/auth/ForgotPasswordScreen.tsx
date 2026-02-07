@@ -24,7 +24,7 @@ export function ForgotPasswordScreen() {
     try {
       await api.forgotPassword(email)
       setSuccess(true)
-    } catch (err: unknown) {
+    } catch {
       // Always show success to prevent email enumeration
       setSuccess(true)
     } finally {

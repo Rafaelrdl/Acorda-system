@@ -1,7 +1,6 @@
 import { ModuleType, GoogleCalendarConnection, GoogleCalendarEvent } from '@/lib/types'
 import type { UserId } from '@/lib/types'
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { CentralLayout } from '@/components/CentralLayout'
 import { FinanceCentral } from '@/components/finance/FinanceCentral'

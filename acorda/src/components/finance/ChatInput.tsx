@@ -48,6 +48,7 @@ export function ChatInput({
     }
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Web Speech API types not in default lib
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
       const recognition = new SpeechRecognition()
       
@@ -60,6 +61,7 @@ export function ChatInput({
         toast.info('Fale agora...')
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SpeechRecognitionEvent not in default TS lib
       recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript
         setInput(transcript)

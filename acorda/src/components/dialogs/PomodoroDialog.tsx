@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -52,7 +52,7 @@ export function PomodoroDialog({
   const [sessionNotes, setSessionNotes] = useState('')
   
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
-  const allPresets = [...DEFAULT_PRESETS, ...presets]
+  const allPresets = useMemo(() => [...DEFAULT_PRESETS, ...presets], [presets])
   const activeTasks = tasks.filter(t => t.status === 'next' || t.status === 'scheduled')
 
   useEffect(() => {

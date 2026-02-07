@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ConsentDialog } from './ConsentDialog'
 import type { UserId } from '@/lib/types'
 import { Subject, RecordedStudySession, ConsentLog } from '@/lib/types'
-import { createRecordedStudySession, createConsentLog, getDateKey, addDaysToDate } from '@/lib/helpers'
+import { createRecordedStudySession, createConsentLog, getDateKey } from '@/lib/helpers'
 import { Microphone, FileText, Sparkle, Info } from '@phosphor-icons/react'
 
 interface RecordedSessionDialogProps {

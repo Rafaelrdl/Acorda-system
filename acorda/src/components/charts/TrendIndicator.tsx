@@ -39,6 +39,7 @@ export function TrendIndicator({
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- utility co-located with its consumer component
 export function getTrendDelta(current: number, previous: number): { 
   deltaPct: number
   direction: 'up' | 'down' | 'neutral' 

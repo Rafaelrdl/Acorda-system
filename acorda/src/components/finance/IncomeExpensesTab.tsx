@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import type { UserId } from '@/lib/types'
 import { Income, FixedExpense, FinanceCategory, FinanceAccount, RecurrenceFrequency, Transaction } from '@/lib/types'
 import { formatCurrency, createIncome, createFixedExpense, createTransaction, updateTimestamp, getDateKey, getMonthKey } from '@/lib/helpers'
-import { Plus, Trash, TrendUp, TrendDown, Wallet, Check, Clock, Lightning, CalendarCheck, PencilSimple } from '@phosphor-icons/react'
+import { Plus, Trash, TrendUp, TrendDown, Wallet, Check, Clock, Lightning, PencilSimple } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
 interface IncomeExpensesTabProps {
@@ -36,7 +36,7 @@ export function IncomeExpensesTab({
   accounts,
   incomes,
   fixedExpenses,
-  transactions,
+  _transactions,
   onAddIncome,
   onUpdateIncome,
   onDeleteIncome,

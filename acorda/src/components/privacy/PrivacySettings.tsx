@@ -26,7 +26,7 @@ interface PrivacySettingsProps {
 }
 
 export function PrivacySettings({
-  userId,
+  _userId,
   onDeleteAllData,
   onExportFinance,
   onExportStudy,
@@ -79,7 +79,7 @@ export function PrivacySettings({
       URL.revokeObjectURL(url)
 
       toast.success('Arquivo exportado com sucesso')
-    } catch (error) {
+    } catch {
       toast.error('Erro ao exportar dados')
     }
   }

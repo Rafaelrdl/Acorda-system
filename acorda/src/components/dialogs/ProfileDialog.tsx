@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
-import { User, Camera, Eye, EyeSlash, Check, X, Trash } from '@phosphor-icons/react'
+import { User, Camera, Eye, EyeSlash, Check, X } from '@phosphor-icons/react'
 import { api, User as UserType } from '@/lib/api'
 import { toast } from 'sonner'
 

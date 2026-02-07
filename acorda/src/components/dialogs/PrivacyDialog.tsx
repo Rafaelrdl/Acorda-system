@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import type { UserId } from '@/lib/types'
-import { ShieldCheck, Info, Trash, Download } from '@phosphor-icons/react'
+import { ShieldCheck, Info, Trash } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,7 +18,7 @@ interface PrivacyDialogProps {
 export function PrivacyDialog({
   open,
   onOpenChange,
-  userId,
+  _userId,
   onDeleteAllData,
 }: PrivacyDialogProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)

@@ -7,7 +7,6 @@ import { CurrencyInput } from '@/components/ui/currency-input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { UserId } from '@/lib/types'
 import { Transaction, FinanceCategory, FinanceAccount, FinanceAuditLog } from '@/lib/types'
 import { formatCurrency, createTransaction, getDateKey } from '@/lib/helpers'
@@ -33,7 +32,7 @@ export function TransactionsTab({
   transactions,
   onAddTransaction,
   onDeleteTransaction,
-  onAddAuditLog,
+  _onAddAuditLog,
 }: TransactionsTabProps) {
   const [showIncomeDialog, setShowIncomeDialog] = useState(false)
   const [showExpenseDialog, setShowExpenseDialog] = useState(false)

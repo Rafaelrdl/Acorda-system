@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import type { UserId } from '@/lib/types'
 import { InboxItem, Task, Reference, EnergyLevel } from '@/lib/types'
-import { createTask, updateTimestamp } from '@/lib/helpers'
+import { createTask } from '@/lib/helpers'
 import { ArrowRight, CheckCircle } from '@phosphor-icons/react'
 
 interface ProcessInboxDialogProps {

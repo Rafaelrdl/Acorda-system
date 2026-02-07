@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import type { UserId } from '@/lib/types'
 import { WorkoutExercise, WorkoutPlan, WorkoutPlanItem, WorkoutSession, WorkoutSetLog } from '@/lib/types'
 import { createWorkoutSession, getDateKey } from '@/lib/helpers'
