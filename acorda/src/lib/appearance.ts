@@ -11,7 +11,7 @@ export type Appearance = 'light' | 'dark'
 export function applyTheme(theme: Appearance): void {
   const root = document.documentElement
   
-  console.log('[Theme] Applying theme:', theme)
+  if (import.meta.env.DEV) console.log('[Theme] Applying theme:', theme)
   
   if (theme === 'dark') {
     root.classList.add('dark')

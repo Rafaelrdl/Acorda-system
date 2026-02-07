@@ -18,7 +18,7 @@ interface PrivacyDialogProps {
 export function PrivacyDialog({
   open,
   onOpenChange,
-  _userId,
+  userId: _userId,
   onDeleteAllData,
 }: PrivacyDialogProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)

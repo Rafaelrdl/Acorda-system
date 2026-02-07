@@ -36,7 +36,7 @@ export function IncomeExpensesTab({
   accounts,
   incomes,
   fixedExpenses,
-  _transactions,
+  transactions: _transactions,
   onAddIncome,
   onUpdateIncome,
   onDeleteIncome,

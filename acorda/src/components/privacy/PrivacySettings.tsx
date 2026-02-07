@@ -26,7 +26,7 @@ interface PrivacySettingsProps {
 }
 
 export function PrivacySettings({
-  _userId,
+  userId: _userId,
   onDeleteAllData,
   onExportFinance,
   onExportStudy,

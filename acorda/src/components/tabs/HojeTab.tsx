@@ -59,7 +59,7 @@ export function HojeTab({
   habitLogs,
   calendarBlocks,
   pomodoroSessions,
-  _dailyNotes,
+  dailyNotes: _dailyNotes,
   onToggleTask,
   onToggleHabit,
   onStartPomodoro,
@@ -68,7 +68,7 @@ export function HojeTab({
   onGoToLeituras,
   onGoToBemEstar,
   onGoToTreino,
-  _onSaveDailyNote,
+  onSaveDailyNote: _onSaveDailyNote,
   userId,
 }: HojeTabProps) {
   // Carregar dados de finanças

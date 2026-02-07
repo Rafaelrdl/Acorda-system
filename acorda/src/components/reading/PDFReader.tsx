@@ -41,8 +41,8 @@ export function PDFReader({
   onClose,
   onSaveProgress,
   onAddHighlight,
-  _onUpdateHighlight,
-  _onDeleteHighlight,
+  onUpdateHighlight: _onUpdateHighlight,
+  onDeleteHighlight: _onDeleteHighlight,
 }: PDFReaderProps) {
   const [numPages, setNumPages] = useState<number>(0)
   const [currentPage, setCurrentPage] = useState(doc.currentPage || 1)

@@ -19,7 +19,7 @@ const MAX_QUESTIONS = 5
 export function SelfTestDialog({
   open,
   onOpenChange,
-  _session,
+  session: _session,
   initialQuestions = [],
   onSave,
 }: SelfTestDialogProps) {

@@ -17,7 +17,7 @@ interface DietTodayTabProps {
   today: string
 }
 
-export function DietTodayTab({ userId, meals, setMeals, _templates, today }: DietTodayTabProps) {
+export function DietTodayTab({ userId, meals, setMeals, templates: _templates, today }: DietTodayTabProps) {
   const [showMealDialog, setShowMealDialog] = useState(false)
   const [editingMeal, setEditingMeal] = useState<DietMealEntry | null>(null)
 

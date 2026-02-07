@@ -207,9 +207,6 @@ class WebhookView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
         
-        # Mark as processed for anti-replay deduplication
-        _mark_webhook_processed(request)
-        
         data = request.data
         topic = data.get('type') or request.query_params.get('topic')
         resource_id = data.get('data', {}).get('id') or request.query_params.get('id')
@@ -227,6 +224,8 @@ class WebhookView(APIView):
             elif topic == 'subscription_authorized_payment':
                 self._handle_subscription_payment(resource_id)
             
+            # Mark as processed AFTER successful business logic
+            _mark_webhook_processed(request)
             return Response({'status': 'ok'})
         except Exception as e:
             logger.exception(f"Webhook processing error: {e}")

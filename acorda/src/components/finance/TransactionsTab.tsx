@@ -32,7 +32,7 @@ export function TransactionsTab({
   transactions,
   onAddTransaction,
   onDeleteTransaction,
-  _onAddAuditLog,
+  onAddAuditLog: _onAddAuditLog,
 }: TransactionsTabProps) {
   const [showIncomeDialog, setShowIncomeDialog] = useState(false)
   const [showExpenseDialog, setShowExpenseDialog] = useState(false)

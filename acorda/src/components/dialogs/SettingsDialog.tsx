@@ -27,13 +27,13 @@ export function SettingsDialog({
   }
 
   const handleAppearanceChange = (isDark: boolean) => {
-    console.log('[Settings] Changing appearance to:', isDark ? 'dark' : 'light')
+    if (import.meta.env.DEV) console.log('[Settings] Changing appearance to:', isDark ? 'dark' : 'light')
     const newSettings = {
       ...settings,
       appearance: isDark ? 'dark' as const : 'light' as const,
       updatedAt: Date.now(),
     }
-    console.log('[Settings] New settings:', newSettings)
+    if (import.meta.env.DEV) console.log('[Settings] New settings:', newSettings)
     onUpdateSettings(newSettings)
   }
 

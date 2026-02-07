@@ -415,6 +415,8 @@ export function toServer(entityType: EntityType, item: MapperItem): Record<strin
     case 'workoutPlanItems':
     case 'workoutSessions':
     case 'workoutSetLogs':
+    case 'workoutPlanDayStatuses':
+    case 'workout_plan_day_statuses':
     case 'wellnessPrograms':
     case 'wellnessCheckIns':
     case 'wellnessDayActions':
@@ -515,6 +517,8 @@ export function fromServer(entityType: EntityType, item: MapperItem): Record<str
     case 'workoutPlanItems':
     case 'workoutSessions':
     case 'workoutSetLogs':
+    case 'workoutPlanDayStatuses':
+    case 'workout_plan_day_statuses':
     case 'wellnessPrograms':
     case 'wellnessCheckIns':
     case 'wellnessDayActions':

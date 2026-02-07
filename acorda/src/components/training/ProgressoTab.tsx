@@ -20,7 +20,7 @@ interface ProgressoTabProps {
 }
 
 export function ProgressoTab({
-  _userId,
+  userId: _userId,
   exercises,
   sessions,
   setLogs,
