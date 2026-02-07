@@ -6,7 +6,10 @@
  * Tokens are NOT stored in localStorage to prevent XSS attacks.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD
+    ? (() => { throw new Error('VITE_API_URL must be set in production') })()
+    : 'http://localhost:8000/api')
 
 interface ApiError {
   message: string
@@ -128,8 +131,12 @@ class ApiClient {
     if (response.status === 401 && this._isAuthenticated) {
       const refreshed = await this.refreshAccessToken()
       if (refreshed) {
+        const retryCsrfHeaders: HeadersInit = this._csrfToken
+          ? { 'X-CSRFToken': this._csrfToken }
+          : {}
         const retryResponse = await fetch(url, {
           ...options,
+          headers: { ...retryCsrfHeaders, ...(options.headers || {}) },
           credentials: 'include',
         })
         if (!retryResponse.ok) {

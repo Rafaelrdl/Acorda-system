@@ -108,10 +108,10 @@ export function PrivacySettings({
                   <li>Livros, anotações e highlights</li>
                   <li>Sessões de estudo e transcrições (se consentidas)</li>
                   <li>Check-ins de bem-estar</li>
+                  <li>Arquivos PDF (sincronizados com o servidor para backup)</li>
                 </ul>
                 <p className="font-medium mt-3">O que NÃO é armazenado:</p>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li>Arquivos PDF originais (ficam apenas no seu navegador)</li>
                   <li>Gravações de áudio (apenas transcrições são salvas)</li>
                 </ul>
               </div>

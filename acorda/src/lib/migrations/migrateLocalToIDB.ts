@@ -469,7 +469,7 @@ async function updateForeignKeyReferences(userId: UserId, idMapping: Record<stri
     'habitLogs': ['habitId'],
     'calendarBlocks': ['habitId', 'taskId'],
     'studySessions': ['subjectId'],
-    'reviewScheduleItems': ['subjectId'],
+    'reviewScheduleItems': ['recordedSessionId'],
     'workoutPlanItems': ['planId', 'exerciseId'],
     'workoutSessions': ['planId'],
     'workoutSetLogs': ['sessionId', 'exerciseId'],

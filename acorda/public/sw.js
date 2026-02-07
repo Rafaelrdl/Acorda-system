@@ -95,7 +95,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Dynamic content: Stale-while-revalidate
+  // Dynamic content: Stale-while-revalidate (same-origin only)
+  if (url.origin !== self.location.origin) {
+    return;
+  }
   event.respondWith(staleWhileRevalidate(request, DYNAMIC_CACHE));
 });
 

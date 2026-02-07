@@ -2,6 +2,7 @@
 Views for accounts app.
 """
 import base64
+import logging
 import uuid
 from rest_framework import status
 from rest_framework.views import APIView
@@ -33,6 +34,8 @@ from .authentication import (
     get_refresh_token_from_cookie,
     REFRESH_TOKEN_COOKIE,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class LoginView(APIView):
@@ -94,7 +97,7 @@ class LogoutView(APIView):
             # Token already blacklisted or invalid - that's fine
             pass
         except Exception:
-            pass
+            logger.exception("Unexpected error during logout token blacklist")
         
         # Always clear cookies
         clear_auth_cookies(response)
@@ -262,7 +265,7 @@ def _delete_avatar_file(avatar_url: str) -> None:
         if default_storage.exists(name):
             default_storage.delete(name)
     except Exception:
-        pass
+        logger.exception("Failed to delete avatar file: %s", avatar_url)
 
 
 class UploadAvatarView(APIView):

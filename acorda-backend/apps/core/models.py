@@ -30,7 +30,9 @@ class SyncableModel(models.Model):
     
     def soft_delete(self):
         import time
-        self.deleted_at = int(time.time() * 1000)
+        now_ms = int(time.time() * 1000)
+        self.deleted_at = now_ms
+        self.sync_version = now_ms
         self.save(update_fields=['deleted_at', 'sync_version'])
 
 

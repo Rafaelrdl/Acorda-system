@@ -5,10 +5,12 @@ import hashlib
 import hmac
 import json
 import logging
+import time
 from datetime import date
 from urllib.parse import quote as url_quote
 
 from django.conf import settings
+from django.core.cache import cache as django_cache
 from django.utils import timezone
 from django.db import models, transaction
 from rest_framework import status
@@ -91,6 +93,25 @@ def _verify_mp_webhook_signature(request) -> bool:
     if not ts or not v1:
         return False
 
+    # Reject requests with timestamps older than 5 minutes (anti-replay)
+    _WEBHOOK_TS_TOLERANCE = 300  # seconds
+    try:
+        ts_int = int(ts)
+        now = int(time.time())
+        if abs(now - ts_int) > _WEBHOOK_TS_TOLERANCE:
+            logger.warning("MP Webhook rejected: timestamp %s outside tolerance window", ts)
+            return False
+    except (ValueError, OverflowError):
+        logger.warning("MP Webhook rejected: non-numeric timestamp %s", ts)
+        return False
+
+    # Deduplicate by x-request-id (cache for 10 minutes)
+    _DEDUP_TTL = 600
+    cache_key = f"mp_webhook_dedup:{x_request_id}"
+    if django_cache.get(cache_key):
+        logger.warning("MP Webhook rejected: duplicate x-request-id %s", x_request_id)
+        return False
+
     # data.id from the notification body
     data_id = ''
     body = request.data
@@ -108,6 +129,13 @@ def _verify_mp_webhook_signature(request) -> bool:
     ).hexdigest()
 
     return hmac.compare_digest(computed, v1)
+
+
+def _mark_webhook_processed(request) -> None:
+    """Mark a webhook x-request-id as processed (anti-replay)."""
+    x_request_id = request.headers.get('x-request-id', '')
+    if x_request_id:
+        django_cache.set(f"mp_webhook_dedup:{x_request_id}", 1, 600)
 
 
 class PlansView(APIView):
@@ -178,6 +206,9 @@ class WebhookView(APIView):
                 {'error': 'Invalid signature'},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+        
+        # Mark as processed for anti-replay deduplication
+        _mark_webhook_processed(request)
         
         data = request.data
         topic = data.get('type') or request.query_params.get('topic')

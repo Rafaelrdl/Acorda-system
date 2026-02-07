@@ -56,7 +56,11 @@ class MercadoPagoService:
             "expiration_date_to": (timezone.now() + timedelta(hours=24)).isoformat(),
         }
         
-        result = self.sdk.preference().create(preference_data)
+        try:
+            result = self.sdk.preference().create(preference_data)
+        except Exception:
+            logger.exception("MP SDK error creating preference")
+            return {"success": False, "error": "Erro de comunicação com o gateway de pagamento"}
         
         if result["status"] == 201:
             return {
@@ -102,7 +106,11 @@ class MercadoPagoService:
             "external_reference": external_reference,
         }
         
-        result = self.sdk.preapproval().create(preapproval_data)
+        try:
+            result = self.sdk.preapproval().create(preapproval_data)
+        except Exception:
+            logger.exception("MP SDK error creating preapproval")
+            return {"success": False, "error": "Erro de comunicação com o gateway de pagamento"}
         
         if result["status"] == 201:
             return {
@@ -120,7 +128,11 @@ class MercadoPagoService:
     
     def get_payment(self, payment_id: str) -> Optional[dict]:
         """Get payment details from Mercado Pago."""
-        result = self.sdk.payment().get(payment_id)
+        try:
+            result = self.sdk.payment().get(payment_id)
+        except Exception:
+            logger.exception("MP SDK error getting payment %s", payment_id)
+            return None
         
         if result["status"] == 200:
             return result["response"]
@@ -130,7 +142,11 @@ class MercadoPagoService:
     
     def get_preapproval(self, preapproval_id: str) -> Optional[dict]:
         """Get subscription details from Mercado Pago."""
-        result = self.sdk.preapproval().get(preapproval_id)
+        try:
+            result = self.sdk.preapproval().get(preapproval_id)
+        except Exception:
+            logger.exception("MP SDK error getting preapproval %s", preapproval_id)
+            return None
         
         if result["status"] == 200:
             return result["response"]
@@ -140,10 +156,14 @@ class MercadoPagoService:
     
     def cancel_subscription(self, preapproval_id: str) -> bool:
         """Cancel a subscription."""
-        result = self.sdk.preapproval().update(
-            preapproval_id,
-            {"status": "cancelled"}
-        )
+        try:
+            result = self.sdk.preapproval().update(
+                preapproval_id,
+                {"status": "cancelled"}
+            )
+        except Exception:
+            logger.exception("MP SDK error cancelling subscription %s", preapproval_id)
+            return False
         
         if result["status"] == 200:
             return True
@@ -157,7 +177,11 @@ class MercadoPagoService:
         if amount:
             refund_data["amount"] = amount
         
-        result = self.sdk.refund().create(payment_id, refund_data)
+        try:
+            result = self.sdk.refund().create(payment_id, refund_data)
+        except Exception:
+            logger.exception("MP SDK error refunding payment %s", payment_id)
+            return False
         
         if result["status"] == 201:
             return True

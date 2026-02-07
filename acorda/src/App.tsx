@@ -575,6 +575,9 @@ function MainApp({ user }: { user: User }) {
     setUserSettings(defaultSettings)
     setGoogleCalendarEvents([])
     setGoogleCalendarConnection(defaultGoogleCalendarConnection)
+
+    // Clear auth session so user is redirected to login
+    await logout()
   }
 
   const handleExportTasks = () => {
