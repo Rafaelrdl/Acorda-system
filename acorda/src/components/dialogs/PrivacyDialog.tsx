@@ -34,7 +34,7 @@ export function PrivacyDialog({
       toast.success('Todos os dados foram apagados')
     } catch (error) {
       console.error('Erro ao apagar dados:', error)
-      toast.error('Erro ao apagar dados')
+      toast.error(error instanceof Error ? error.message : 'Erro ao apagar dados')
     }
   }
 

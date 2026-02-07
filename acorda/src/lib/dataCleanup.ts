@@ -47,12 +47,12 @@ export async function deleteAllUserData(
   const clearPDFImpl = options?.clearPDF ?? await getClearPDF()
 
   // ─── Delete server-side data first (LGPD right-to-erasure) ───
+  let serverDeleteFailed = false
   try {
     const { api } = await import('./api')
     await api.deleteAccount()
   } catch {
-    // If backend call fails (offline, etc.) still clean local data.
-    // The user can retry or will be cleaned up on next server contact.
+    serverDeleteFailed = true
   }
 
   // Clear all user data from IndexedDB (DATA + PENDING_SYNC + SYNC_META)
@@ -60,4 +60,12 @@ export async function deleteAllUserData(
 
   // Clear PDF storage — works with string UUID or numeric userId
   await clearPDFImpl(userId)
+
+  // If server deletion failed, throw AFTER cleaning local data
+  // so the caller can inform the user accurately
+  if (serverDeleteFailed) {
+    throw new Error(
+      'Dados locais apagados, mas a exclusão no servidor falhou. Tente novamente para remover seus dados do servidor.'
+    )
+  }
 }

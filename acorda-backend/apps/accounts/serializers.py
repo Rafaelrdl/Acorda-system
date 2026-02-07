@@ -1,10 +1,14 @@
 """
 Serializers for accounts app.
 """
+import logging
+
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from .models import User, ActivationToken, PasswordResetToken
+
+logger = logging.getLogger(__name__)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -39,21 +43,14 @@ class LoginSerializer(serializers.Serializer):
         except User.DoesNotExist:
             raise serializers.ValidationError('Credenciais inválidas.')
         
-        # Check if user is activated
-        if user.status == User.Status.PENDING_ACTIVATION:
-            raise serializers.ValidationError(
-                'Sua conta ainda não foi ativada. Verifique seu e-mail.'
+        # Check account status — generic message to prevent enumeration;
+        # detailed reason logged server-side only.
+        if user.status != User.Status.ACTIVE:
+            logger.info(
+                'Login blocked for %s: account status is %s',
+                email, user.status,
             )
-        
-        if user.status == User.Status.SUSPENDED:
-            raise serializers.ValidationError(
-                'Sua conta está suspensa. Entre em contato com o suporte.'
-            )
-        
-        if user.status == User.Status.CANCELLED:
-            raise serializers.ValidationError(
-                'Sua conta foi cancelada.'
-            )
+            raise serializers.ValidationError('Credenciais inválidas.')
         
         # Authenticate
         user = authenticate(email=email, password=password)

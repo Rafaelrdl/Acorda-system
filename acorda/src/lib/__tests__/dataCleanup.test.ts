@@ -1,6 +1,18 @@
 import { describe, expect, it, vi } from 'vitest'
 import { deleteAllUserData, StorageLike } from '../dataCleanup'
 
+// Mock the dynamic api import so deleteAccount succeeds by default
+vi.mock('../api', () => ({
+  api: { deleteAccount: vi.fn().mockResolvedValue(undefined) },
+}))
+
+function makeMockStorage(): StorageLike {
+  return {
+    keys: async () => [],
+    clearUserData: vi.fn().mockResolvedValue(undefined),
+  }
+}
+
 describe('deleteAllUserData', () => {
   it('deletes all data for the specified user and clears PDFs', async () => {
     const clearedUserId: string[] = []
@@ -42,5 +54,21 @@ describe('deleteAllUserData', () => {
 
     expect(mockStorage.clearUserData).toHaveBeenCalledWith('abc-123-def')
     expect(clearedUserId).toEqual(['abc-123-def'])
+  })
+
+  it('throws when server deleteAccount fails but still cleans local data', async () => {
+    const { api } = await import('../api')
+    vi.mocked(api.deleteAccount).mockRejectedValueOnce(new Error('Network error'))
+
+    const mockStorage = makeMockStorage()
+    const clearPDF = vi.fn().mockResolvedValue(undefined)
+
+    await expect(
+      deleteAllUserData('1', { storage: mockStorage, clearPDF }),
+    ).rejects.toThrow('exclusão no servidor falhou')
+
+    // Local data should still have been cleaned
+    expect(mockStorage.clearUserData).toHaveBeenCalledWith('1')
+    expect(clearPDF).toHaveBeenCalledWith('1')
   })
 })

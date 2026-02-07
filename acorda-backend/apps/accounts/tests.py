@@ -496,3 +496,65 @@ class TestAllAuthEndpoints(APITestCase):
         response = self.client.post('/api/auth/refresh/', format='json')
         # Should not return 404
         self.assertNotEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class TestLoginNoEnumeration(APITestCase):
+    """
+    Test that login does not reveal account existence or status.
+    (Audit R10 finding #6)
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            email='existing@example.com',
+            password='testpass123',
+            status='active',
+        )
+
+    def _login(self, email, password):
+        return self.client.post('/api/auth/login/', {
+            'email': email, 'password': password,
+        }, format='json')
+
+    def test_wrong_password_message(self):
+        response = self._login('existing@example.com', 'wrongpassword')
+        self.assertIn(response.status_code, [400, 401])
+        body = str(response.data)
+        self.assertNotIn('ativada', body)
+        self.assertNotIn('suspensa', body)
+        self.assertNotIn('cancelada', body)
+
+    def test_nonexistent_email_message(self):
+        response = self._login('ghost@example.com', 'testpass123')
+        self.assertIn(response.status_code, [400, 401])
+        body = str(response.data)
+        self.assertNotIn('ativada', body)
+
+    def test_pending_user_same_message_as_nonexistent(self):
+        """Pending user must return the same generic error as wrong credentials."""
+        User.objects.create_user(
+            email='pending@example.com',
+            password='testpass123',
+            status='pending_activation',
+        )
+        pending_resp = self._login('pending@example.com', 'testpass123')
+        ghost_resp = self._login('ghost2@example.com', 'testpass123')
+
+        # Both should be 400
+        self.assertEqual(pending_resp.status_code, ghost_resp.status_code)
+        # Error messages should be identical
+        self.assertEqual(str(pending_resp.data), str(ghost_resp.data))
+
+    def test_suspended_user_generic_message(self):
+        """Suspended user must NOT reveal 'suspensa' in the response."""
+        User.objects.create_user(
+            email='suspended@example.com',
+            password='testpass123',
+            status='suspended',
+        )
+        response = self._login('suspended@example.com', 'testpass123')
+        self.assertIn(response.status_code, [400, 401])
+        body = str(response.data)
+        self.assertNotIn('suspensa', body)
+        self.assertNotIn('contato', body)

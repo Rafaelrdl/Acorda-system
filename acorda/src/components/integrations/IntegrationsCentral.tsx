@@ -12,7 +12,7 @@ import {
   PDFHighlight,
   StudySession,
 } from '@/lib/types'
-import { getSyncKey, getDateKey, createGoogleCalendarConnection } from '@/lib/helpers'
+import { getSyncKey, getDateKey, generateId, createGoogleCalendarConnection } from '@/lib/helpers'
 import { exportFinanceToCSV, exportStudyToMarkdown, exportReadingToMarkdown } from '@/lib/export'
 import { deleteAllUserData } from '@/lib/dataCleanup'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -146,7 +146,7 @@ function splitEventByDay(
 
     if (endMinutes > startMinutes) {
       entries.push({
-        id: `gcal_${event.id}_${dayKey}_${startMinutes}_${endMinutes}`,
+        id: generateId(),
         userId,
         googleEventId: event.id,
         title: event.summary || 'Sem t�tulo',

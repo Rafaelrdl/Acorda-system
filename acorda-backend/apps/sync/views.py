@@ -3,6 +3,7 @@ Views for sync app - offline sync support.
 """
 import logging
 import time
+import uuid as _uuid
 import datetime as _dt
 
 from django.db import transaction
@@ -107,6 +108,15 @@ class SyncPushView(APIView):
 
                 try:
                     item_id = item_data.get('id')
+
+                    # Validate UUID format before any DB query
+                    if item_id is not None:
+                        try:
+                            _uuid.UUID(str(item_id))
+                        except (ValueError, AttributeError):
+                            errors.append({'id': item_id, 'error': 'ID inválido (deve ser UUID).'})
+                            continue
+
                     item_updated_at = item_data.get('updated_at', 0)
                     item_deleted_at = item_data.get('deleted_at')
 

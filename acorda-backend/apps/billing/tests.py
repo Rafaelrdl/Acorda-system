@@ -365,3 +365,78 @@ class TestAllBillingEndpoints(APITestCase):
             }, format='json')
             # Should NOT return 401 Unauthorized
             self.assertNotEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class TestWebhookApprovedActivation(APITestCase):
+    """
+    Test that first webhook with status=approved activates user/subscription.
+    (Audit R10 finding #1)
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.plan = Plan.objects.create(
+            name='Pro Mensal',
+            plan_type='pro',
+            billing_cycle='monthly',
+            price=Decimal('14.90'),
+        )
+
+    def test_approved_payment_creates_user_and_subscription(self):
+        """Simulates _handle_payment for an approved payment on creation.
+        The payment should be created as approved AND user+subscription
+        should be provisioned (not skipped)."""
+        from apps.billing.views import WebhookView
+        from apps.billing.models import Payment
+        from unittest.mock import patch
+
+        fake_mp_response = {
+            'status': 'approved',
+            'payer': {'email': 'newbuyer@example.com', 'first_name': 'New', 'last_name': 'Buyer'},
+            'transaction_amount': float(self.plan.price),
+            'external_reference': f'acorda|{self.plan.id}|{self.plan.billing_cycle}|abc123',
+        }
+
+        with patch('apps.billing.views.mp_service.get_payment', return_value=fake_mp_response):
+            view = WebhookView()
+            view._handle_payment('mp_pay_001')
+
+        payment = Payment.objects.get(mp_payment_id='mp_pay_001')
+        self.assertEqual(payment.status, Payment.Status.APPROVED)
+        # User and subscription MUST be linked on first approved webhook
+        self.assertIsNotNone(payment.user, 'Payment.user should be set on first approved webhook')
+        self.assertIsNotNone(payment.subscription, 'Payment.subscription should be set on first approved webhook')
+
+        # Subscription should be active
+        self.assertEqual(payment.subscription.status, Subscription.Status.ACTIVE)
+        self.assertEqual(payment.subscription.plan, self.plan)
+
+    def test_approved_payment_idempotent_on_redelivery(self):
+        """Second webhook for same payment should NOT duplicate user/subscription."""
+        from apps.billing.views import WebhookView
+        from apps.billing.models import Payment
+        from unittest.mock import patch
+
+        fake_mp_response = {
+            'status': 'approved',
+            'payer': {'email': 'repeat@example.com', 'first_name': 'R', 'last_name': ''},
+            'transaction_amount': float(self.plan.price),
+            'external_reference': f'acorda|{self.plan.id}|{self.plan.billing_cycle}|abc123',
+        }
+
+        with patch('apps.billing.views.mp_service.get_payment', return_value=fake_mp_response):
+            view = WebhookView()
+            view._handle_payment('mp_pay_redelivery')
+            # Redeliver
+            view._handle_payment('mp_pay_redelivery')
+
+        self.assertEqual(Payment.objects.filter(mp_payment_id='mp_pay_redelivery').count(), 1)
+        payment = Payment.objects.get(mp_payment_id='mp_pay_redelivery')
+        # Still linked
+        self.assertIsNotNone(payment.user)
+        self.assertIsNotNone(payment.subscription)
+        # Only 1 subscription for that user+plan
+        self.assertEqual(
+            Subscription.objects.filter(user=payment.user, plan=self.plan).count(),
+            1,
+        )

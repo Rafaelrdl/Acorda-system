@@ -119,11 +119,12 @@ def _verify_mp_webhook_signature(request) -> bool:
         logger.warning("MP Webhook rejected: duplicate x-request-id %s", x_request_id)
         return False
 
-    # data.id from the notification body
-    data_id = ''
-    body = request.data
-    if isinstance(body, dict):
-        data_id = str(body.get('data', {}).get('id', ''))
+    # data.id — prefer query param (per MP webhook docs), fall back to body
+    data_id = request.query_params.get('data.id', '')
+    if not data_id:
+        body = request.data
+        if isinstance(body, dict):
+            data_id = str(body.get('data', {}).get('id', ''))
 
     # Build the manifest to sign
     manifest = f"id:{data_id};request-id:{x_request_id};ts:{ts};"
@@ -323,8 +324,19 @@ class WebhookView(APIView):
 
             payment.save(update_fields=['mp_status', 'status', 'plan', 'payment_type', 'paid_at', 'updated_at'])
         
-        # Process approved payments
-        if mp_status == 'approved' and payment.status != Payment.Status.APPROVED:
+        # Process approved payments:
+        # - On creation when already approved (first webhook)
+        # - On update when transitioning to approved
+        # - When approved but user/subscription still missing (retry)
+        needs_activation = (
+            mp_status == 'approved'
+            and (
+                created
+                or not payment.user
+                or not payment.subscription
+            )
+        )
+        if needs_activation:
             self._process_approved_payment(payment, payer_email, payer_name, external_reference, mp_payment)
     
     def _process_approved_payment(self, payment, payer_email: str, payer_name: str, external_reference: str, mp_payment: dict):

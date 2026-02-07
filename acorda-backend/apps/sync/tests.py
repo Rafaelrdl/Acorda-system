@@ -785,3 +785,64 @@ class TestSyncEntityCreation(APITestCase):
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['results']['dietMeals']['created'], 1)
+
+
+class TestSyncPushInvalidUUID(APITestCase):
+    """
+    Test that sync push returns validation error for invalid UUID ids.
+    (Audit R10 finding #7)
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            email='uuid-test@example.com',
+            password='testpass123',
+            status='active',
+        )
+        self.client.force_authenticate(user=self.user)
+        self.now = int(time.time() * 1000)
+
+    def test_invalid_uuid_returns_validation_error(self):
+        """Push with non-UUID id should return per-item error, not 500."""
+        response = self.client.post('/api/sync/push/', {
+            'changes': {
+                'tasks': [{
+                    'id': 'not-a-uuid',
+                    'title': 'Bad ID',
+                    'status': 'todo',
+                    'tags': [],
+                    'is_top_priority': False,
+                    'is_two_minute_task': False,
+                    'created_at': self.now,
+                    'updated_at': self.now,
+                }]
+            }
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        errors = response.data['results']['tasks']['errors']
+        self.assertEqual(len(errors), 1)
+        self.assertIn('UUID', errors[0]['error'])
+
+    def test_gcal_style_id_returns_validation_error(self):
+        """IDs like 'gcal_abc_2026-01-31_0_60' must be rejected as non-UUID."""
+        response = self.client.post('/api/sync/push/', {
+            'changes': {
+                'googleCalendarEvents': [{
+                    'id': 'gcal_abc123_2026-01-31_0_60',
+                    'google_event_id': 'abc123',
+                    'title': 'Event',
+                    'start_time': 0,
+                    'end_time': 60,
+                    'date': '2026-01-31',
+                    'is_read_only': True,
+                    'last_synced_at': self.now,
+                    'created_at': self.now,
+                    'updated_at': self.now,
+                }]
+            }
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        errors = response.data['results']['googleCalendarEvents']['errors']
+        self.assertGreaterEqual(len(errors), 1)
+        self.assertIn('UUID', errors[0]['error'])
