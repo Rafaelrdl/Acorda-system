@@ -1,12 +1,17 @@
 """
 Custom JWT authentication that reads tokens from HttpOnly cookies.
 Falls back to Authorization header if cookies are not present.
+
+When authenticating via cookie, CSRF is enforced using Django's
+double-submit cookie pattern (same approach as DRF SessionAuthentication).
+Header-based auth (Bearer token) is CSRF-exempt by design.
 """
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
 from django.conf import settings
+from django.middleware.csrf import CsrfViewMiddleware
 
 
 # Cookie names
@@ -22,10 +27,24 @@ COOKIE_SETTINGS = {
 }
 
 
+class _CSRFCheck(CsrfViewMiddleware):
+    """
+    Thin wrapper so CsrfViewMiddleware returns the failure reason
+    instead of an HttpResponseForbidden.
+    """
+
+    def _reject(self, request, reason):
+        return reason
+
+
 class CookieJWTAuthentication(JWTAuthentication):
     """
     JWT authentication that reads from cookies first, then falls back to header.
     Also enforces that the user account is active (status == 'active').
+
+    CSRF enforcement:
+      • Cookie-based auth ➜ CSRF validated (double-submit cookie)
+      • Header-based auth ➜ CSRF skipped (already secure)
     """
 
     def get_user(self, validated_token):
@@ -39,7 +58,22 @@ class CookieJWTAuthentication(JWTAuthentication):
                 code='user_inactive',
             )
         return user
-    
+
+    @staticmethod
+    def _enforce_csrf(request):
+        """
+        Enforce CSRF validation for cookie-authenticated requests.
+        Mirrors the approach used by DRF's SessionAuthentication.
+        Safe methods (GET, HEAD, OPTIONS) are allowed through by Django's
+        CsrfViewMiddleware itself – only unsafe methods are checked.
+        """
+        check = _CSRFCheck(lambda req: None)
+        # Populate request.META['CSRF_COOKIE'] from the csrftoken cookie
+        check.process_request(request)
+        reason = check.process_view(request, None, (), {})
+        if reason:
+            raise PermissionDenied(f'CSRF Failed: {reason}')
+
     def authenticate(self, request):
         # First, try to get token from cookie
         access_token = request.COOKIES.get(ACCESS_TOKEN_COOKIE)
@@ -49,12 +83,14 @@ class CookieJWTAuthentication(JWTAuthentication):
             try:
                 validated_token = self.get_validated_token(access_token)
                 user = self.get_user(validated_token)
+                # Cookie-based auth → enforce CSRF on unsafe methods
+                self._enforce_csrf(request)
                 return (user, validated_token)
             except InvalidToken:
                 # Token invalid, try header as fallback
                 pass
         
-        # Fall back to header-based authentication
+        # Fall back to header-based authentication (no CSRF needed)
         return super().authenticate(request)
 
 

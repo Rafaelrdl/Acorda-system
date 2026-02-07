@@ -209,6 +209,11 @@ AUTH_COOKIE_SECURE = not DEBUG  # Secure in production
 # SameSite policy: 'Lax' for same-site, 'None' for cross-site (requires Secure=True)
 AUTH_COOKIE_SAMESITE = config('AUTH_COOKIE_SAMESITE', default='None' if not DEBUG else 'Lax')
 
+# CSRF cookie settings – aligned with auth cookies for cross-site SPA
+CSRF_COOKIE_SECURE = AUTH_COOKIE_SECURE
+CSRF_COOKIE_SAMESITE = AUTH_COOKIE_SAMESITE
+CSRF_COOKIE_HTTPONLY = False  # Frontend JS must read the token value
+
 # Celery
 CELERY_BROKER_URL = config('REDIS_URL', default='redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://localhost:6379/0')

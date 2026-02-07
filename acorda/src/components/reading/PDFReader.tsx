@@ -53,6 +53,11 @@ export function PDFReader({
   const [selectedColor, setSelectedColor] = useState<HighlightColor>('yellow')
   const [highlightNote, setHighlightNote] = useState('')
 
+  // Keep a ref to the latest doc so the debounced save always
+  // spreads the correct document, even if the component re-renders.
+  const docRef = useRef(doc)
+  docRef.current = doc
+
   useEffect(() => {
     const url = URL.createObjectURL(file)
     setFileUrl(url)
@@ -60,10 +65,16 @@ export function PDFReader({
   }, [file])
 
   useEffect(() => {
+    // Capture doc.id so the cleanup / timeout can detect a document switch
+    const docId = doc.id
+
     const timer = setTimeout(() => {
-      if (currentPage !== doc.currentPage) {
-        const updatedDoc = { ...doc, currentPage, lastOpenedAt: Date.now(), updatedAt: Date.now() }
-        // Use onSaveProgress if available, otherwise fall back to onClose
+      const latestDoc = docRef.current
+      // If the document changed before the timeout fired, abort
+      if (latestDoc.id !== docId) return
+
+      if (currentPage !== latestDoc.currentPage) {
+        const updatedDoc = { ...latestDoc, currentPage, lastOpenedAt: Date.now(), updatedAt: Date.now() }
         if (onSaveProgress) {
           onSaveProgress(updatedDoc)
         } else {
@@ -73,7 +84,7 @@ export function PDFReader({
     }, 2000)
 
     return () => clearTimeout(timer)
-  }, [currentPage, doc.currentPage, onSaveProgress, onClose])
+  }, [currentPage, doc.id, onSaveProgress, onClose])
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages)

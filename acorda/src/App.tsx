@@ -162,7 +162,7 @@ function MainApp({ user }: { user: User }) {
         },
         updatedAt: Date.now()
       }
-      console.log('[App] Updated settings from backend:', updated)
+      if (import.meta.env.DEV) console.log('[App] Updated settings from backend:', updated)
       return updated
     })
   }, [user, defaultSettings, setUserSettings])

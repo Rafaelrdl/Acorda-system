@@ -190,7 +190,7 @@ async function initDB(): Promise<IDBDatabase> {
     
     request.onsuccess = () => {
       dbInstance = request.result
-      console.log('[DB] Database opened successfully')
+      if (import.meta.env.DEV) console.log('[DB] Database opened successfully')
       resolve(dbInstance)
     }
     
@@ -214,7 +214,7 @@ async function initDB(): Promise<IDBDatabase> {
         db.createObjectStore(STORES.SYNC_META)
       }
       
-      console.log('[DB] Database schema upgraded')
+      if (import.meta.env.DEV) console.log('[DB] Database schema upgraded')
     }
   })
   
@@ -312,12 +312,12 @@ class SyncManager {
   }
   
   private onOnline() {
-    console.log('[Sync] Back online, triggering sync...')
+    if (import.meta.env.DEV) console.log('[Sync] Back online, triggering sync...')
     this.sync()
   }
   
   private onOffline() {
-    console.log('[Sync] Went offline')
+    if (import.meta.env.DEV) console.log('[Sync] Went offline')
     this.stopAutoSync()
   }
   
@@ -331,14 +331,14 @@ class SyncManager {
       }
     }, intervalMs)
     
-    console.log('[Sync] Auto-sync started, interval:', intervalMs)
+    if (import.meta.env.DEV) console.log('[Sync] Auto-sync started, interval:', intervalMs)
   }
   
   stopAutoSync() {
     if (this.syncInterval) {
       clearInterval(this.syncInterval)
       this.syncInterval = null
-      console.log('[Sync] Auto-sync stopped')
+      if (import.meta.env.DEV) console.log('[Sync] Auto-sync stopped')
     }
   }
   
@@ -352,11 +352,11 @@ class SyncManager {
       operation,
     }
     
-    console.log('[Sync] Adding pending change:', { storeKey, operation, itemId: data.id })
+    if (import.meta.env.DEV) console.log('[Sync] Adding pending change:', { storeKey, operation, itemId: data.id })
     
     await dbSet(STORES.PENDING_SYNC, change.id, change)
     
-    console.log('[Sync] Pending change added successfully')
+    if (import.meta.env.DEV) console.log('[Sync] Pending change added successfully')
     
     // Update pending count
     await this.updatePendingCount()
@@ -368,7 +368,7 @@ class SyncManager {
         // Background Sync API
         await (registration as ServiceWorkerRegistration & { sync: { register: (tag: string) => Promise<void> } }).sync.register('sync-data')
       } catch (e) {
-        console.log('[Sync] Background sync not available:', e)
+        if (import.meta.env.DEV) console.log('[Sync] Background sync not available:', e)
       }
     }
   }
@@ -431,7 +431,7 @@ class SyncManager {
     }
     
     if (this.syncInProgress) {
-      console.log('[Sync] Sync already in progress')
+      if (import.meta.env.DEV) console.log('[Sync] Sync already in progress')
       return { success: false, error: 'Sync in progress' }
     }
     
@@ -440,7 +440,7 @@ class SyncManager {
     }
     
     this.syncInProgress = true
-    console.log('[Sync] Starting sync...')
+    if (import.meta.env.DEV) console.log('[Sync] Starting sync...')
     
     try {
       // Resolve userId once for the entire sync cycle
@@ -461,7 +461,7 @@ class SyncManager {
         pendingCount: await this.getPendingCount(userId),
       }, userId)
       
-      console.log('[Sync] Sync completed successfully')
+      if (import.meta.env.DEV) console.log('[Sync] Sync completed successfully')
       return { success: true }
     } catch (error) {
       console.error('[Sync] Sync failed:', error)
@@ -475,11 +475,11 @@ class SyncManager {
     const pending = await this.getUserPendingChanges(userId)
     
     if (pending.length === 0) {
-      console.log('[Sync] No pending changes')
+      if (import.meta.env.DEV) console.log('[Sync] No pending changes')
       return
     }
     
-    console.log('[Sync] Pushing', pending.length, 'pending changes')
+    if (import.meta.env.DEV) console.log('[Sync] Pushing', pending.length, 'pending changes')
     
     // Group by entity type using regex helper and apply toServer mapping
     const grouped: Record<string, Record<string, unknown>[]> = {}
@@ -495,7 +495,7 @@ class SyncManager {
       
       // Only sync enabled entities
       if (!SYNC_ENABLED_ENTITIES.includes(entityType as SyncEnabledEntity)) {
-        console.log('[Sync] Skipping non-synced entity:', entityType)
+        if (import.meta.env.DEV) console.log('[Sync] Skipping non-synced entity:', entityType)
         continue
       }
       
@@ -532,7 +532,7 @@ class SyncManager {
         }
       }
       
-      console.log('[Sync] Push completed')
+      if (import.meta.env.DEV) console.log('[Sync] Push completed')
     } catch (error) {
       console.error('❌ [Sync] Push failed:', error)
       throw error
@@ -547,7 +547,7 @@ class SyncManager {
       ? String(meta.lastSyncVersion)
       : meta.lastSyncTimestamp
     
-    console.log('[Sync] Pulling changes since:', since)
+    if (import.meta.env.DEV) console.log('[Sync] Pulling changes since:', since)
     
     try {
       const response = await api.syncPull(since)
@@ -586,7 +586,7 @@ class SyncManager {
         }
       }
       
-      console.log('[Sync] Pull completed')
+      if (import.meta.env.DEV) console.log('[Sync] Pull completed')
 
       // Return the server-provided sync_version as canonical cursor
       return response.sync_version ?? 0
@@ -658,7 +658,7 @@ class SyncManager {
       return { success: false, error: 'Not authenticated' }
     }
     
-    console.log('[Sync] Starting full sync...')
+    if (import.meta.env.DEV) console.log('[Sync] Starting full sync...')
     
     try {
       const response = await api.syncFull()
@@ -699,7 +699,7 @@ class SyncManager {
       // Clear pending changes for this user only
       await this.clearUserPendingChanges(userId)
       
-      console.log('[Sync] Full sync completed')
+      if (import.meta.env.DEV) console.log('[Sync] Full sync completed')
       return { success: true }
     } catch (error) {
       console.error('[Sync] Full sync failed:', error)
@@ -743,7 +743,7 @@ export const storage = {
    * does NOT touch other users' queues.
    */
   async clearUserData(userId: string): Promise<void> {
-    console.log('[Storage] Clearing all data for user:', userId)
+    if (import.meta.env.DEV) console.log('[Storage] Clearing all data for user:', userId)
     
     const allKeys = await this.keys()
     const userKeys = allKeys.filter(key => key.startsWith(`user_${userId}_`))
@@ -764,7 +764,7 @@ export const storage = {
     // Clear only this user's sync meta
     await dbDelete(STORES.SYNC_META, `meta_${userId}`)
     
-    console.log('[Storage] Cleared', userKeys.length, 'keys for user:', userId)
+    if (import.meta.env.DEV) console.log('[Storage] Cleared', userKeys.length, 'keys for user:', userId)
   },
   
   /**

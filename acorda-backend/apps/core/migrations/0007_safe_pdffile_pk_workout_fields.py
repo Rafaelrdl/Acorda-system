@@ -16,8 +16,6 @@ import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
 
-from apps.core.models import pdf_upload_path
-
 
 def _sqlite_recreate_pdffile(apps, schema_editor):
     """

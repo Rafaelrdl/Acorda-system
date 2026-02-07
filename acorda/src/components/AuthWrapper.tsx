@@ -40,7 +40,7 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
    * 4. Start auto-sync
    */
   const bootstrapSync = useCallback(async (userId: string) => {
-    console.log('[Auth] Starting sync bootstrap for user:', userId)
+    if (import.meta.env.DEV) console.log('[Auth] Starting sync bootstrap for user:', userId)
     setBootstrapping(true)
     
     try {
@@ -52,25 +52,25 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
       
       // Step 1: Migrate old localStorage data if exists
       if (hasLocalStorageData(userId)) {
-        console.log('[Auth] Migrating localStorage data...')
+        if (import.meta.env.DEV) console.log('[Auth] Migrating localStorage data...')
         await migrateLocalStorageToIndexedDB(userId)
       }
       
-      // Step 2: Check for pending changes and sync accordingly
-      const hasPending = await storage.hasPendingChanges()
+      // Step 2: Check for pending changes FOR THIS USER and sync accordingly
+      const userPendingCount = await syncManager.getPendingCount(userId)
       
-      if (hasPending) {
-        console.log('[Auth] Found pending changes, syncing...')
+      if (userPendingCount > 0) {
+        if (import.meta.env.DEV) console.log('[Auth] Found', userPendingCount, 'pending changes, syncing...')
         await syncManager.sync()
       } else {
-        console.log('[Auth] No pending changes, doing full sync...')
+        if (import.meta.env.DEV) console.log('[Auth] No pending changes, doing full sync...')
         await syncManager.fullSync()
       }
       
       // Step 3: Start auto-sync (every 30 seconds)
       syncManager.startAutoSync(30000)
       
-      console.log('[Auth] Sync bootstrap complete')
+      if (import.meta.env.DEV) console.log('[Auth] Sync bootstrap complete')
     } catch (error) {
       console.error('[Auth] Sync bootstrap failed:', error)
       // Don't throw - allow app to work offline
@@ -87,7 +87,7 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
    * 4. Clear localStorage remnants
    */
   const cleanupUserData = useCallback(async (userId: string) => {
-    console.log('[Auth] Cleaning up data for user:', userId)
+    if (import.meta.env.DEV) console.log('[Auth] Cleaning up data for user:', userId)
     
     try {
       // Stop auto-sync
@@ -102,7 +102,7 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
       // Clear localStorage remnants
       clearUserLocalStorage(userId)
       
-      console.log('[Auth] User data cleanup complete')
+      if (import.meta.env.DEV) console.log('[Auth] User data cleanup complete')
     } catch (error) {
       console.error('[Auth] User data cleanup failed:', error)
     }
@@ -110,6 +110,9 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
 
   const checkAuth = async () => {
     try {
+      // Fetch CSRF token before any mutating requests
+      await api.fetchCsrfToken()
+
       // With HttpOnly cookies, we check auth by trying to get user info
       // The browser automatically sends cookies with credentials: 'include'
       const userData = await api.getMe()
@@ -153,6 +156,9 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
       const userData = await api.login(email, password)
       setUser(userData)
       
+      // Refresh CSRF token after login (new session)
+      await api.fetchCsrfToken()
+
       // Bootstrap sync after login
       await bootstrapSync(userData.id)
     } catch (err: unknown) {

@@ -13,6 +13,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from django.utils import timezone
 from django.core.files.base import ContentFile
 from django.conf import settings
+from django.middleware.csrf import get_token
 from django.db import transaction
 
 from .models import User, PasswordResetToken
@@ -232,6 +233,38 @@ class ChangePasswordView(APIView):
         return Response({'detail': 'Senha alterada com sucesso!'})
 
 
+def _storage_name_from_url(avatar_url: str) -> str | None:
+    """
+    Convert an avatar URL (e.g. '/media/avatars/avatar_xxx.png')
+    to a storage-relative name (e.g. 'avatars/avatar_xxx.png').
+    Returns None when the URL cannot be resolved to a local file.
+    """
+    if not avatar_url:
+        return None
+    # External URLs or data URIs are not local files
+    if avatar_url.startswith(('data:', 'http://', 'https://')):
+        return None
+    # Strip leading '/' then strip the MEDIA_URL prefix ('media/')
+    name = avatar_url.lstrip('/')
+    media_prefix = settings.MEDIA_URL.strip('/')
+    if media_prefix and name.startswith(media_prefix + '/'):
+        name = name[len(media_prefix) + 1:]
+    return name or None
+
+
+def _delete_avatar_file(avatar_url: str) -> None:
+    """Safely delete the physical avatar file from storage."""
+    name = _storage_name_from_url(avatar_url)
+    if not name:
+        return
+    from django.core.files.storage import default_storage
+    try:
+        if default_storage.exists(name):
+            default_storage.delete(name)
+    except Exception:
+        pass
+
+
 class UploadAvatarView(APIView):
     """Upload user avatar."""
     
@@ -288,13 +321,7 @@ class UploadAvatarView(APIView):
                 avatar_url = default_storage.url(saved_path)
                 
                 # Delete old avatar file if it exists and is a file path
-                if user.avatar_url and not user.avatar_url.startswith('data:'):
-                    try:
-                        old_name = user.avatar_url.lstrip('/')
-                        if not old_name.startswith('http') and default_storage.exists(old_name):
-                            default_storage.delete(old_name)
-                    except Exception:
-                        pass
+                _delete_avatar_file(user.avatar_url)
 
                 user.avatar_url = avatar_url
                 user.save(update_fields=['avatar_url', 'updated_at'])
@@ -338,13 +365,7 @@ class UploadAvatarView(APIView):
             avatar_url = default_storage.url(saved_path)
 
             # Delete old avatar file
-            if user.avatar_url and not user.avatar_url.startswith('data:'):
-                try:
-                    old_name = user.avatar_url.lstrip('/')
-                    if not old_name.startswith('http') and default_storage.exists(old_name):
-                        default_storage.delete(old_name)
-                except Exception:
-                    pass
+            _delete_avatar_file(user.avatar_url)
 
             user.avatar_url = avatar_url
             user.save(update_fields=['avatar_url', 'updated_at'])
@@ -363,8 +384,14 @@ class UploadAvatarView(APIView):
     def delete(self, request):
         """Remove user avatar."""
         user = request.user
+        old_url = user.avatar_url
+
         user.avatar_url = None
         user.save(update_fields=['avatar_url', 'updated_at'])
+
+        # Delete physical file from storage
+        if old_url:
+            _delete_avatar_file(old_url)
         
         return Response({
             'detail': 'Avatar removido com sucesso!',
@@ -495,3 +522,21 @@ class DeleteAccountView(APIView):
         response = Response({'detail': 'Conta e dados excluídos com sucesso.'})
         clear_auth_cookies(response)
         return response
+
+
+class CSRFTokenView(APIView):
+    """
+    Issue a CSRF token for double-submit cookie protection.
+
+    The frontend calls ``GET /api/auth/csrf/`` on startup, receives the
+    token in the JSON body (since cross-origin JS can't read the cookie)
+    and sends it back as ``X-CSRFToken`` on every unsafe request.
+    """
+
+    permission_classes = [AllowAny]
+    # This view MUST be exempt from CSRF itself – it creates the token.
+    authentication_classes = []
+
+    def get(self, request):
+        token = get_token(request)          # sets csrftoken cookie via middleware
+        return Response({'csrfToken': token})

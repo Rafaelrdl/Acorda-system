@@ -65,11 +65,27 @@ class SyncPushView(APIView):
         }
         """
         changes = request.data.get('changes', {})
+
+        # ── Validate top-level shape ────────────────────────────────
+        if not isinstance(changes, dict):
+            return Response(
+                {'success': False, 'error': 'changes deve ser um objeto.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         results = {}
         current_time = int(time.time() * 1000)
         
         for entity_type, items in changes.items():
             if entity_type not in ENTITY_MODELS:
+                continue
+
+            # Each entity value must be a list
+            if not isinstance(items, list):
+                results[entity_type] = {
+                    'created': 0, 'updated': 0, 'deleted': 0,
+                    'errors': [{'id': None, 'error': f'{entity_type} deve ser uma lista.'}],
+                }
                 continue
             
             model = ENTITY_MODELS[entity_type]
@@ -81,6 +97,11 @@ class SyncPushView(APIView):
             errors = []
             
             for item_data in items:
+                # Each item must be a dict
+                if not isinstance(item_data, dict):
+                    errors.append({'id': None, 'error': 'Item deve ser um objeto.'})
+                    continue
+
                 try:
                     item_id = item_data.get('id')
                     item_updated_at = item_data.get('updated_at', 0)
@@ -130,7 +151,10 @@ class SyncPushView(APIView):
                                 errors.append({'id': item_id, 'errors': serializer.errors})
                                 
                 except Exception as e:
-                    errors.append({'id': item_data.get('id'), 'error': str(e)})
+                    errors.append({
+                        'id': item_data.get('id') if isinstance(item_data, dict) else None,
+                        'error': str(e),
+                    })
             
             results[entity_type] = {
                 'created': created,

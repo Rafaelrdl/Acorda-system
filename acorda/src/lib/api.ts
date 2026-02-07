@@ -16,11 +16,32 @@ interface ApiError {
 class ApiClient {
   // Authentication state is tracked locally but tokens are in HttpOnly cookies
   private _isAuthenticated = false
+  // CSRF token for double-submit cookie protection
+  private _csrfToken: string | null = null
 
   constructor() {
     // Check if we have a session by calling /auth/me/ on init
     // This is handled by AuthWrapper, so we start as false
     this._isAuthenticated = false
+  }
+
+  /**
+   * Fetch a CSRF token from the backend.
+   * Must be called before the first mutating request (POST/PUT/DELETE).
+   * The token is stored in memory and sent as X-CSRFToken header.
+   */
+  async fetchCsrfToken(): Promise<void> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/csrf/`, {
+        credentials: 'include',
+      })
+      if (response.ok) {
+        const data = await response.json()
+        this._csrfToken = data.csrfToken
+      }
+    } catch {
+      // Non-fatal – CSRF cookie may already exist from a prior session
+    }
   }
 
   /**
@@ -52,6 +73,7 @@ class ApiClient {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...options.headers,
+      ...(this._csrfToken ? { 'X-CSRFToken': this._csrfToken } : {}),
     }
 
     // Include credentials (cookies) in every request
@@ -93,8 +115,12 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<Response> {
     const url = `${API_BASE_URL}${endpoint}`
+    const csrfHeaders: HeadersInit = this._csrfToken
+      ? { 'X-CSRFToken': this._csrfToken }
+      : {}
     const response = await fetch(url, {
       ...options,
+      headers: { ...csrfHeaders, ...(options.headers || {}) },
       credentials: 'include',
     })
 
@@ -155,11 +181,20 @@ class ApiClient {
    */
   private async refreshAccessToken(): Promise<boolean> {
     try {
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        ...(this._csrfToken ? { 'X-CSRFToken': this._csrfToken } : {}),
+      }
       const response = await fetch(`${API_BASE_URL}/auth/refresh/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'include',
       })
+
+      if (response.ok) {
+        // Refresh CSRF token in case the cookie rotated
+        await this.fetchCsrfToken()
+      }
 
       return response.ok
     } catch {

@@ -13,9 +13,11 @@ from .views import (
     UploadAvatarView,
     RefreshTokenView,
     DeleteAccountView,
+    CSRFTokenView,
 )
 
 urlpatterns = [
+    path('csrf/', CSRFTokenView.as_view(), name='csrf-token'),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('activate/', ActivateAccountView.as_view(), name='activate'),
