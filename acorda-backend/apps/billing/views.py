@@ -66,9 +66,12 @@ def _verify_mp_webhook_signature(request) -> bool:
     """
     secret = getattr(settings, 'MP_WEBHOOK_SECRET', '')
     if not secret:
-        # No secret configured – allow in dev, but log warning
-        logger.warning("MP_WEBHOOK_SECRET not set – skipping signature verification")
-        return True
+        if settings.DEBUG:
+            logger.warning("MP_WEBHOOK_SECRET not set – skipping signature verification (DEBUG mode)")
+            return True
+        # In production, refuse to process unsigned webhooks
+        logger.error("MP_WEBHOOK_SECRET not set in production – rejecting webhook")
+        return False
 
     x_signature = request.headers.get('x-signature', '')
     x_request_id = request.headers.get('x-request-id', '')
@@ -197,7 +200,7 @@ class WebhookView(APIView):
         except Exception as e:
             logger.exception(f"Webhook processing error: {e}")
             return Response(
-                {'error': str(e)},
+                {'error': 'Erro interno ao processar notificação.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
@@ -248,7 +251,24 @@ class WebhookView(APIView):
             if plan and not payment.plan:
                 payment.plan = plan
                 payment.payment_type = payment_type
-            payment.save(update_fields=['mp_status', 'plan', 'payment_type', 'updated_at'])
+
+            # Map mp_status → Payment.Status for non-approved states
+            status_map = {
+                'approved': Payment.Status.APPROVED,
+                'rejected': Payment.Status.REJECTED,
+                'cancelled': Payment.Status.CANCELLED,
+                'refunded': Payment.Status.REFUNDED,
+                'charged_back': Payment.Status.REFUNDED,
+                'in_process': Payment.Status.PENDING,
+                'in_mediation': Payment.Status.PENDING,
+            }
+            mapped = status_map.get(mp_status)
+            if mapped and payment.status != mapped:
+                payment.status = mapped
+                if mapped == Payment.Status.APPROVED and not payment.paid_at:
+                    payment.paid_at = timezone.now()
+
+            payment.save(update_fields=['mp_status', 'status', 'plan', 'payment_type', 'paid_at', 'updated_at'])
         
         # Process approved payments
         if mp_status == 'approved' and payment.status != Payment.Status.APPROVED:

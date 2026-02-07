@@ -157,7 +157,11 @@ export function IncomeExpensesTab({
       
       toast.success(`Despesa "${expense.name}" lançada automaticamente`)
     })
-  }, [currentMonth]) // Só executa quando muda o mês ou na primeira renderização
+  // Effect intentionally runs only when currentMonth changes (once per month).
+  // Including all referenced values would cause re-firing on every render,
+  // double-posting automatic transactions.  Values are stable within a month.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMonth])
 
   const handleConfirmIncome = (income: Income) => {
     // Criar transação

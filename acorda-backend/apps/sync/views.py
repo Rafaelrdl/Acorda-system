@@ -139,8 +139,13 @@ class SyncPushView(APIView):
                 'errors': errors,
             }
         
+        # Determine overall success – False if any entity had errors
+        has_errors = any(
+            len(r.get('errors', [])) > 0 for r in results.values()
+        )
+
         return Response({
-            'success': True,
+            'success': not has_errors,
             'sync_version': current_time,
             'results': results,
         })

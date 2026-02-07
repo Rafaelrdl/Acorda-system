@@ -258,6 +258,19 @@ class UploadAvatarView(APIView):
                     file_ext = 'png'
                     content_type = 'image/png'
                 
+                # Validate MIME type
+                allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+                if content_type not in allowed_types:
+                    return Response(
+                        {'detail': 'Formato de imagem não suportado. Use JPEG, PNG, GIF ou WebP.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Validate extension
+                allowed_exts = ['jpeg', 'jpg', 'png', 'gif', 'webp']
+                if file_ext.lower() not in allowed_exts:
+                    file_ext = 'png'  # safe fallback
+                
                 # Decode base64
                 decoded = base64.b64decode(encoded)
                 
@@ -292,9 +305,9 @@ class UploadAvatarView(APIView):
                     'user': UserSerializer(user).data
                 })
                 
-            except Exception as e:
+            except Exception:
                 return Response(
-                    {'detail': f'Erro ao processar imagem: {str(e)}'},
+                    {'detail': 'Erro ao processar imagem. Verifique o formato e tente novamente.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
@@ -390,14 +403,12 @@ class RefreshTokenView(APIView):
 
             # Block refresh for suspended / cancelled / pending accounts
             if user.status not in (User.Status.ACTIVE,):
-                clear_auth_cookies(Response(
-                    {'detail': 'Conta inativa ou suspensa.', 'code': 'user_inactive'},
-                    status=status.HTTP_403_FORBIDDEN
-                ))
-                return Response(
+                resp = Response(
                     {'detail': 'Conta inativa ou suspensa.', 'code': 'user_inactive'},
                     status=status.HTTP_403_FORBIDDEN
                 )
+                clear_auth_cookies(resp)
+                return resp
 
             new_refresh = RefreshToken.for_user(user)
             
@@ -457,16 +468,26 @@ class DeleteAccountView(APIView):
             pdf.delete()
 
         # Cancel active subscriptions
-        from apps.billing.models import Subscription
+        from apps.billing.models import Subscription, Payment
         Subscription.objects.filter(user=user).update(
             status='cancelled',
             cancelled_at=timezone.now(),
+        )
+
+        # Anonymise billing PII (LGPD right-to-erasure)
+        # We keep Payment records for legal/fiscal retention but strip
+        # personally identifiable fields.
+        Payment.objects.filter(user=user).update(
+            payer_email='deleted@anon.invalid',
+            payer_name='',
+            metadata={},
         )
 
         # Deactivate user (keep record for audit but mark as cancelled)
         user.status = User.Status.CANCELLED
         user.is_active = False
         user.name = ''
+        user.email = f'deleted_{user.id}@anon.invalid'
         user.avatar_url = None
         user.enabled_modules = {}
         user.save()

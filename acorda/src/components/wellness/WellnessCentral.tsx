@@ -141,7 +141,10 @@ export function WellnessCentral({ userId }: WellnessCentralProps) {
     if (newDayActions.length > 0) {
       setDayActions(current => [...(current || []), ...newDayActions])
     }
-  }, [programs, today]) // Não incluir funções memoizadas para evitar loops
+  }, [programs, today, computeProgramDay, isProgramCompleted])
+  // ensureDayActions depends on dayActions which this effect modifies —
+  // including it would cause an infinite loop. setPrograms/setDayActions are
+  // stable state setters.
 
   const handleAddProgram = (program: WellnessProgram) => {
     setPrograms((current) => [...(current || []), program])

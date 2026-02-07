@@ -373,21 +373,45 @@ class SyncManager {
     }
   }
   
-  // Get pending count
-  async getPendingCount(): Promise<number> {
-    const pending = await dbGetAll<PendingChange>(STORES.PENDING_SYNC)
+  // Get pending count for a specific user (or all if no userId)
+  async getPendingCount(userId?: string): Promise<number> {
+    const pending = userId
+      ? await this.getUserPendingChanges(userId)
+      : await dbGetAll<PendingChange>(STORES.PENDING_SYNC)
     return pending.length
+  }
+
+  /**
+   * Get pending changes that belong to a specific user
+   * by matching storeKey prefix `user_{userId}_`
+   */
+  private async getUserPendingChanges(userId: string): Promise<PendingChange[]> {
+    const all = await dbGetAll<PendingChange>(STORES.PENDING_SYNC)
+    const prefix = `user_${userId}_`
+    return all.filter(c => c.storeKey.startsWith(prefix))
+  }
+
+  /**
+   * Clear pending changes only for a specific user.
+   */
+  private async clearUserPendingChanges(userId: string): Promise<void> {
+    const userChanges = await this.getUserPendingChanges(userId)
+    for (const change of userChanges) {
+      await dbDelete(STORES.PENDING_SYNC, change.id)
+    }
   }
   
   private async updatePendingCount() {
+    // Best-effort update — uses total count since we don't know userId here
     const count = await this.getPendingCount()
     const meta = await this.getSyncMeta()
     await this.setSyncMeta({ ...meta, pendingCount: count })
   }
   
-  // Get sync metadata
-  async getSyncMeta(): Promise<SyncMeta> {
-    const meta = await dbGet<SyncMeta>(STORES.SYNC_META, 'meta')
+  // Get sync metadata — partitioned by userId
+  async getSyncMeta(userId?: string): Promise<SyncMeta> {
+    const key = userId ? `meta_${userId}` : 'meta'
+    const meta = await dbGet<SyncMeta>(STORES.SYNC_META, key)
     return meta || {
       lastSyncTimestamp: null,
       lastSyncVersion: 0,
@@ -395,8 +419,9 @@ class SyncManager {
     }
   }
   
-  private async setSyncMeta(meta: SyncMeta) {
-    await dbSet(STORES.SYNC_META, 'meta', meta)
+  private async setSyncMeta(meta: SyncMeta, userId?: string) {
+    const key = userId ? `meta_${userId}` : 'meta'
+    await dbSet(STORES.SYNC_META, key, meta)
   }
   
   // Main sync function
@@ -418,19 +443,23 @@ class SyncManager {
     console.log('[Sync] Starting sync...')
     
     try {
-      // 1. Push pending changes
-      await this.pushPendingChanges()
+      // Resolve userId once for the entire sync cycle
+      const userId = await this.resolveUserId()
+
+      // 1. Push pending changes (only removes confirmed items)
+      await this.pushPendingChanges(userId)
       
       // 2. Pull remote changes
-      await this.pullRemoteChanges()
+      const serverVersion = await this.pullRemoteChanges(userId)
       
-      // Update sync metadata
-      const meta = await this.getSyncMeta()
+      // Update sync metadata using server-provided sync_version as cursor
+      const meta = await this.getSyncMeta(userId)
       await this.setSyncMeta({
         ...meta,
         lastSyncTimestamp: new Date().toISOString(),
-        pendingCount: 0,
-      })
+        lastSyncVersion: serverVersion,
+        pendingCount: await this.getPendingCount(userId),
+      }, userId)
       
       console.log('[Sync] Sync completed successfully')
       return { success: true }
@@ -442,8 +471,8 @@ class SyncManager {
     }
   }
   
-  private async pushPendingChanges() {
-    const pending = await dbGetAll<PendingChange>(STORES.PENDING_SYNC)
+  private async pushPendingChanges(userId: string) {
+    const pending = await this.getUserPendingChanges(userId)
     
     if (pending.length === 0) {
       console.log('[Sync] No pending changes')
@@ -454,7 +483,9 @@ class SyncManager {
     
     // Group by entity type using regex helper and apply toServer mapping
     const grouped: Record<string, Record<string, unknown>[]> = {}
-    
+    // Track which pending change IDs belong to which entity type
+    const changesByEntity: Record<string, PendingChange[]> = {}
+
     for (const change of pending) {
       const entityType = getEntityTypeFromKey(change.storeKey)
       if (!entityType) {
@@ -470,11 +501,13 @@ class SyncManager {
       
       if (!grouped[entityType]) {
         grouped[entityType] = []
+        changesByEntity[entityType] = []
       }
       
       // Apply toServer mapping for camelCase → snake_case and status conversions
       const mappedItem = toServer(entityType, change.data as { id: string; [key: string]: unknown })
       grouped[entityType].push(mappedItem)
+      changesByEntity[entityType].push(change)
     }
     
     // Push to API
@@ -483,9 +516,20 @@ class SyncManager {
       const result = await api.syncPush({ changes: grouped })
       if (import.meta.env.DEV) console.log('✅ [Sync] API response:', JSON.stringify(result, null, 2))
       
-      // Clear pushed changes
-      for (const change of pending) {
-        await dbDelete(STORES.PENDING_SYNC, change.id)
+      // Only remove pending changes for entities that had no errors
+      for (const [entityType, entityChanges] of Object.entries(changesByEntity)) {
+        const entityResult = result.results?.[entityType]
+        const hasErrors = entityResult?.errors && entityResult.errors.length > 0
+        
+        if (hasErrors) {
+          console.warn(`[Sync] Entity "${entityType}" had errors, keeping pending:`, entityResult.errors)
+          continue
+        }
+        
+        // Remove only confirmed pending changes
+        for (const change of entityChanges) {
+          await dbDelete(STORES.PENDING_SYNC, change.id)
+        }
       }
       
       console.log('[Sync] Push completed')
@@ -495,17 +539,22 @@ class SyncManager {
     }
   }
   
-  private async pullRemoteChanges() {
-    const meta = await this.getSyncMeta()
+  private async pullRemoteChanges(userId: string): Promise<number> {
+    const meta = await this.getSyncMeta(userId)
     
-    console.log('[Sync] Pulling changes since:', meta.lastSyncTimestamp)
+    // Use server sync_version as cursor (integer ms), not client clock
+    const since = meta.lastSyncVersion
+      ? String(meta.lastSyncVersion)
+      : meta.lastSyncTimestamp
+    
+    console.log('[Sync] Pulling changes since:', since)
     
     try {
-      const response = await api.syncPull(meta.lastSyncTimestamp)
+      const response = await api.syncPull(since)
       
       // Apply changes to local storage with fromServer mapping
       for (const [entityType, items] of Object.entries(response.changes)) {
-        const storeKey = `user_${await this.getCurrentUserId()}_${entityType}`
+        const storeKey = `user_${userId}_${entityType}`
         const currentRaw = await dbGet<SyncableItem[] | SyncableItem>(STORES.DATA, storeKey)
         const current = Array.isArray(currentRaw)
           ? currentRaw
@@ -538,6 +587,9 @@ class SyncManager {
       }
       
       console.log('[Sync] Pull completed')
+
+      // Return the server-provided sync_version as canonical cursor
+      return response.sync_version ?? 0
     } catch (error) {
       console.error('[Sync] Pull failed:', error)
       throw error
@@ -582,13 +634,18 @@ class SyncManager {
     return Array.from(result.values())
   }
   
+  /**
+   * Resolve userId once and cache for the sync cycle.
+   * Throws if unable to determine userId — prevents writing to wrong key.
+   */
+  private async resolveUserId(): Promise<string> {
+    const user = await api.getMe()
+    return user.id
+  }
+  
   private async getCurrentUserId(): Promise<string> {
-    try {
-      const user = await api.getMe()
-      return user.id
-    } catch {
-      return '0'
-    }
+    // Used by legacy callers (fullSync). Never fall back to '0'.
+    return this.resolveUserId()
   }
   
   // Full sync (initial load)
@@ -606,7 +663,7 @@ class SyncManager {
     try {
       const response = await api.syncFull()
       
-      const userId = await this.getCurrentUserId()
+      const userId = await this.resolveUserId()
       
       // Store all data locally with fromServer mapping
       for (const [entityType, items] of Object.entries(response.data)) {
@@ -632,15 +689,15 @@ class SyncManager {
         }
       }
       
-      // Update sync metadata
+      // Use server sync_version as canonical cursor, not client clock
       await this.setSyncMeta({
         lastSyncTimestamp: new Date().toISOString(),
-        lastSyncVersion: 1,
+        lastSyncVersion: response.sync_version ?? 0,
         pendingCount: 0,
-      })
+      }, userId)
       
-      // Clear any pending changes
-      await dbClear(STORES.PENDING_SYNC)
+      // Clear pending changes for this user only
+      await this.clearUserPendingChanges(userId)
       
       console.log('[Sync] Full sync completed')
       return { success: true }
@@ -681,7 +738,9 @@ export const storage = {
   },
   
   /**
-   * Clear all data for a specific user from IndexedDB
+   * Clear all data for a specific user from IndexedDB.
+   * Only removes that user's data, pending changes, and sync meta —
+   * does NOT touch other users' queues.
    */
   async clearUserData(userId: string): Promise<void> {
     console.log('[Storage] Clearing all data for user:', userId)
@@ -693,9 +752,17 @@ export const storage = {
       await dbDelete(STORES.DATA, key)
     }
     
-    // Also clear pending sync and sync meta
-    await dbClear(STORES.PENDING_SYNC)
-    await dbClear(STORES.SYNC_META)
+    // Clear only this user's pending sync changes
+    const allPending = await dbGetAll<PendingChange>(STORES.PENDING_SYNC)
+    const prefix = `user_${userId}_`
+    for (const change of allPending) {
+      if (change.storeKey.startsWith(prefix)) {
+        await dbDelete(STORES.PENDING_SYNC, change.id)
+      }
+    }
+    
+    // Clear only this user's sync meta
+    await dbDelete(STORES.SYNC_META, `meta_${userId}`)
     
     console.log('[Storage] Cleared', userKeys.length, 'keys for user:', userId)
   },

@@ -347,11 +347,13 @@ class TestAllBillingEndpoints(APITestCase):
         ])
     
     def test_webhook_is_public(self):
-        """Test that webhook endpoint is public (no auth required)."""
+        """Test that webhook endpoint is public (no auth required)
+        and accepts requests when DEBUG=True without MP_WEBHOOK_SECRET."""
         self.client.logout()
-        response = self.client.post('/api/billing/webhook/', {
-            'type': 'payment',
-            'data': {'id': '12345'}
-        }, format='json')
-        # Should NOT return 401 Unauthorized
-        self.assertNotEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        with self.settings(DEBUG=True, MP_WEBHOOK_SECRET=''):
+            response = self.client.post('/api/billing/webhook/', {
+                'type': 'payment',
+                'data': {'id': '12345'}
+            }, format='json')
+            # Should NOT return 401 Unauthorized
+            self.assertNotEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

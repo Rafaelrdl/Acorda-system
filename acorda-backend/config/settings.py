@@ -206,7 +206,8 @@ CSRF_TRUSTED_ORIGINS = config(
 
 # Cookie settings for authentication
 AUTH_COOKIE_SECURE = not DEBUG  # Secure in production
-AUTH_COOKIE_SAMESITE = 'Lax'    # 'None' for cross-domain with Secure=True
+# SameSite policy: 'Lax' for same-site, 'None' for cross-site (requires Secure=True)
+AUTH_COOKIE_SAMESITE = config('AUTH_COOKIE_SAMESITE', default='None' if not DEBUG else 'Lax')
 
 # Celery
 CELERY_BROKER_URL = config('REDIS_URL', default='redis://localhost:6379/0')

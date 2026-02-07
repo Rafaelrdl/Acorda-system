@@ -139,13 +139,13 @@ export function NoteEditor({
     toast.success(note ? 'Anotação salva' : 'Anotação criada')
   }, [title, content, tags, sourceUrl, note, userId, onSave])
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (hasUnsavedChanges) {
       const confirm = window.confirm('Você tem alterações não salvas. Deseja realmente sair?')
       if (!confirm) return
     }
     onClose()
-  }
+  }, [hasUnsavedChanges, onClose])
 
   const handleDelete = () => {
     if (note && onDelete) {
@@ -264,7 +264,10 @@ export function NoteEditor({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [open, handleSave])
+    // insertFormat reads from DOM (textarea selection) and is stable in behaviour;
+    // adding it would re-register the listener on every content change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, handleSave, handleClose])
 
   if (!open) return null
 
