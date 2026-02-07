@@ -7,6 +7,7 @@ import json
 import logging
 import time
 from datetime import date
+from dateutil.relativedelta import relativedelta
 from urllib.parse import quote as url_quote
 
 from django.conf import settings
@@ -112,13 +113,6 @@ def _verify_mp_webhook_signature(request) -> bool:
         logger.warning("MP Webhook rejected: non-numeric timestamp %s", ts)
         return False
 
-    # Deduplicate by x-request-id (cache for 10 minutes)
-    _DEDUP_TTL = 600
-    cache_key = f"mp_webhook_dedup:{x_request_id}"
-    if django_cache.get(cache_key):
-        logger.warning("MP Webhook rejected: duplicate x-request-id %s", x_request_id)
-        return False
-
     # data.id — prefer query param (per MP webhook docs), fall back to body
     data_id = request.query_params.get('data.id', '')
     if not data_id:
@@ -214,6 +208,14 @@ class WebhookView(APIView):
                 {'error': 'Invalid signature'},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+        
+        # Deduplicate by x-request-id AFTER valid signature (return 200 so MP stops retrying)
+        x_request_id = request.headers.get('x-request-id', '')
+        if x_request_id:
+            cache_key = f"mp_webhook_dedup:{x_request_id}"
+            if django_cache.get(cache_key):
+                logger.info("MP Webhook duplicate ignored: x-request-id %s", x_request_id)
+                return Response({'status': 'ignored'}, status=status.HTTP_200_OK)
         
         data = request.data
         # Validate payload shape – data must be a dict
@@ -384,7 +386,8 @@ class WebhookView(APIView):
 
         # Upsert subscription: renew existing active/pending sub for user+plan,
         # or create a new one.  Prevents duplicates on recurring payments.
-        existing_sub = Subscription.objects.filter(
+        # select_for_update prevents race condition on concurrent webhooks.
+        existing_sub = Subscription.objects.select_for_update().filter(
             user=user,
             plan=plan,
             status__in=[Subscription.Status.ACTIVE, Subscription.Status.PENDING],
@@ -408,9 +411,9 @@ class WebhookView(APIView):
         
         # Set period end based on billing cycle
         if plan.billing_cycle == Plan.BillingCycle.MONTHLY:
-            subscription.current_period_end = timezone.now() + timezone.timedelta(days=30)
+            subscription.current_period_end = timezone.now() + relativedelta(months=1)
         elif plan.billing_cycle == Plan.BillingCycle.YEARLY:
-            subscription.current_period_end = timezone.now() + timezone.timedelta(days=365)
+            subscription.current_period_end = timezone.now() + relativedelta(years=1)
         else:  # Lifetime
             subscription.current_period_end = None  # Never expires
         

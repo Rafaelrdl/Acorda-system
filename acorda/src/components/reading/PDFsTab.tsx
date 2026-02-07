@@ -70,14 +70,14 @@ export function PDFsTab({
       setPdfFilesStatus(statusMap)
       
       for (const doc of pdfDocuments) {
-        const exists = await hasPDFInStorage(doc.id)
+        const exists = await hasPDFInStorage(doc.id, userId)
         statusMap.set(doc.id, exists ? 'available' : 'missing')
       }
       setPdfFilesStatus(new Map(statusMap))
     }
     
     checkPDFAvailability()
-  }, [pdfDocuments])
+  }, [pdfDocuments, userId])
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -140,7 +140,7 @@ export function PDFsTab({
     }
     
     // Load from IndexedDB
-    const file = await loadPDFFromStorage(doc.id)
+    const file = await loadPDFFromStorage(doc.id, userId)
     if (file) {
       setSelectedPDF({ doc, file })
     } else {
@@ -208,7 +208,7 @@ export function PDFsTab({
 
   const handleDeletePDF = async (doc: PDFDocument) => {
     // Delete from IndexedDB
-    await deletePDFFromStorage(doc.id)
+    await deletePDFFromStorage(doc.id, userId)
     
     // Delete metadata from KV
     onDeletePDFDocument(doc.id)

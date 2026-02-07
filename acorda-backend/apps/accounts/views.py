@@ -311,6 +311,18 @@ class UploadAvatarView(APIView):
                 # Decode base64
                 decoded = base64.b64decode(encoded)
                 
+                # Validate actual image content with Pillow
+                try:
+                    import io
+                    from PIL import Image
+                    img = Image.open(io.BytesIO(decoded))
+                    img.verify()
+                except Exception:
+                    return Response(
+                        {'detail': 'Arquivo não é uma imagem válida.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
                 # Validate size (max 5MB)
                 if len(decoded) > 5 * 1024 * 1024:
                     return Response(
@@ -354,6 +366,12 @@ class UploadAvatarView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
+            # Validate extension (prevent arbitrary extensions like .exe, .php)
+            allowed_exts = {'jpeg', 'jpg', 'png', 'gif', 'webp'}
+            ext = file.name.rsplit('.', 1)[-1].lower() if '.' in file.name else 'png'
+            if ext not in allowed_exts:
+                ext = 'png'  # safe fallback
+            
             # Validate size (max 5MB)
             if file.size > 5 * 1024 * 1024:
                 return Response(
@@ -361,9 +379,21 @@ class UploadAvatarView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
+            # Validate actual image content with Pillow
+            try:
+                from PIL import Image
+                file.seek(0)
+                img = Image.open(file)
+                img.verify()
+                file.seek(0)
+            except Exception:
+                return Response(
+                    {'detail': 'Arquivo não é uma imagem válida.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
             # Save file to storage (local or S3)
             from django.core.files.storage import default_storage
-            ext = file.name.rsplit('.', 1)[-1] if '.' in file.name else 'png'
             filename = f"avatars/avatar_{user.id}_{uuid.uuid4().hex[:8]}.{ext}"
             saved_path = default_storage.save(filename, file)
             avatar_url = default_storage.url(saved_path)

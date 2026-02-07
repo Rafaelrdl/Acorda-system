@@ -1,5 +1,5 @@
 """
-Tests for the sync app - validates all 31 entities and 4 sync endpoints.
+Tests for the sync app - validates all 42 entities and 4 sync endpoints.
 """
 import time
 import uuid
@@ -18,6 +18,7 @@ from apps.core.models import (
     Subject, StudySession, ConsentLog, RecordedStudySession, ReviewScheduleItem,
     WellnessProgram, WellnessCheckIn, WellnessDayAction,
     WorkoutExercise, WorkoutPlan, WorkoutPlanItem, WorkoutSession, WorkoutSetLog,
+    WorkoutPlanDayStatus,
     DietMealTemplate, DietMealEntry, DataExport
 )
 from .serializers import ENTITY_MODELS, ENTITY_SERIALIZERS
@@ -65,6 +66,7 @@ class TestSyncEntitiesConfiguration(TestCase):
         'workoutPlanItems',
         'workoutSessions',
         'workoutSetLogs',
+        'workoutPlanDayStatuses',
         'dietMealTemplates',
         'dietMeals',
         'dataExports',
@@ -785,6 +787,35 @@ class TestSyncEntityCreation(APITestCase):
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['results']['dietMeals']['created'], 1)
+
+    def test_sync_workoutPlanDayStatuses(self):
+        """Test syncing workoutPlanDayStatuses entity."""
+        plan_id = str(uuid.uuid4())
+        # Create the parent plan so FK is satisfied
+        WorkoutPlan.objects.create(
+            id=plan_id,
+            user=self.user,
+            name='Push Pull Legs',
+            created_at=self.now,
+            updated_at=self.now,
+        )
+        response = self._push_entity('workoutPlanDayStatuses', {
+            'id': str(uuid.uuid4()),
+            'plan_id': plan_id,
+            'date': '2026-02-01',
+            'resolution': 'done',
+            'moved_to_date': '',
+            'created_at': self.now,
+            'updated_at': self.now,
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['results']['workoutPlanDayStatuses']['created'], 1)
+
+        # Pull should include the newly created entity
+        pull_response = self.client.get('/api/sync/pull/')
+        self.assertEqual(pull_response.status_code, status.HTTP_200_OK)
+        self.assertIn('workoutPlanDayStatuses', pull_response.data['changes'])
+        self.assertEqual(len(pull_response.data['changes']['workoutPlanDayStatuses']), 1)
 
 
 class TestSyncPushInvalidUUID(APITestCase):

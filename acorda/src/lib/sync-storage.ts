@@ -850,17 +850,19 @@ export function useStorage<T>(
     // Drain the queue
     const effects = queue.splice(0, queue.length)
     
-    for (const { prevData, newData } of effects) {
-      // Save to IndexedDB
-      storage.set(key, newData)
-      
-      // Only track changes for entities in the allowlist
-      if (!isEntitySyncEnabled(key)) {
-        continue
-      }
-      
-      // Track changes for sync with proper diff detection
-      if (Array.isArray(newData) && Array.isArray(prevData)) {
+    // Wrap in async IIFE — useEffect can't be async directly
+    void (async () => {
+      for (const { prevData, newData } of effects) {
+        // Save to IndexedDB
+        await storage.set(key, newData)
+        
+        // Only track changes for entities in the allowlist
+        if (!isEntitySyncEnabled(key)) {
+          continue
+        }
+        
+        // Track changes for sync with proper diff detection
+        if (Array.isArray(newData) && Array.isArray(prevData)) {
         // Build lookup maps for efficient comparison
         const prevMap = new Map<string, SyncableItem>()
         for (const item of prevData as SyncableItem[]) {
@@ -908,6 +910,7 @@ export function useStorage<T>(
         }
       }
     }
+    })() // end async IIFE
   }) // runs after every render to process queued side effects
   
   // Update function - pure state updater + queued side effects

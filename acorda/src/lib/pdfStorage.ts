@@ -4,10 +4,16 @@
  */
 
 const DB_NAME = 'acorda-pdfs'
-const DB_VERSION = 1
+const DB_VERSION = 2
 const STORE_NAME = 'pdf-files'
 
+/** Build a composite key so different users never collide on the same docId. */
+function pdfKey(userId: string | number, docId: string): string {
+  return `${userId}_${docId}`
+}
+
 interface PDFStorageEntry {
+  pdfKey: string          // composite key: userId_docId
   docId: string
   userId: string | number
   fileName: string
@@ -24,10 +30,20 @@ function openDatabase(): Promise<IDBDatabase> {
     
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result
-      
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        const store = db.createObjectStore(STORE_NAME, { keyPath: 'docId' })
+      const oldVersion = event.oldVersion
+
+      if (oldVersion < 1) {
+        // Fresh install – create store with composite key
+        const store = db.createObjectStore(STORE_NAME, { keyPath: 'pdfKey' })
         store.createIndex('userId', 'userId', { unique: false })
+        store.createIndex('docId', 'docId', { unique: false })
+      } else if (oldVersion < 2) {
+        // Migrate from v1 (keyPath: 'docId') → v2 (keyPath: 'pdfKey')
+        // We must delete and recreate because IDB doesn't allow changing keyPath
+        db.deleteObjectStore(STORE_NAME)
+        const store = db.createObjectStore(STORE_NAME, { keyPath: 'pdfKey' })
+        store.createIndex('userId', 'userId', { unique: false })
+        store.createIndex('docId', 'docId', { unique: false })
       }
     }
   })
@@ -50,6 +66,7 @@ export async function savePDFToStorage(
     const store = transaction.objectStore(STORE_NAME)
     
     const entry: PDFStorageEntry = {
+      pdfKey: pdfKey(userId, docId),
       docId,
       userId,
       fileName,
@@ -69,7 +86,7 @@ export async function savePDFToStorage(
  * Load a PDF file from IndexedDB
  * Returns a File object or null if not found
  */
-export async function loadPDFFromStorage(docId: string): Promise<File | null> {
+export async function loadPDFFromStorage(docId: string, userId?: string | number): Promise<File | null> {
   try {
     const db = await openDatabase()
     
@@ -77,7 +94,10 @@ export async function loadPDFFromStorage(docId: string): Promise<File | null> {
       const transaction = db.transaction(STORE_NAME, 'readonly')
       const store = transaction.objectStore(STORE_NAME)
       
-      const request = store.get(docId)
+      // Use composite key when userId is available, otherwise fall back to docId index
+      const request = userId
+        ? store.get(pdfKey(userId, docId))
+        : store.index('docId').get(docId)
       
       request.onerror = () => {
         db.close()
@@ -108,7 +128,7 @@ export async function loadPDFFromStorage(docId: string): Promise<File | null> {
 /**
  * Delete a PDF file from IndexedDB
  */
-export async function deletePDFFromStorage(docId: string): Promise<void> {
+export async function deletePDFFromStorage(docId: string, userId?: string | number): Promise<void> {
   try {
     const db = await openDatabase()
     
@@ -116,7 +136,8 @@ export async function deletePDFFromStorage(docId: string): Promise<void> {
       const transaction = db.transaction(STORE_NAME, 'readwrite')
       const store = transaction.objectStore(STORE_NAME)
       
-      const request = store.delete(docId)
+      const key = userId ? pdfKey(userId, docId) : docId
+      const request = store.delete(key)
       
       request.onerror = () => {
         db.close()
@@ -136,7 +157,7 @@ export async function deletePDFFromStorage(docId: string): Promise<void> {
 /**
  * Check if a PDF exists in IndexedDB
  */
-export async function hasPDFInStorage(docId: string): Promise<boolean> {
+export async function hasPDFInStorage(docId: string, userId?: string | number): Promise<boolean> {
   try {
     const db = await openDatabase()
     
@@ -144,7 +165,10 @@ export async function hasPDFInStorage(docId: string): Promise<boolean> {
       const transaction = db.transaction(STORE_NAME, 'readonly')
       const store = transaction.objectStore(STORE_NAME)
       
-      const request = store.count(IDBKeyRange.only(docId))
+      // Use composite key when userId is available, otherwise fall back to docId index
+      const request = userId
+        ? store.count(IDBKeyRange.only(pdfKey(userId, docId)))
+        : store.index('docId').count(IDBKeyRange.only(docId))
       
       request.onerror = () => {
         db.close()

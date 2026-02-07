@@ -564,24 +564,38 @@ function MainApp({ user }: { user: User }) {
   }
 
   const handleDeleteAllData = async () => {
-    await deleteAllUserData(userId)
-    setInboxItems([])
-    setTasks([])
-    setGoals([])
-    setKeyResults([])
-    setHabits([])
-    setHabitLogs([])
-    setPomodoroSessions([])
-    setPomodoroPresets([])
-    setCalendarBlocks([])
-    setProjects([])
-    setReferences([])
-    setUserSettings(defaultSettings)
-    setGoogleCalendarEvents([])
-    setGoogleCalendarConnection(defaultGoogleCalendarConnection)
+    let serverFailed = false
+    try {
+      await deleteAllUserData(userId)
+    } catch {
+      // Server delete failed but local data was cleaned
+      serverFailed = true
+    } finally {
+      // Always reset state + logout regardless of server result
+      setInboxItems([])
+      setTasks([])
+      setGoals([])
+      setKeyResults([])
+      setHabits([])
+      setHabitLogs([])
+      setPomodoroSessions([])
+      setPomodoroPresets([])
+      setCalendarBlocks([])
+      setProjects([])
+      setReferences([])
+      setUserSettings(defaultSettings)
+      setGoogleCalendarEvents([])
+      setGoogleCalendarConnection(defaultGoogleCalendarConnection)
 
-    // Clear auth session so user is redirected to login
-    await logout()
+      // Clear auth session so user is redirected to login
+      await logout()
+    }
+
+    if (serverFailed) {
+      // Toast shown after logout — won't display, but keeps intent clear.
+      // In practice the user is already redirected by the time this runs.
+      console.warn('Dados locais apagados, mas a exclusão no servidor falhou.')
+    }
   }
 
   const handleExportTasks = () => {

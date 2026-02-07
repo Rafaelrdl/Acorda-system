@@ -1,0 +1,7 @@
+# Production dependencies
+-r requirements-prod.txt
+
+# Development & Testing
+django-debug-toolbar>=4.2,<5.0
+pytest-django>=4.7,<5.0
+factory-boy>=3.3,<4.0

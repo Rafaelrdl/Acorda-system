@@ -164,13 +164,13 @@ function taskFromServer(item: MapperItem): Record<string, unknown> {
   // Remove the temporary client_status field from result
   delete result.clientStatus
   
-  // Convert deadline ISO string to timestamp
-  if (typeof item.deadline === 'string') {
+  // Convert deadline ISO string to timestamp (guard empty string → NaN)
+  if (typeof item.deadline === 'string' && item.deadline) {
     result.deadline = new Date(item.deadline).getTime()
   }
   
   // Convert due_date ISO string to timestamp
-  if (typeof item.due_date === 'string') {
+  if (typeof item.due_date === 'string' && item.due_date) {
     result.dueDate = new Date(item.due_date).getTime()
   }
 
@@ -225,12 +225,12 @@ function goalFromServer(item: MapperItem): Record<string, unknown> {
   }
   
   // Convert deadline ISO string to timestamp
-  if (typeof item.deadline === 'string') {
+  if (typeof item.deadline === 'string' && item.deadline) {
     result.deadline = new Date(item.deadline).getTime()
   }
   
   // Convert target_date ISO string to timestamp
-  if (typeof item.target_date === 'string') {
+  if (typeof item.target_date === 'string' && item.target_date) {
     result.targetDate = new Date(item.target_date).getTime()
   }
   
