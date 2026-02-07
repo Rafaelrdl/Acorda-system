@@ -151,9 +151,10 @@ class SyncPushView(APIView):
                                 errors.append({'id': item_id, 'errors': serializer.errors})
                                 
                 except Exception as e:
+                    logger.exception('Sync push error for item %s', item_data.get('id') if isinstance(item_data, dict) else None)
                     errors.append({
                         'id': item_data.get('id') if isinstance(item_data, dict) else None,
-                        'error': str(e),
+                        'error': 'Erro interno ao processar item.',
                     })
             
             results[entity_type] = {

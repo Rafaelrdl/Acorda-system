@@ -152,8 +152,10 @@ class GoogleCalendarConnectionSerializer(BaseSyncSerializer):
         model = GoogleCalendarConnection
         fields = BaseSyncSerializer.Meta.fields + [
             'connected', 'connected_at', 'disconnected_at',
-            'last_sync_at', 'access_token', 'refresh_token', 'expires_at'
+            'last_sync_at', 'expires_at'
         ]
+        # access_token and refresh_token are sensitive OAuth credentials
+        # and must NEVER be exposed via the sync API.
 
 
 class GoogleCalendarEventSerializer(BaseSyncSerializer):

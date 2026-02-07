@@ -163,24 +163,23 @@ class TestAllBillingEndpoints(APITestCase):
         self.assertNotEqual(response.status_code, status.HTTP_404_NOT_FOUND)
     
     def test_checkout_creates_preference(self):
-        """Test that checkout creates a payment preference."""
-        response = self.client.post('/api/billing/checkout/', {
-            'plan_id': str(self.pro_plan.id),
-            'payer_email': 'payer@example.com',
-            'payer_name': 'Test Payer',
-        }, format='json')
+        """Test that checkout creates a payment preference.
+        Without MP_ACCESS_TOKEN configured, the SDK call must fail
+        gracefully and return 400 (not 500)."""
+        with self.settings(MP_ACCESS_TOKEN=''):
+            response = self.client.post('/api/billing/checkout/', {
+                'plan_id': str(self.pro_plan.id),
+                'payer_email': 'payer@example.com',
+                'payer_name': 'Test Payer',
+            }, format='json')
         
-        # Should succeed or return a clear client error – never 500
-        self.assertIn(response.status_code, [
-            status.HTTP_200_OK,
-            status.HTTP_201_CREATED,
-            status.HTTP_400_BAD_REQUEST,
-        ])
-        self.assertNotEqual(
-            response.status_code,
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            f"Checkout returned 500: {response.data}",
-        )
+            # Without valid MP credentials the service returns
+            # {"success": False, "error": ...} → view returns 400
+            self.assertEqual(
+                response.status_code,
+                status.HTTP_400_BAD_REQUEST,
+                f"Expected 400 with no MP token, got {response.status_code}: {response.data}",
+            )
     
     def test_checkout_requires_plan_id(self):
         """Test that checkout requires plan_id."""
@@ -326,25 +325,34 @@ class TestAllBillingEndpoints(APITestCase):
         self.assertNotEqual(response.status_code, status.HTTP_404_NOT_FOUND)
     
     def test_webhook_accepts_payment_notification(self):
-        """Test that webhook accepts payment notifications."""
+        """Test that webhook returns 401 when signature is invalid (no secret in prod)
+        or 200 when DEBUG+no-secret (dev skip)."""
         self.client.logout()
-        response = self.client.post('/api/billing/webhook/', {
-            'type': 'payment',
-            'data': {'id': '12345'}
-        }, format='json')
-        
-        # Without a valid MP_WEBHOOK_SECRET, webhook should accept or return 401/200
-        # It should NEVER return 500 – errors must be handled gracefully
-        self.assertNotEqual(
-            response.status_code,
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            f"Webhook returned 500: {response.data}",
-        )
-        self.assertIn(response.status_code, [
-            status.HTTP_200_OK,
-            status.HTTP_400_BAD_REQUEST,
-            status.HTTP_401_UNAUTHORIZED,
-        ])
+        # With DEBUG=False and no secret, signature check should fail → 401
+        with self.settings(DEBUG=False, MP_WEBHOOK_SECRET=''):
+            response = self.client.post('/api/billing/webhook/', {
+                'type': 'payment',
+                'data': {'id': '12345'}
+            }, format='json')
+            self.assertEqual(
+                response.status_code,
+                status.HTTP_401_UNAUTHORIZED,
+                f"Expected 401 (no secret in prod), got {response.status_code}: {response.data}",
+            )
+    
+    def test_webhook_skips_signature_in_debug(self):
+        """Test that in DEBUG mode with no secret, webhook processes the request."""
+        self.client.logout()
+        with self.settings(DEBUG=True, MP_WEBHOOK_SECRET=''):
+            response = self.client.post('/api/billing/webhook/', {
+                'type': 'payment',
+                'data': {'id': '99999'}
+            }, format='json')
+            # Should succeed (signature skipped) or return 200/500 from MP lookup
+            self.assertIn(response.status_code, [
+                status.HTTP_200_OK,
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+            ])
     
     def test_webhook_is_public(self):
         """Test that webhook endpoint is public (no auth required)

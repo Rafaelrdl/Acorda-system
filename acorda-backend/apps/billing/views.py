@@ -38,8 +38,14 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 def _build_external_reference(plan, payer_email: str) -> str:
-    """Build an external_reference that carries plan id + billing cycle."""
-    return f"acorda|{plan.id}|{plan.billing_cycle}|{payer_email}"
+    """Build an external_reference that carries plan id + billing cycle.
+    
+    Note: payer_email is hashed (not stored in plaintext) to avoid
+    PII leaking into MP logs / external systems.
+    """
+    import hashlib
+    email_hash = hashlib.sha256(payer_email.lower().strip().encode()).hexdigest()[:16]
+    return f"acorda|{plan.id}|{plan.billing_cycle}|{email_hash}"
 
 
 def _parse_external_reference(external_reference: str) -> dict:
@@ -49,7 +55,7 @@ def _parse_external_reference(external_reference: str) -> dict:
         return {
             'plan_id': parts[1],
             'billing_cycle': parts[2],
-            'email': parts[3],
+            'email_hash': parts[3],
         }
     # Legacy format: acorda_type_email_timestamp
     if external_reference.startswith('acorda_'):

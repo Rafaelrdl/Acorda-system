@@ -13,6 +13,9 @@ _prod_mode = os.environ.get('ACORDA_TEST_PROD', '') == '1'
 if _prod_mode:
     os.environ['DEBUG'] = 'False'
     os.environ.setdefault('SECRET_KEY', 'test-only-secret-key-not-for-production')
+else:
+    # Default tests run with DEBUG=True (prevents RuntimeError on insecure key)
+    os.environ.setdefault('DEBUG', 'True')
 
 
 def pytest_configure():

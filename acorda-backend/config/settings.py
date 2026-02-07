@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Fail loudly in production if SECRET_KEY is still the insecure default
 if not DEBUG and SECRET_KEY.startswith('django-insecure'):
@@ -239,9 +239,9 @@ if SENDGRID_API_KEY:
     }
 
 # Mercado Pago
-MP_ACCESS_TOKEN = config('MP_ACCESS_TOKEN', default='')
-MP_PUBLIC_KEY = config('MP_PUBLIC_KEY', default='')
-MP_WEBHOOK_SECRET = config('MP_WEBHOOK_SECRET', default='')
+MP_ACCESS_TOKEN = config('MP_ACCESS_TOKEN', default='', cast=str)
+MP_PUBLIC_KEY = config('MP_PUBLIC_KEY', default='', cast=str)
+MP_WEBHOOK_SECRET = config('MP_WEBHOOK_SECRET', default='', cast=str)
 
 # Frontend URL (for email links)
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5174')
@@ -266,3 +266,19 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     # Required when running behind a reverse proxy (nginx, ALB, Cloudflare, etc.)
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Cache – use Redis when available for shared deduplication across workers
+_REDIS_URL = config('REDIS_URL', default='')
+if _REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': _REDIS_URL,
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        }
+    }
