@@ -1,6 +1,7 @@
 """
 Views for sync app - offline sync support.
 """
+import logging
 import time
 import datetime as _dt
 
@@ -17,6 +18,8 @@ from .serializers import (
     ENTITY_MODELS,
     SyncPullSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 def parse_since_param(value):
     if value is None or value == "":
@@ -106,6 +109,20 @@ class SyncPushView(APIView):
                     item_id = item_data.get('id')
                     item_updated_at = item_data.get('updated_at', 0)
                     item_deleted_at = item_data.get('deleted_at')
+
+                    # Coerce timestamps to int for safe comparison
+                    try:
+                        item_updated_at = int(item_updated_at) if item_updated_at else 0
+                    except (TypeError, ValueError):
+                        errors.append({'id': item_id, 'error': 'updated_at inválido.'})
+                        continue
+
+                    try:
+                        if item_deleted_at is not None:
+                            item_deleted_at = int(item_deleted_at)
+                    except (TypeError, ValueError):
+                        errors.append({'id': item_id, 'error': 'deleted_at inválido.'})
+                        continue
 
                     # Ensure timestamps exist to avoid serializer errors
                     if not item_data.get('created_at'):

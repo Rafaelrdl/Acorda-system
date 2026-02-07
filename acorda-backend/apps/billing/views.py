@@ -20,6 +20,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from apps.accounts.models import User, ActivationToken
 from apps.accounts.tasks import send_activation_email
+from apps.core.utils import safe_delay
 from .models import Plan, Subscription, Payment, UsageRecord
 from .serializers import (
     PlanSerializer,
@@ -214,8 +215,19 @@ class WebhookView(APIView):
             )
         
         data = request.data
+        # Validate payload shape – data must be a dict
+        if not isinstance(data, dict):
+            return Response(
+                {'error': 'Payload inválido.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         topic = data.get('type') or request.query_params.get('topic')
-        resource_id = data.get('data', {}).get('id') or request.query_params.get('id')
+        data_inner = data.get('data')
+        resource_id = (
+            (data_inner.get('id') if isinstance(data_inner, dict) else None)
+            or request.query_params.get('id')
+        )
         
         logger.info(f"MP Webhook received: topic={topic}, id={resource_id}")
         
@@ -268,6 +280,18 @@ class WebhookView(APIView):
             )
         
         # Check if payment already exists
+        # Apply status_map on creation so new payments reflect the actual MP status
+        status_map = {
+            'approved': Payment.Status.APPROVED,
+            'rejected': Payment.Status.REJECTED,
+            'cancelled': Payment.Status.CANCELLED,
+            'refunded': Payment.Status.REFUNDED,
+            'charged_back': Payment.Status.REFUNDED,
+            'in_process': Payment.Status.PENDING,
+            'in_mediation': Payment.Status.PENDING,
+        }
+        initial_status = status_map.get(mp_status, Payment.Status.PENDING)
+
         payment, created = Payment.objects.get_or_create(
             mp_payment_id=payment_id,
             defaults={
@@ -275,6 +299,8 @@ class WebhookView(APIView):
                 'payer_email': payer_email,
                 'payer_name': payer_name,
                 'mp_status': mp_status,
+                'status': initial_status,
+                'paid_at': timezone.now() if initial_status == Payment.Status.APPROVED else None,
                 'metadata': mp_payment,
                 'plan': plan,
                 'payment_type': payment_type,
@@ -289,15 +315,6 @@ class WebhookView(APIView):
                 payment.payment_type = payment_type
 
             # Map mp_status → Payment.Status for non-approved states
-            status_map = {
-                'approved': Payment.Status.APPROVED,
-                'rejected': Payment.Status.REJECTED,
-                'cancelled': Payment.Status.CANCELLED,
-                'refunded': Payment.Status.REFUNDED,
-                'charged_back': Payment.Status.REFUNDED,
-                'in_process': Payment.Status.PENDING,
-                'in_mediation': Payment.Status.PENDING,
-            }
             mapped = status_map.get(mp_status)
             if mapped and payment.status != mapped:
                 payment.status = mapped
@@ -392,7 +409,7 @@ class WebhookView(APIView):
         # Create activation token and send email
         if user_created or user.status == User.Status.PENDING_ACTIVATION:
             activation_token = ActivationToken.objects.create(user=user)
-            send_activation_email.delay(str(user.id), activation_token.token)
+            safe_delay(send_activation_email, str(user.id), activation_token.token)
             logger.info(f"Activation email sent to {user.email}")
     
     def _get_plan_from_reference(self, external_reference: str, metadata: dict) -> Plan:

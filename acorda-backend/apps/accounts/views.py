@@ -28,6 +28,7 @@ from .serializers import (
     ChangePasswordSerializer,
 )
 from .tasks import send_password_reset_email
+from apps.core.utils import safe_delay
 from .authentication import (
     set_auth_cookies,
     clear_auth_cookies,
@@ -156,7 +157,7 @@ class ForgotPasswordView(APIView):
             reset_token = PasswordResetToken.objects.create(user=user)
             
             # Send email async
-            send_password_reset_email.delay(user.id, reset_token.token)
+            safe_delay(send_password_reset_email, user.id, reset_token.token)
         
         # Always return success to prevent email enumeration
         return Response({

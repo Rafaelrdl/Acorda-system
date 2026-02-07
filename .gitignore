@@ -45,3 +45,4 @@ Desktop.ini
 # ===== Misc =====
 *.log
 npm-debug.log*
+debug-sync.html

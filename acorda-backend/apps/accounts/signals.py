@@ -5,6 +5,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import User
 from .tasks import send_welcome_email
+from apps.core.utils import safe_delay
 
 
 @receiver(post_save, sender=User)
@@ -14,4 +15,4 @@ def user_activated(sender, instance, created, **kwargs):
         # Check if user was just activated (has activated_at but no welcome sent)
         update_fields = kwargs.get('update_fields')
         if update_fields and 'status' in update_fields:
-            send_welcome_email.delay(str(instance.id))
+            safe_delay(send_welcome_email, str(instance.id))
