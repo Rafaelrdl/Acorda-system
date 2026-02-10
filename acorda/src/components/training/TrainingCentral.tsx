@@ -52,9 +52,11 @@ export function TrainingCentral({ userId }: TrainingCentralProps) {
             sessions={sessions || []}
             setLogs={setLogs || []}
             recommendedPlanId={workoutUiState?.recommendedPlanId}
+            autoOpenSessionId={workoutUiState?.autoOpenSessionId}
             onSessionsChange={setSessions}
             onSetLogsChange={setSetLogs}
             onClearRecommendation={() => setWorkoutUiState({ updatedAt: Date.now() })}
+            onClearAutoOpen={() => setWorkoutUiState(prev => ({ ...prev, autoOpenSessionId: undefined, updatedAt: Date.now() }))}
           />
           </TabsContent>
 

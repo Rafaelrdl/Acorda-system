@@ -3,7 +3,6 @@ import {
   UserCircle, 
   Gear, 
   SquaresFour, 
-  ShieldCheck, 
   SignOut,
   Plugs
 } from '@phosphor-icons/react'
@@ -27,7 +26,6 @@ interface UserMenuProps {
   onOpenProfile: () => void
   onOpenSettings: () => void
   onOpenModules: () => void
-  onOpenPrivacy: () => void
   onOpenIntegrations: () => void
   onLogout: () => void
 }
@@ -37,7 +35,6 @@ export function UserMenu({
   onOpenProfile,
   onOpenSettings,
   onOpenModules,
-  onOpenPrivacy,
   onOpenIntegrations,
   onLogout,
 }: UserMenuProps) {
@@ -85,11 +82,6 @@ export function UserMenu({
         <DropdownMenuItem onClick={onOpenIntegrations}>
           <Plugs size={18} aria-hidden="true" />
           <span>Integrações</span>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onClick={onOpenPrivacy}>
-          <ShieldCheck size={18} aria-hidden="true" />
-          <span>Privacidade</span>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />

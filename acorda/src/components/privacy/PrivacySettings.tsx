@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { UserId } from '@/lib/types'
-import { ShieldCheck, Trash, Download, Info, FileText, FileCsv } from '@phosphor-icons/react'
+import { ShieldCheck, Trash, Download, Info, FileText, FileCsv, FileArrowDown } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { getDateKey } from '@/lib/helpers'
 
@@ -23,6 +23,7 @@ interface PrivacySettingsProps {
   onExportFinance: () => string
   onExportStudy: () => string
   onExportReading: () => string
+  onExportAllJSON?: () => Promise<string>
 }
 
 export function PrivacySettings({
@@ -31,9 +32,11 @@ export function PrivacySettings({
   onExportFinance,
   onExportStudy,
   onExportReading,
+  onExportAllJSON,
 }: PrivacySettingsProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [confirmText, setConfirmText] = useState('')
+  const [exporting, setExporting] = useState(false)
 
   const handleDelete = async () => {
     if (confirmText !== 'APAGAR') return
@@ -84,6 +87,29 @@ export function PrivacySettings({
     }
   }
 
+  const handleExportAllJSON = async () => {
+    if (!onExportAllJSON) return
+    setExporting(true)
+    try {
+      const data = await onExportAllJSON()
+      const filename = `acorda-backup-completo-${getDateKey(new Date())}.json`
+      const blob = new Blob([data], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      toast.success('Backup completo exportado')
+    } catch {
+      toast.error('Erro ao exportar dados')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -131,6 +157,19 @@ export function PrivacySettings({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
+          {/* Exportar tudo JSON */}
+          {onExportAllJSON && (
+            <Button
+              variant="default"
+              className="w-full justify-start"
+              onClick={handleExportAllJSON}
+              disabled={exporting}
+            >
+              <FileArrowDown className="mr-2" />
+              {exporting ? 'Exportando...' : 'Exportar tudo (JSON)'}
+            </Button>
+          )}
+
           <Button 
             variant="outline" 
             className="w-full justify-start"

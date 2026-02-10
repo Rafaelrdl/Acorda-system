@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { UserId } from '@/lib/types'
 import { DietMealEntry, DietMealTemplate, DietFoodItem } from '@/lib/types'
 import { createDietMealEntry, formatHHMM, updateTimestamp } from '@/lib/helpers'
@@ -17,9 +17,44 @@ interface DietTodayTabProps {
   today: string
 }
 
-export function DietTodayTab({ userId, meals, setMeals, templates: _templates, today }: DietTodayTabProps) {
+export function DietTodayTab({ userId, meals, setMeals, templates, today }: DietTodayTabProps) {
   const [showMealDialog, setShowMealDialog] = useState(false)
   const [editingMeal, setEditingMeal] = useState<DietMealEntry | null>(null)
+  const appliedRef = useRef<string | null>(null)
+
+  // Auto-aplicar templates com frequência configurada
+  useEffect(() => {
+    if (!templates || templates.length === 0 || appliedRef.current === today) return
+    appliedRef.current = today
+
+    const dayOfWeek = new Date(today + 'T12:00:00').getDay() // 0=Dom..6=Sáb
+    const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+
+    const applicable = templates.filter(t => {
+      if (!t.frequency || t.frequency === 'manual') return false
+      if (t.frequency === 'daily') return true
+      if (t.frequency === 'weekdays') return isWeekday
+      if (t.frequency === 'weekends') return isWeekend
+      if (t.frequency === 'custom') return t.daysOfWeek?.includes(dayOfWeek)
+      return false
+    })
+
+    if (applicable.length === 0) return
+
+    const todayMeals = (meals || []).filter(m => m.date === today)
+    const existingKeys = new Set(todayMeals.map(m => `${m.name}-${m.timeMinutes}`))
+
+    const newMeals = applicable
+      .filter(t => !existingKeys.has(`${t.name}-${t.defaultTimeMinutes}`))
+      .map(t => createDietMealEntry(userId, today, t.name, t.defaultTimeMinutes, {
+        foods: t.foods
+      }))
+
+    if (newMeals.length > 0) {
+      setMeals(current => [...(current || []), ...newMeals])
+    }
+  }, [today, templates, meals, userId, setMeals])
 
   // Refeições do dia, ordenadas por horário
   const todayMeals = (meals || [])

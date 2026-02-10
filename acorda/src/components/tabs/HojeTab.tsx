@@ -2,13 +2,14 @@ import { useMemo, useState } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { CheckInDialog } from '@/components/wellness/CheckInDialog'
 import { CheckInInsightDialog } from '@/components/wellness/CheckInInsightDialog'
+import { UpdateProgressDialog } from '@/components/reading/UpdateProgressDialog'
 import { Button } from '@/components/ui/button'
 import { SectionCard, EmptyState } from '@/components/ui/section-card'
 import { KpiTile } from '@/components/ui/kpi-tile'
 import { Badge } from '@/components/ui/badge'
 import { useKV } from '@/lib/sync-storage'
 import type { UserId, WellnessProgramType } from '@/lib/types'
-import { Task, Habit, HabitLog, CalendarBlock, PomodoroSession, DailyNote, FixedExpense, Transaction, FinanceCategory, ReviewScheduleItem, StudySession, Subject, Book, WellnessProgram, WellnessCheckIn, WellnessDayAction, WorkoutPlan, WorkoutPlanItem, WorkoutSession, WorkoutPlanDayStatus, WorkoutUiState } from '@/lib/types'
+import { Task, Habit, HabitLog, CalendarBlock, PomodoroSession, DailyNote, FixedExpense, Transaction, FinanceCategory, ReviewScheduleItem, StudySession, Subject, Book, ReadingLog, WellnessProgram, WellnessCheckIn, WellnessDayAction, WorkoutPlan, WorkoutPlanItem, WorkoutSession, WorkoutPlanDayStatus, WorkoutUiState } from '@/lib/types'
 import { 
   Timer, 
   CheckCircle, 
@@ -83,7 +84,8 @@ export function HojeTab({
   const [subjects] = useKV<Subject[]>(getSyncKey(userId, 'subjects'), [])
   
   // Carregar dados de leitura
-  const [books] = useKV<Book[]>(getSyncKey(userId, 'books'), [])
+  const [books, setBooks] = useKV<Book[]>(getSyncKey(userId, 'books'), [])
+  const [readingLogs, setReadingLogs] = useKV<ReadingLog[]>(getSyncKey(userId, 'readingLogs'), [])
   
   // Estado do modal de check-in
   const [checkInDialogOpen, setCheckInDialogOpen] = useState(false)
@@ -95,6 +97,10 @@ export function HojeTab({
   
   // Estado para expandir outras fichas do dia
   const [showAllOtherPlans, setShowAllOtherPlans] = useState(false)
+  
+  // Estado do modal de progresso de leitura
+  const [selectedBookForProgress, setSelectedBookForProgress] = useState<Book | null>(null)
+  const [showUpdateProgress, setShowUpdateProgress] = useState(false)
   
   // Carregar dados de bem-estar
   const [wellnessPrograms] = useKV<WellnessProgram[]>(getSyncKey(userId, 'wellnessPrograms'), [])
@@ -954,10 +960,18 @@ export function HojeTab({
                     <div 
                       key={book.id}
                       className="flex items-center justify-between p-3 rounded-lg border bg-accent/10 border-accent/20 hover:border-accent/40 transition-colors cursor-pointer"
-                      onClick={onGoToLeituras}
+                      onClick={() => {
+                        setSelectedBookForProgress(book)
+                        setShowUpdateProgress(true)
+                      }}
                       role="button"
                       tabIndex={0}
-                      onKeyDown={(e) => e.key === 'Enter' && onGoToLeituras?.()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          setSelectedBookForProgress(book)
+                          setShowUpdateProgress(true)
+                        }
+                      }}
                     >
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{book.title}</p>
@@ -1057,6 +1071,22 @@ export function HojeTab({
         insight={lastInsight}
         checkIn={lastSavedCheckIn}
         onEdit={handleEditFromInsight}
+      />
+
+      {/* Modal de Atualizar Progresso de Leitura */}
+      <UpdateProgressDialog
+        book={selectedBookForProgress}
+        open={showUpdateProgress}
+        onOpenChange={(open) => {
+          setShowUpdateProgress(open)
+          if (!open) setSelectedBookForProgress(null)
+        }}
+        onSave={(updatedBook, log) => {
+          setBooks(current => (current || []).map(b => b.id === updatedBook.id ? updatedBook : b))
+          if (log) {
+            setReadingLogs(current => [...(current || []), log])
+          }
+        }}
       />
     </div>
   )

@@ -17,7 +17,6 @@ const PomodoroDialog = lazy(() => import('@/components/dialogs/PomodoroDialog').
 const SettingsDialog = lazy(() => import('@/components/dialogs/SettingsDialog').then(m => ({ default: m.SettingsDialog })))
 const ProfileDialog = lazy(() => import('@/components/dialogs/ProfileDialog').then(m => ({ default: m.ProfileDialog })))
 const ModulesDialog = lazy(() => import('@/components/dialogs/ModulesDialog').then(m => ({ default: m.ModulesDialog })))
-const PrivacyDialog = lazy(() => import('@/components/dialogs/PrivacyDialog').then(m => ({ default: m.PrivacyDialog })))
 const ExportDialog = lazy(() => import('@/components/dialogs/ExportDialog').then(m => ({ default: m.ExportDialog })))
 import { 
   InboxItem, 
@@ -93,7 +92,6 @@ function MainApp({ user }: { user: User }) {
   const [showProfile, setShowProfile] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showModules, setShowModules] = useState(false)
-  const [showPrivacy, setShowPrivacy] = useState(false)
   const [showExport, setShowExport] = useState(false)
 
   // Memoize defaults to avoid recreating on each render
@@ -669,7 +667,6 @@ function MainApp({ user }: { user: User }) {
         onOpenProfile={() => setShowProfile(true)}
         onOpenSettings={() => setShowSettings(true)}
         onOpenModules={() => setShowModules(true)}
-        onOpenPrivacy={() => setShowPrivacy(true)}
         onOpenIntegrations={handleOpenIntegrations}
         onLogout={handleLogout}
       />
@@ -814,13 +811,6 @@ function MainApp({ user }: { user: User }) {
         onOpenChange={setShowModules}
         moduleSettings={userSettings?.modules || defaultSettings.modules}
         onToggleModule={handleToggleModule}
-      />
-
-      <PrivacyDialog
-        open={showPrivacy}
-        onOpenChange={setShowPrivacy}
-        userId={userId}
-        onDeleteAllData={handleDeleteAllData}
       />
 
       <ExportDialog

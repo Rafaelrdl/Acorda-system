@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import type { UserId } from '@/lib/types'
 import { WorkoutExercise, WorkoutPlan, WorkoutPlanItem, WorkoutSession, WorkoutSetLog } from '@/lib/types'
@@ -15,9 +15,11 @@ interface TreinarTabProps {
   sessions: WorkoutSession[]
   setLogs: WorkoutSetLog[]
   recommendedPlanId?: string
+  autoOpenSessionId?: string
   onSessionsChange: (sessions: WorkoutSession[] | ((prev: WorkoutSession[] | undefined) => WorkoutSession[])) => void
   onSetLogsChange: (logs: WorkoutSetLog[] | ((prev: WorkoutSetLog[] | undefined) => WorkoutSetLog[])) => void
   onClearRecommendation?: () => void
+  onClearAutoOpen?: () => void
 }
 
 export function TreinarTab({
@@ -28,11 +30,23 @@ export function TreinarTab({
   sessions,
   setLogs,
   recommendedPlanId,
+  autoOpenSessionId,
   onSessionsChange,
   onSetLogsChange,
   onClearRecommendation,
+  onClearAutoOpen,
 }: TreinarTabProps) {
   const [activeSession, setActiveSession] = useState<WorkoutSession | null>(null)
+
+  // Auto-abrir sessão (vinda do HojeTab)
+  useEffect(() => {
+    if (!autoOpenSessionId) return
+    const target = sessions.find(s => s.id === autoOpenSessionId && !s.endedAt)
+    if (target) {
+      setActiveSession(target)
+    }
+    onClearAutoOpen?.()
+  }, [autoOpenSessionId, sessions, onClearAutoOpen])
 
   // Verificar se há sessão em andamento (sem endedAt)
   const ongoingSession: WorkoutSession | undefined = useMemo(() => {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { DietFoodItem } from '@/lib/types'
+import { DietFoodItem, DietTemplateFrequency } from '@/lib/types'
 import { parseHHMM, formatHHMM } from '@/lib/helpers'
 import {
   Dialog,
@@ -13,16 +13,28 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Plus, Trash } from '@phosphor-icons/react'
 
+const FREQUENCY_OPTIONS: { value: DietTemplateFrequency; label: string }[] = [
+  { value: 'manual', label: 'Manual (não aplicar automaticamente)' },
+  { value: 'daily', label: 'Todos os dias' },
+  { value: 'weekdays', label: 'Dias úteis (Seg–Sex)' },
+  { value: 'weekends', label: 'Finais de semana (Sáb–Dom)' },
+  { value: 'custom', label: 'Dias específicos' },
+]
+
+const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+
 interface MealTemplateDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSave: (name: string, timeMinutes: number, foods: DietFoodItem[]) => void
+  onSave: (name: string, timeMinutes: number, foods: DietFoodItem[], frequency: DietTemplateFrequency, daysOfWeek?: number[]) => void
   onDelete?: () => void
   title: string
   initialData?: {
     name: string
     timeMinutes: number
     foods: DietFoodItem[]
+    frequency?: DietTemplateFrequency
+    daysOfWeek?: number[]
   }
 }
 
@@ -37,6 +49,8 @@ export function MealTemplateDialog({
   const [name, setName] = useState('')
   const [time, setTime] = useState('12:00')
   const [foods, setFoods] = useState<DietFoodItem[]>([])
+  const [frequency, setFrequency] = useState<DietTemplateFrequency>('manual')
+  const [daysOfWeek, setDaysOfWeek] = useState<number[]>([])
   const [newFoodName, setNewFoodName] = useState('')
   const [newFoodQty, setNewFoodQty] = useState('')
   const [newFoodUnit, setNewFoodUnit] = useState('')
@@ -46,10 +60,14 @@ export function MealTemplateDialog({
       setName(initialData.name)
       setTime(formatHHMM(initialData.timeMinutes))
       setFoods(initialData.foods)
+      setFrequency(initialData.frequency ?? 'manual')
+      setDaysOfWeek(initialData.daysOfWeek ?? [])
     } else if (open) {
       setName('')
       setTime('12:00')
       setFoods([])
+      setFrequency('manual')
+      setDaysOfWeek([])
     }
     setNewFoodName('')
     setNewFoodQty('')
@@ -79,7 +97,11 @@ export function MealTemplateDialog({
     e.preventDefault()
     if (!name.trim()) return
     
-    onSave(name.trim(), parseHHMM(time), foods)
+    onSave(name.trim(), parseHHMM(time), foods, frequency, frequency === 'custom' ? daysOfWeek : undefined)
+  }
+
+  const toggleDay = (day: number) => {
+    setDaysOfWeek(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day].sort())
   }
 
   // Templates sugeridos
@@ -147,6 +169,44 @@ export function MealTemplateDialog({
                 onChange={(e) => setTime(e.target.value)}
               />
             </div>
+          </div>
+
+          {/* Frequência */}
+          <div className="space-y-2">
+            <Label htmlFor="template-frequency">Frequência</Label>
+            <select
+              id="template-frequency"
+              value={frequency}
+              onChange={(e) => setFrequency(e.target.value as DietTemplateFrequency)}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              {FREQUENCY_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+
+            {frequency === 'custom' && (
+              <div className="flex gap-1 flex-wrap pt-1">
+                {DAY_LABELS.map((label, idx) => (
+                  <Button
+                    key={idx}
+                    type="button"
+                    variant={daysOfWeek.includes(idx) ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-8 w-10 text-xs p-0"
+                    onClick={() => toggleDay(idx)}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              {frequency === 'manual'
+                ? 'Este template só será aplicado manualmente.'
+                : 'As refeições serão criadas automaticamente nos dias selecionados.'}
+            </p>
           </div>
 
           {/* Lista de alimentos */}

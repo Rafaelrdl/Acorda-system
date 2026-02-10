@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
@@ -18,11 +18,14 @@ import {
   Check, 
   X,
   Clock,
-  Fire,
-  Barbell
+  Barbell,
+  Play,
+  Pause,
+  Timer
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { SetLogDialog } from './SetLogDialog'
+import { formatPrescriptionBadge, formatStructureBadge } from './ExercisePrescriptionDialog'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,17 +71,36 @@ export function ActiveWorkoutView({
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [endNotes, setEndNotes] = useState('')
 
-  // Tempo decorrido
-  const elapsedMinutes = useMemo(() => {
-    return Math.floor((Date.now() - session.startedAt) / 60000)
+  // Série ativa: exercício em andamento
+  const [activeSeriesExerciseId, setActiveSeriesExerciseId] = useState<string | null>(null)
+  const [seriesStartedAt, setSeriesStartedAt] = useState<number | null>(null)
+  const [seriesElapsed, setSeriesElapsed] = useState(0)
+
+  // Cronômetro geral (vivo)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - session.startedAt) / 1000))
+    }, 1000)
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [session.startedAt])
 
-  // Tonelagem total
-  const totalTonnage = useMemo(() => {
-    return setLogs
-      .filter(log => !log.isWarmup)
-      .reduce((acc, log) => acc + (log.reps * log.weight), 0)
-  }, [setLogs])
+  // Timer da série ativa
+  useEffect(() => {
+    if (!seriesStartedAt) { setSeriesElapsed(0); return }
+    const id = setInterval(() => {
+      setSeriesElapsed(Math.floor((Date.now() - seriesStartedAt) / 1000))
+    }, 1000)
+    return () => clearInterval(id)
+  }, [seriesStartedAt])
+
+  const formatTimer = (totalSec: number) => {
+    const m = Math.floor(totalSec / 60)
+    const s = totalSec % 60
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+  }
 
   const getExercise = (exerciseId: string) => {
     return exercises.find(ex => ex.id === exerciseId)
@@ -181,13 +203,9 @@ export function ActiveWorkoutView({
         <div>
           <p className="font-medium text-sm">{plan?.name || 'Treino Livre'}</p>
           <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Clock size={12} />
-              {elapsedMinutes}min
-            </span>
-            <span className="flex items-center gap-1">
-              <Fire size={12} />
-              {totalTonnage.toLocaleString()}kg
+            <span className="flex items-center gap-1 font-mono">
+              <Timer size={12} />
+              {formatTimer(elapsedSeconds)}
             </span>
             <span className="flex items-center gap-1">
               <Barbell size={12} />
@@ -222,27 +240,60 @@ export function ActiveWorkoutView({
 
           return (
             <div key={item.id} className="p-3 rounded-lg border bg-card">
-              {/* Nome do exercício */}
+              {/* Nome do exercício + badges */}
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <p className="font-medium text-sm">{exercise.name}</p>
-                  {item.targetSets && (
-                    <p className="text-xs text-muted-foreground">
-                      Alvo: {item.targetSets}x
-                      {item.targetRepsMin && item.targetRepsMax
-                        ? `${item.targetRepsMin}-${item.targetRepsMax}`
-                        : item.targetRepsMin || item.targetRepsMax || ''}
-                    </p>
-                  )}
+                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                    {(() => {
+                      const pb = formatPrescriptionBadge(item)
+                      return pb ? <Badge variant="secondary" className="text-[10px]">{pb}</Badge> : null
+                    })()}
+                    {(() => {
+                      const sb = formatStructureBadge(item.prescription)
+                      return sb ? <Badge variant="outline" className="text-[10px]">{sb}</Badge> : null
+                    })()}
+                    {!item.prescription && item.targetSets && (
+                      <p className="text-xs text-muted-foreground">
+                        Alvo: {item.targetSets}x
+                        {item.targetRepsMin && item.targetRepsMax
+                          ? `${item.targetRepsMin}-${item.targetRepsMax}`
+                          : item.targetRepsMin || item.targetRepsMax || ''}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleAddSet(item.exerciseId)}
-                >
-                  <Plus size={14} className="mr-1" />
-                  Set
-                </Button>
+                <div className="flex items-center gap-1">
+                  {/* Botão Iniciar / Pausar série */}
+                  {activeSeriesExerciseId === item.exerciseId ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-amber-600 border-amber-400"
+                      onClick={() => { setActiveSeriesExerciseId(null); setSeriesStartedAt(null) }}
+                    >
+                      <Pause size={14} className="mr-1" />
+                      {formatTimer(seriesElapsed)}
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => { setActiveSeriesExerciseId(item.exerciseId); setSeriesStartedAt(Date.now()) }}
+                    >
+                      <Play size={14} className="mr-1" />
+                      Série
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleAddSet(item.exerciseId)}
+                  >
+                    <Plus size={14} className="mr-1" />
+                    Set
+                  </Button>
+                </div>
               </div>
 
               {/* Último registro (progressão) */}
@@ -306,10 +357,10 @@ export function ActiveWorkoutView({
                 </p>
               )}
 
-              {/* Subtotal do exercício */}
+              {/* Total de sets */}
               {exerciseSets.filter(s => !s.isWarmup).length > 0 && (
                 <div className="mt-2 pt-2 border-t text-xs text-muted-foreground text-right">
-                  Volume: {exerciseSets.filter(s => !s.isWarmup).reduce((acc, s) => acc + s.reps * s.weight, 0).toLocaleString()}kg
+                  {exerciseSets.filter(s => !s.isWarmup).length} séries efetivas
                 </div>
               )}
             </div>
@@ -337,7 +388,7 @@ export function ActiveWorkoutView({
           <AlertDialogHeader>
             <AlertDialogTitle>Finalizar Treino?</AlertDialogTitle>
             <AlertDialogDescription>
-              Você completou {setLogs.filter(l => !l.isWarmup).length} sets com {totalTonnage.toLocaleString()}kg de volume.
+              Você completou {setLogs.filter(l => !l.isWarmup).length} sets em {formatTimer(elapsedSeconds)}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">

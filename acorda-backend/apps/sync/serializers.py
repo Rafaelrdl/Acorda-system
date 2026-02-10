@@ -366,7 +366,7 @@ class DietMealTemplateSerializer(BaseSyncSerializer):
     class Meta(BaseSyncSerializer.Meta):
         model = DietMealTemplate
         fields = BaseSyncSerializer.Meta.fields + [
-            'name', 'default_time_minutes', 'foods'
+            'name', 'default_time_minutes', 'foods', 'frequency', 'days_of_week'
         ]
 
 

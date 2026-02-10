@@ -19,6 +19,7 @@ import {
   formatTime, 
   getDateKey,
   getSyncKey, 
+  softDelete,
   updateTimestamp 
 } from '@/lib/helpers'
 import { Plus, BookOpen, GraduationCap, Clock, ArrowRight, CalendarCheck, CheckCircle, Warning, Question } from '@phosphor-icons/react'
@@ -162,6 +163,27 @@ export function StudyCentral({ userId }: StudyCentralProps) {
   const handleEditSessionQuestions = (session: StudySession) => {
     setSessionForSelfTest(session)
     setShowSelfTestDialog(true)
+  }
+
+  // Handler para cancelar revisões futuras de uma sessão
+  const handleCancelUpcomingReviews = (sessionId: string) => {
+    setReviewScheduleItems((current) =>
+      (current || []).map(item =>
+        item.recordedSessionId === sessionId && !item.completed && item.scheduledDate > today
+          ? softDelete(item)
+          : item
+      )
+    )
+    toast.success('Revisões futuras canceladas')
+    setShowSessionDetails(false)
+    setSelectedSession(null)
+  }
+
+  // Obter revisões futuras pendentes de uma sessão
+  const getUpcomingReviewsForSession = (sessionId: string) => {
+    return activeReviewItems.filter(
+      item => item.recordedSessionId === sessionId && !item.completed && item.scheduledDate > today
+    )
   }
 
   return (
@@ -442,6 +464,8 @@ export function StudyCentral({ userId }: StudyCentralProps) {
             setShowSessionDetails(false)
             handleEditSessionQuestions(session)
           }}
+          upcomingReviews={getUpcomingReviewsForSession(selectedSession.id)}
+          onCancelUpcomingReviews={handleCancelUpcomingReviews}
         />
       )}
 

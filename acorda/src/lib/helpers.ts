@@ -43,6 +43,7 @@ import {
   DietFoodItem,
   DietMealTemplate,
   DietMealEntry,
+  DietTemplateFrequency,
   UserId,
   WorkoutPrescription,
   WorkoutTechnique,
@@ -1320,6 +1321,8 @@ export function createDietMealTemplate(
   defaultTimeMinutes: number,
   options: {
     foods?: DietFoodItem[]
+    frequency?: DietTemplateFrequency
+    daysOfWeek?: number[]
   } = {}
 ): DietMealTemplate {
   const now = Date.now()
@@ -1329,6 +1332,8 @@ export function createDietMealTemplate(
     name,
     defaultTimeMinutes,
     foods: options.foods || [],
+    frequency: options.frequency ?? 'manual',
+    daysOfWeek: options.daysOfWeek,
     createdAt: now,
     updatedAt: now,
   }

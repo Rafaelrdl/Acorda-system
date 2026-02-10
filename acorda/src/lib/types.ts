@@ -609,12 +609,16 @@ export interface DietFoodItem {
   unit?: string
 }
 
+export type DietTemplateFrequency = 'manual' | 'daily' | 'weekdays' | 'weekends' | 'custom'
+
 export interface DietMealTemplate {
   id: string
   userId: UserId
   name: string
   defaultTimeMinutes: number // 0-1439 (minutos desde meia-noite)
   foods: DietFoodItem[]
+  frequency?: DietTemplateFrequency // frequência de aplicação automática
+  daysOfWeek?: number[] // 0=Dom,1=Seg..6=Sáb (usado quando frequency='custom')
   createdAt: number
   updatedAt: number
 }
@@ -657,5 +661,6 @@ export interface WorkoutPlanDayStatus {
  */
 export interface WorkoutUiState {
   recommendedPlanId?: string
+  autoOpenSessionId?: string
   updatedAt: number
 }

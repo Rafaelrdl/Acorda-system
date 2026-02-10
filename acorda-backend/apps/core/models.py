@@ -728,9 +728,19 @@ class WorkoutSetLog(SyncableModel):
 class DietMealTemplate(SyncableModel):
     """Diet meal template."""
 
+    FREQUENCY_CHOICES = [
+        ('manual', 'Manual'),
+        ('daily', 'Diário'),
+        ('weekdays', 'Dias úteis'),
+        ('weekends', 'Finais de semana'),
+        ('custom', 'Personalizado'),
+    ]
+
     name = models.CharField('Nome', max_length=200)
     default_time_minutes = models.IntegerField('Horário padrão (min)')
     foods = models.JSONField('Alimentos', default=list, blank=True)
+    frequency = models.CharField('Frequência', max_length=20, choices=FREQUENCY_CHOICES, default='manual')
+    days_of_week = models.JSONField('Dias da semana', default=list, blank=True)
 
     class Meta:
         verbose_name = 'Template de Refeição'

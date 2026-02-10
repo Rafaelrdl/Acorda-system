@@ -15,6 +15,7 @@ import {
 import { getSyncKey, getDateKey, generateId, createGoogleCalendarConnection } from '@/lib/helpers'
 import { exportFinanceToCSV, exportStudyToMarkdown, exportReadingToMarkdown } from '@/lib/export'
 import { deleteAllUserData } from '@/lib/dataCleanup'
+import { storage } from '@/lib/sync-storage'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Calendar, ShieldCheck } from '@phosphor-icons/react'
 import { toast } from 'sonner'
@@ -72,7 +73,7 @@ async function requestAccessToken(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Google Identity Services not typed
   const google = (window as unknown as { google?: any }).google
   if (!google?.accounts?.oauth2?.initTokenClient) {
-    throw new Error('Google Identity Services indispon�vel')
+    throw new Error('Google Identity Services indisponível')
   }
 
   return new Promise((resolve, reject) => {
@@ -85,7 +86,7 @@ async function requestAccessToken(
           return
         }
         if (!response.access_token || !response.expires_in) {
-          reject(new Error('Resposta inv�lida do Google'))
+          reject(new Error('Resposta inválida do Google'))
           return
         }
         resolve({
@@ -149,7 +150,7 @@ function splitEventByDay(
         id: generateId(),
         userId,
         googleEventId: event.id,
-        title: event.summary || 'Sem t�tulo',
+        title: event.summary || 'Sem título',
         description: event.description,
         startTime: startMinutes,
         endTime: endMinutes,
@@ -229,7 +230,7 @@ export function IntegrationsCentral({
 
   const ensureAccessToken = async (prompt: '' | 'consent') => {
     if (!googleClientId) {
-      throw new Error('VITE_GOOGLE_CLIENT_ID n�o configurado')
+      throw new Error('VITE_GOOGLE_CLIENT_ID não configurado')
     }
 
     const now = Date.now()
@@ -330,7 +331,7 @@ export function IntegrationsCentral({
         updatedAt: syncedAt,
       }))
 
-      toast.success('Sincroniza��o conclu�da')
+      toast.success('Sincronização concluída')
     } catch (error: unknown) {
       const message = (error as { message?: string })?.message || 'Erro ao sincronizar com o Google Calendar'
       toast.error(message)
@@ -354,6 +355,18 @@ export function IntegrationsCentral({
 
   const handleExportReading = (): string => {
     return exportReadingToMarkdown(books || [], readingLogs || [], pdfHighlights || [])
+  }
+
+  const handleExportAllJSON = async (): Promise<string> => {
+    const allKeys = await storage.keys()
+    const userPrefix = `user_${userId}_`
+    const userKeys = allKeys.filter(k => k.startsWith(userPrefix))
+    const dump: Record<string, unknown> = {}
+    for (const key of userKeys) {
+      const entityName = key.replace(userPrefix, '')
+      dump[entityName] = await storage.get(key)
+    }
+    return JSON.stringify(dump, null, 2)
   }
 
   return (
@@ -387,6 +400,7 @@ export function IntegrationsCentral({
             onExportFinance={handleExportFinance}
             onExportStudy={handleExportStudy}
             onExportReading={handleExportReading}
+            onExportAllJSON={handleExportAllJSON}
           />
         </TabsContent>
       </Tabs>

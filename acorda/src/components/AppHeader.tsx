@@ -20,7 +20,6 @@ interface AppHeaderProps {
   onOpenProfile: () => void
   onOpenSettings: () => void
   onOpenModules: () => void
-  onOpenPrivacy: () => void
   onOpenIntegrations: () => void
   onLogout: () => void
 }
@@ -40,7 +39,6 @@ export function AppHeader({
   onOpenProfile,
   onOpenSettings,
   onOpenModules,
-  onOpenPrivacy,
   onOpenIntegrations,
   onLogout,
 }: AppHeaderProps) {
@@ -80,7 +78,6 @@ export function AppHeader({
           onOpenProfile={onOpenProfile}
           onOpenSettings={onOpenSettings}
           onOpenModules={onOpenModules}
-          onOpenPrivacy={onOpenPrivacy}
           onOpenIntegrations={onOpenIntegrations}
           onLogout={onLogout}
         />

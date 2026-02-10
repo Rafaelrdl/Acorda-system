@@ -767,6 +767,8 @@ class TestSyncEntityCreation(APITestCase):
             'name': 'Breakfast Template',
             'default_time_minutes': 480,
             'foods': [],
+            'frequency': 'weekdays',
+            'days_of_week': [],
             'created_at': self.now,
             'updated_at': self.now,
         })

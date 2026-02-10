@@ -1,8 +1,19 @@
+import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { StudySession, Subject } from '@/lib/types'
+import { StudySession, Subject, ReviewScheduleItem } from '@/lib/types'
 import { formatTime } from '@/lib/helpers'
-import { Clock, BookOpen, ListChecks, PencilSimple, CalendarBlank } from '@phosphor-icons/react'
+import { Clock, BookOpen, ListChecks, PencilSimple, CalendarBlank, XCircle } from '@phosphor-icons/react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface StudySessionDetailsDialogProps {
   open: boolean
@@ -10,6 +21,9 @@ interface StudySessionDetailsDialogProps {
   session: StudySession | null
   subject: Subject | null
   onEditQuestions: (session: StudySession) => void
+  /** Revisões futuras (não concluídas) desta sessão */
+  upcomingReviews?: ReviewScheduleItem[]
+  onCancelUpcomingReviews?: (sessionId: string) => void
 }
 
 export function StudySessionDetailsDialog({
@@ -18,10 +32,15 @@ export function StudySessionDetailsDialog({
   session,
   subject,
   onEditQuestions,
+  upcomingReviews,
+  onCancelUpcomingReviews,
 }: StudySessionDetailsDialogProps) {
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+
   if (!session) return null
 
   const hasQuestions = session.selfTestQuestions && session.selfTestQuestions.length > 0
+  const futureReviewCount = upcomingReviews?.length ?? 0
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -114,13 +133,50 @@ export function StudySessionDetailsDialog({
             </div>
           )}
 
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-between items-center pt-2">
+            {/* Cancelar próximas revisões */}
+            {futureReviewCount > 0 && onCancelUpcomingReviews && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive h-8 text-xs"
+                onClick={() => setShowCancelConfirm(true)}
+              >
+                <XCircle size={14} className="mr-1" />
+                Cancelar revisões ({futureReviewCount})
+              </Button>
+            )}
+            {(futureReviewCount === 0 || !onCancelUpcomingReviews) && <span />}
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Fechar
             </Button>
           </div>
         </div>
       </DialogContent>
+
+      {/* Confirmação de cancelamento */}
+      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar próximas revisões?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Isso removerá {futureReviewCount} revisão(ões) futura(s) pendente(s) desta sessão. As revisões já concluídas não serão afetadas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                onCancelUpcomingReviews?.(session.id)
+                setShowCancelConfirm(false)
+              }}
+            >
+              Cancelar revisões
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   )
 }
