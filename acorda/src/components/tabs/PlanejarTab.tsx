@@ -238,17 +238,13 @@ export function PlanejarTab({
         <TabsContent value="tarefas" className="space-y-4">
           {/* Header com botões de ação */}
           <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowProjectDialog(true)}>
-              <Plus size={16} className="mr-1" />
-              Projeto
-            </Button>
             <Button size="sm" onClick={() => setShowTaskDialog(true)}>
               <Plus size={16} className="mr-1" />
               Tarefa
             </Button>
           </div>
 
-          {pendingTasks.length === 0 ? (
+          {pendingTasks.length === 0 && completedTasks.length === 0 ? (
             <Card className="p-8">
               <div className="text-center">
                 <ListChecks size={48} className="mx-auto text-muted-foreground/30 mb-3" weight="light" />
