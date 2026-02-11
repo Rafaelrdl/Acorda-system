@@ -24,6 +24,10 @@ COPY . .
 # Collect static files (use dummy SECRET_KEY so the production guard doesn't fire)
 RUN SECRET_KEY=build-only-placeholder python manage.py collectstatic --noinput
 
+# Copy and set entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Create non-root user
 RUN adduser --disabled-password --gecos '' appuser && \
     chown -R appuser:appuser /app
@@ -32,5 +36,5 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Run gunicorn
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--threads", "4", "config.wsgi:application"]
