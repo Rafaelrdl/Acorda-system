@@ -466,6 +466,47 @@ class ApiClient {
       method: 'DELETE',
     })
   }
+
+  // ============ GOOGLE CALENDAR ============
+
+  /**
+   * Exchange Google auth code for tokens on the backend (Code Model).
+   */
+  async googleCalendarConnect(code: string, origin: string) {
+    return this.request<{
+      connection_id: string
+      connected: boolean
+      connected_at: number
+    }>('/integrations/google-calendar/connect/', {
+      method: 'POST',
+      body: JSON.stringify({ code, origin }),
+    })
+  }
+
+  /**
+   * Trigger backend-side fetch of Google Calendar events.
+   */
+  async googleCalendarSync() {
+    return this.request<{
+      imported_count: number
+      deleted_count: number
+      last_sync_at: number
+    }>('/integrations/google-calendar/sync/', {
+      method: 'POST',
+    })
+  }
+
+  /**
+   * Revoke tokens and deactivate Google Calendar connection.
+   */
+  async googleCalendarDisconnect() {
+    return this.request<{
+      disconnected: boolean
+      disconnected_at: number
+    }>('/integrations/google-calendar/disconnect/', {
+      method: 'POST',
+    })
+  }
 }
 
 // Types

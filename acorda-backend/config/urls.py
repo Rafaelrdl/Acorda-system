@@ -11,6 +11,7 @@ urlpatterns = [
     path('api/auth/', include('apps.accounts.urls')),
     path('api/billing/', include('apps.billing.urls')),
     path('api/sync/', include('apps.sync.urls')),
+    path('api/integrations/', include('apps.integrations.urls')),
     path('api/', include('apps.core.urls')),
 ]
 

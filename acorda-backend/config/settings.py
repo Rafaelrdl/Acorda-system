@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'apps.billing',
     'apps.core',
     'apps.sync',
+    'apps.integrations',
 ]
 
 MIDDLEWARE = [
@@ -266,6 +267,10 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     # Required when running behind a reverse proxy (nginx, ALB, Cloudflare, etc.)
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# ── Google OAuth (Code Model) ─────────────────────────────────
+GOOGLE_OAUTH_CLIENT_ID = config('GOOGLE_OAUTH_CLIENT_ID', default='')
+GOOGLE_OAUTH_CLIENT_SECRET = config('GOOGLE_OAUTH_CLIENT_SECRET', default='')
 
 # Cache – use Redis when available for shared deduplication across workers
 _REDIS_URL = config('REDIS_URL', default='')

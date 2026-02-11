@@ -12,28 +12,19 @@ import {
   PDFHighlight,
   StudySession,
 } from '@/lib/types'
-import { getSyncKey, getDateKey, generateId, createGoogleCalendarConnection } from '@/lib/helpers'
+import { getSyncKey, createGoogleCalendarConnection } from '@/lib/helpers'
 import { exportFinanceToCSV, exportStudyToMarkdown, exportReadingToMarkdown } from '@/lib/export'
 import { deleteAllUserData } from '@/lib/dataCleanup'
-import { storage } from '@/lib/sync-storage'
+import { storage, syncManager } from '@/lib/sync-storage'
+import { api } from '@/lib/api'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Calendar, ShieldCheck } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
 const GOOGLE_IDENTITY_SRC = 'https://accounts.google.com/gsi/client'
-const GOOGLE_CALENDAR_BASE = 'https://www.googleapis.com/calendar/v3'
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
 
 let googleIdentityPromise: Promise<void> | null = null
-
-type GoogleCalendarApiEvent = {
-  id: string
-  status?: string
-  summary?: string
-  description?: string
-  start?: { dateTime?: string; date?: string }
-  end?: { dateTime?: string; date?: string }
-}
 
 function loadGoogleIdentityScript(): Promise<void> {
   if (googleIdentityPromise) return googleIdentityPromise
@@ -64,142 +55,46 @@ function loadGoogleIdentityScript(): Promise<void> {
   return googleIdentityPromise
 }
 
-async function requestAccessToken(
-  clientId: string,
-  prompt: '' | 'consent'
-): Promise<{ accessToken: string; expiresAt: number }> {
+/**
+ * Request an authorization CODE via Google Identity Services (Code Model).
+ * The code is exchanged for tokens on the backend — tokens never touch the browser.
+ */
+async function requestAuthCode(clientId: string): Promise<string> {
   await loadGoogleIdentityScript()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Google Identity Services not typed
   const google = (window as unknown as { google?: any }).google
-  if (!google?.accounts?.oauth2?.initTokenClient) {
+  if (!google?.accounts?.oauth2?.initCodeClient) {
     throw new Error('Google Identity Services indisponível')
   }
 
   return new Promise((resolve, reject) => {
-    const tokenClient = google.accounts.oauth2.initTokenClient({
+    const codeClient = google.accounts.oauth2.initCodeClient({
       client_id: clientId,
       scope: GOOGLE_SCOPES,
-      callback: (response: { access_token?: string; expires_in?: number; error?: string; error_description?: string }) => {
+      ux_mode: 'popup',
+      callback: (response: { code?: string; error?: string; error_description?: string }) => {
         if (response.error) {
           reject(new Error(response.error_description || response.error))
           return
         }
-        if (!response.access_token || !response.expires_in) {
+        if (!response.code) {
           reject(new Error('Resposta inválida do Google'))
           return
         }
-        resolve({
-          accessToken: response.access_token,
-          expiresAt: Date.now() + response.expires_in * 1000,
-        })
+        resolve(response.code)
+      },
+      error_callback: (error: { type?: string; message?: string }) => {
+        if (error.type === 'popup_closed') {
+          reject(new Error('Popup fechado pelo usuário'))
+          return
+        }
+        reject(new Error(error.message || 'Erro no fluxo de autorização'))
       },
     })
 
-    tokenClient.requestAccessToken({ prompt })
+    codeClient.requestCode()
   })
-}
-
-function normalizeEventTimes(event: GoogleCalendarApiEvent): { start: Date; end: Date } | null {
-  const startValue = event.start?.dateTime || event.start?.date
-  const endValue = event.end?.dateTime || event.end?.date
-  if (!startValue || !endValue) return null
-
-  const start = event.start?.dateTime
-    ? new Date(startValue)
-    : new Date(`${startValue}T00:00:00`)
-
-  const end = event.end?.dateTime
-    ? new Date(endValue)
-    : new Date(`${endValue}T00:00:00`)
-
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
-    return null
-  }
-
-  return { start, end }
-}
-
-function splitEventByDay(
-  event: GoogleCalendarApiEvent,
-  userId: UserId,
-  start: Date,
-  end: Date,
-  syncedAt: number
-): GoogleCalendarEvent[] {
-  const entries: GoogleCalendarEvent[] = []
-  let cursor = new Date(start)
-
-  while (cursor < end) {
-    const dayKey = getDateKey(cursor)
-    const dayStart = new Date(cursor)
-    dayStart.setHours(0, 0, 0, 0)
-    const dayEnd = new Date(dayStart)
-    dayEnd.setDate(dayEnd.getDate() + 1)
-
-    const segmentEnd = end < dayEnd ? end : dayEnd
-    const startMinutes = cursor.getHours() * 60 + cursor.getMinutes()
-    let endMinutes = segmentEnd.getHours() * 60 + segmentEnd.getMinutes()
-
-    if (segmentEnd.getTime() === dayEnd.getTime()) {
-      endMinutes = 24 * 60
-    }
-
-    if (endMinutes > startMinutes) {
-      entries.push({
-        id: generateId(),
-        userId,
-        googleEventId: event.id,
-        title: event.summary || 'Sem título',
-        description: event.description,
-        startTime: startMinutes,
-        endTime: endMinutes,
-        date: dayKey,
-        isReadOnly: true,
-        lastSyncedAt: syncedAt,
-        createdAt: syncedAt,
-        updatedAt: syncedAt,
-      })
-    }
-
-    cursor = dayEnd
-  }
-
-  return entries
-}
-
-async function fetchGoogleEvents(
-  accessToken: string,
-  timeMin: Date,
-  timeMax: Date
-): Promise<GoogleCalendarApiEvent[]> {
-  const params = new URLSearchParams({
-    timeMin: timeMin.toISOString(),
-    timeMax: timeMax.toISOString(),
-    singleEvents: 'true',
-    orderBy: 'startTime',
-    maxResults: '2500',
-  })
-
-  const response = await fetch(`${GOOGLE_CALENDAR_BASE}/calendars/primary/events?${params.toString()}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  })
-
-  if (!response.ok) {
-    let message = `Erro ao buscar eventos (${response.status})`
-    try {
-      const data = await response.json()
-      message = data?.error?.message || message
-    } catch {
-      // ignore parse errors
-    }
-    throw new Error(message)
-  }
-
-  const data = await response.json()
-  return (data?.items || []) as GoogleCalendarApiEvent[]
 }
 
 interface IntegrationsCentralProps {
@@ -228,115 +123,98 @@ export function IntegrationsCentral({
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
 
-  const ensureAccessToken = async (prompt: '' | 'consent') => {
-    if (!googleClientId) {
-      throw new Error('VITE_GOOGLE_CLIENT_ID não configurado')
-    }
-
-    const now = Date.now()
-    if (connection?.accessToken && connection?.expiresAt && connection.expiresAt > now + 60_000) {
-      return connection.accessToken
-    }
-
-    const token = await requestAccessToken(googleClientId, prompt)
-
-    onUpdateConnection((current) => {
-      const base = current || createGoogleCalendarConnection(userId)
-      return {
-        ...base,
-        connected: true,
-        connectedAt: base.connectedAt || now,
-        accessToken: token.accessToken,
-        expiresAt: token.expiresAt,
-        updatedAt: now,
-      }
-    })
-
-    return token.accessToken
-  }
-
+  /**
+   * 1. Open Google consent popup (Code Model) → get authorization code
+   * 2. Send code to backend → backend exchanges for tokens, stores them securely
+   * 3. Sync to pull updated connection state into local KV
+   */
   const handleConnect = async () => {
-    try {
-      await ensureAccessToken('consent')
-      toast.success('Google Calendar conectado')
-    } catch (error: unknown) {
-      const message = (error as { message?: string })?.message || 'Erro ao conectar Google Calendar'
-      toast.error(message)
-    }
-  }
-
-  const handleDisconnect = async () => {
-    const now = Date.now()
-    if (connection?.accessToken) {
-      try {
-        await fetch('https://oauth2.googleapis.com/revoke', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: `token=${encodeURIComponent(connection.accessToken)}`,
-        })
-      } catch {
-        // ignore revoke errors
-      }
+    if (!googleClientId) {
+      toast.error('VITE_GOOGLE_CLIENT_ID não configurado')
+      return
     }
 
-    onUpdateConnection((current) => ({
-      ...(current || createGoogleCalendarConnection(userId)),
-      connected: false,
-      disconnectedAt: now,
-      accessToken: undefined,
-      expiresAt: undefined,
-      updatedAt: now,
-    }))
-    onUpdateEvents([])
-    toast.success('Desconectado do Google Calendar')
-  }
-
-  const handleSync = async () => {
-    setIsSyncing(true)
     try {
-      let accessToken: string
-      try {
-        accessToken = await ensureAccessToken(connection?.connected ? '' : 'consent')
-      } catch (error) {
-        if (connection?.connected) {
-          accessToken = await ensureAccessToken('consent')
-        } else {
-          throw error
-        }
-      }
-      const rangeStart = new Date()
-      rangeStart.setDate(rangeStart.getDate() - 7)
-      rangeStart.setHours(0, 0, 0, 0)
-      const rangeEnd = new Date()
-      rangeEnd.setDate(rangeEnd.getDate() + 60)
-      rangeEnd.setHours(23, 59, 59, 999)
+      const code = await requestAuthCode(googleClientId)
 
-      const apiEvents = await fetchGoogleEvents(accessToken, rangeStart, rangeEnd)
-      const syncedAt = Date.now()
+      const result = await api.googleCalendarConnect(code, 'postmessage')
 
-      const mappedEvents = apiEvents
-        .filter((event) => event.status !== 'cancelled')
-        .flatMap((event) => {
-          const times = normalizeEventTimes(event)
-          if (!times) return []
-          return splitEventByDay(event, userId, times.start, times.end, syncedAt)
-        })
-        .sort((a, b) => (a.date === b.date ? a.startTime - b.startTime : a.date.localeCompare(b.date)))
-
-      onUpdateEvents(mappedEvents)
+      // Optimistic local update
+      const now = Date.now()
       onUpdateConnection((current) => ({
         ...(current || createGoogleCalendarConnection(userId)),
         connected: true,
-        lastSyncAt: syncedAt,
-        updatedAt: syncedAt,
+        connectedAt: result.connected_at || now,
+        updatedAt: now,
+        // Tokens are NOT stored locally — they live only on the backend
+        accessToken: undefined,
+        refreshToken: undefined,
+        expiresAt: undefined,
       }))
 
-      toast.success('Sincronização concluída')
+      // Pull full state from backend via sync
+      await syncManager.sync()
+
+      toast.success('Google Calendar conectado')
+    } catch (error: unknown) {
+      const message = (error as { message?: string })?.message || 'Erro ao conectar Google Calendar'
+      if (!message.includes('popup_closed') && !message.includes('Popup fechado')) {
+        toast.error(message)
+      }
+    }
+  }
+
+  /**
+   * Backend fetches events from Google, upserts into DB,
+   * then syncManager.sync() pulls them into local KV.
+   */
+  const handleSync = async () => {
+    setIsSyncing(true)
+    try {
+      const result = await api.googleCalendarSync()
+
+      // Pull updated events from backend into local KV
+      await syncManager.sync()
+
+      toast.success(
+        `Sincronizado: ${result.imported_count} evento(s) importado(s)`
+      )
     } catch (error: unknown) {
       const message = (error as { message?: string })?.message || 'Erro ao sincronizar com o Google Calendar'
       toast.error(message)
     } finally {
       setIsSyncing(false)
+    }
+  }
+
+  /**
+   * Backend revokes tokens, clears credentials, soft-deletes events.
+   * Sync pulls the updated (disconnected) state.
+   */
+  const handleDisconnect = async () => {
+    try {
+      await api.googleCalendarDisconnect()
+
+      // Optimistic local update
+      const now = Date.now()
+      onUpdateConnection((current) => ({
+        ...(current || createGoogleCalendarConnection(userId)),
+        connected: false,
+        disconnectedAt: now,
+        accessToken: undefined,
+        refreshToken: undefined,
+        expiresAt: undefined,
+        updatedAt: now,
+      }))
+      onUpdateEvents([])
+
+      // Pull full state from backend via sync
+      await syncManager.sync()
+
+      toast.success('Desconectado do Google Calendar')
+    } catch (error: unknown) {
+      const message = (error as { message?: string })?.message || 'Erro ao desconectar Google Calendar'
+      toast.error(message)
     }
   }
 
