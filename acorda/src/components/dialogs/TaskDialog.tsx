@@ -74,7 +74,7 @@ export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyRe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md overflow-hidden">
+      <DialogContent className="max-w-md overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{task ? 'Editar Tarefa' : 'Nova Tarefa'}</DialogTitle>
         </DialogHeader>
@@ -88,6 +88,7 @@ export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyRe
               onChange={(e) => setTitle(e.target.value)}
               placeholder="O que precisa ser feito?"
               autoFocus
+              className="h-12"
             />
           </div>
 
@@ -102,11 +103,11 @@ export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyRe
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="task-status">Status</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as TaskStatus)}>
-                <SelectTrigger id="task-status">
+                <SelectTrigger id="task-status" className="h-12">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -120,7 +121,7 @@ export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyRe
             <div className="space-y-2">
               <Label htmlFor="task-energy">Energia</Label>
               <Select value={energyLevel} onValueChange={(v) => setEnergyLevel(v as EnergyLevel)}>
-                <SelectTrigger id="task-energy">
+                <SelectTrigger id="task-energy" className="h-12">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -139,6 +140,7 @@ export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyRe
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="trabalho, pessoal, urgente (separadas por vírgula)"
+              className="h-12"
             />
           </div>
 
@@ -146,7 +148,7 @@ export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyRe
             <div className="space-y-2">
               <Label htmlFor="task-kr">Vincular a resultado-chave (opcional)</Label>
               <Select value={keyResultId || '__none__'} onValueChange={(val) => setKeyResultId(val === '__none__' ? '' : val)}>
-                <SelectTrigger id="task-kr" className="w-full">
+                <SelectTrigger id="task-kr" className="w-full h-12">
                   <SelectValue placeholder="Nenhum" className="truncate" />
                 </SelectTrigger>
                 <SelectContent className="max-w-[calc(100vw-4rem)]">
@@ -169,12 +171,12 @@ export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyRe
             </div>
           )}
 
-          <div className="flex gap-2 pt-4">
-            <Button type="submit" className="flex-1" disabled={!title.trim()}>
-              {task ? 'Salvar' : 'Criar Tarefa'}
-            </Button>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="h-12 touch-target">
               Cancelar
+            </Button>
+            <Button type="submit" className="flex-1 h-12 touch-target" disabled={!title.trim()}>
+              {task ? 'Salvar' : 'Criar Tarefa'}
             </Button>
           </div>
         </form>

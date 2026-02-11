@@ -128,7 +128,7 @@ export function EvolucaoTab({
   const todayDietCompleted = todayDietMeals.filter(m => m.isCompleted).length
 
   return (
-    <div className="pb-24 px-4 pt-4 space-y-4 max-w-5xl mx-auto">
+    <div className="pb-24 px-4 pt-4 space-y-4 max-w-5xl mx-auto" style={{ paddingBottom: `calc(6rem + env(safe-area-inset-bottom, 0px))` }}>
       {/* Header com toggle de período */}
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold">Dashboard</h1>

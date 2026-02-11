@@ -53,19 +53,23 @@ export function CentralLayout({
   return (
     <div 
       ref={containerRef}
-      className="min-h-screen bg-background pb-24"
+      className="min-h-screen-safe bg-background"
+      style={{ paddingBottom: `calc(6rem + env(safe-area-inset-bottom, 0px))` }}
       role="region"
       aria-label={`Central ${title}`}
     >
       {/* Header fixo da Central */}
-      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border">
+      <header 
+        className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border"
+        style={{ paddingTop: `env(safe-area-inset-top, 0px)` }}
+      >
         <div className="flex items-center gap-3 p-4 max-w-4xl mx-auto">
           <Button
             variant="ghost"
             size="icon"
             onClick={onBack}
             aria-label={`Voltar e fechar ${title}`}
-            className="flex-shrink-0 -ml-2"
+            className="flex-shrink-0 -ml-2 touch-target"
           >
             <ArrowLeft className="w-5 h-5" aria-hidden="true" />
           </Button>

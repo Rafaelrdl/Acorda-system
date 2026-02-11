@@ -141,25 +141,25 @@ export function WeeklyCalendar({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={prevWeek}>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Button variant="outline" size="sm" onClick={prevWeek} className="touch-target flex items-center justify-center">
             <CaretLeft />
           </Button>
-          <Button variant="outline" size="sm" onClick={today}>
+          <Button variant="outline" size="sm" onClick={today} className="touch-target px-2 sm:px-3">
             Hoje
           </Button>
-          <Button variant="outline" size="sm" onClick={nextWeek}>
+          <Button variant="outline" size="sm" onClick={nextWeek} className="touch-target flex items-center justify-center">
             <CaretRight />
           </Button>
         </div>
         <div className="text-sm font-medium">
-          {currentWeekStart.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+          {currentWeekStart.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <div className="min-w-[700px]">
+      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+        <div className="min-w-[640px]">
           <div className="grid grid-cols-8 gap-1 mb-2">
             <div className="text-xs text-muted-foreground"></div>
             {weekDates.map((date) => {

@@ -30,28 +30,29 @@ export function QuickCapture({ open, onOpenChange, userId, onCapture }: QuickCap
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-auto max-h-[50vh]">
+      <SheetContent side="bottom" className="h-auto max-h-[60vh]">
         <SheetHeader>
           <SheetTitle>Captura Rápida</SheetTitle>
         </SheetHeader>
         
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4 pb-4">
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4 px-4 pb-4">
           <Input
             id="quick-capture-input"
             placeholder="O que está na sua mente?"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             autoFocus
-            className="text-base"
+            className="text-base h-12"
           />
           
           <div className="flex gap-2">
-            <Button type="submit" className="flex-1" disabled={!content.trim()}>
+            <Button type="submit" className="flex-1 h-12 touch-target" disabled={!content.trim()}>
               Adicionar à Inbox
             </Button>
             <Button 
               type="button" 
               variant="outline"
+              className="h-12 touch-target"
               onClick={() => onOpenChange(false)}
             >
               Cancelar

@@ -657,8 +657,8 @@ function MainApp({ user }: { user: User }) {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-12">
-      <AppHeader 
+    <div className="min-h-screen-safe bg-background" style={{ paddingTop: `calc(3.5rem + env(safe-area-inset-top, 0px))` }}>
+      <AppHeader
         activeTab={activeTab} 
         centralTitle={activeCentral ? CENTRAL_TITLES[activeCentral] : null}
         user={userInfo}

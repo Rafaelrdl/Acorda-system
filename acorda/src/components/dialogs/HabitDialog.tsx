@@ -286,12 +286,12 @@ export function HabitDialog({
             </div>
           )}
 
-          <div className="flex gap-2 pt-4">
-            <Button type="submit" className="flex-1">
-              {habit ? 'Salvar' : 'Criar Hábito'}
-            </Button>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="h-12 touch-target">
               Cancelar
+            </Button>
+            <Button type="submit" className="flex-1 h-12 touch-target">
+              {habit ? 'Salvar' : 'Criar Hábito'}
             </Button>
           </div>
         </form>

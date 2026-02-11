@@ -45,7 +45,7 @@ export function AppHeader({
   const contextTitle = centralTitle || TAB_TITLES[activeTab]
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-b border-border/50 z-50 safe-area-top">
+    <header className="fixed top-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-b border-border/50 z-50 pt-[env(safe-area-inset-top,0px)]">
       <div className="flex items-center justify-between h-14 px-4 max-w-5xl mx-auto">
         {/* Menu de Centrais + Branding */}
         <div className="flex items-center gap-3">

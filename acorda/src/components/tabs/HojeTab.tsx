@@ -420,7 +420,7 @@ export function HojeTab({
   })
 
   return (
-    <div className="pb-24 px-4 pt-4 max-w-5xl mx-auto">
+    <div className="pb-24 px-4 pt-4 max-w-5xl mx-auto" style={{ paddingBottom: `calc(6rem + env(safe-area-inset-bottom, 0px))` }}>
       {/* Header com data */}
       <div className="mb-4">
         <p className="text-sm text-muted-foreground capitalize">{dateFormatted}</p>
