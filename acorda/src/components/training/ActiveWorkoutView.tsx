@@ -240,11 +240,47 @@ export function ActiveWorkoutView({
 
           return (
             <div key={item.id} className="p-3 rounded-lg border bg-card">
-              {/* Nome do exercício + badges */}
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <p className="font-medium text-sm">{exercise.name}</p>
-                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              {/* Nome do exercício + badges + botões */}
+              <div className="mb-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{exercise.name}</p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {/* Botão Iniciar / Pausar série */}
+                    {activeSeriesExerciseId === item.exerciseId ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-amber-600 border-amber-400 h-8 text-xs"
+                        onClick={() => { setActiveSeriesExerciseId(null); setSeriesStartedAt(null) }}
+                      >
+                        <Pause size={14} className="mr-1" />
+                        {formatTimer(seriesElapsed)}
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        onClick={() => { setActiveSeriesExerciseId(item.exerciseId); setSeriesStartedAt(Date.now()) }}
+                      >
+                        <Play size={14} className="mr-1" />
+                        Série
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs"
+                      onClick={() => handleAddSet(item.exerciseId)}
+                    >
+                      <Plus size={14} className="mr-1" />
+                      Set
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                     {(() => {
                       const pb = formatPrescriptionBadge(item)
                       return pb ? <Badge variant="secondary" className="text-[10px]">{pb}</Badge> : null
@@ -262,38 +298,6 @@ export function ActiveWorkoutView({
                       </p>
                     )}
                   </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  {/* Botão Iniciar / Pausar série */}
-                  {activeSeriesExerciseId === item.exerciseId ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-amber-600 border-amber-400"
-                      onClick={() => { setActiveSeriesExerciseId(null); setSeriesStartedAt(null) }}
-                    >
-                      <Pause size={14} className="mr-1" />
-                      {formatTimer(seriesElapsed)}
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => { setActiveSeriesExerciseId(item.exerciseId); setSeriesStartedAt(Date.now()) }}
-                    >
-                      <Play size={14} className="mr-1" />
-                      Série
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleAddSet(item.exerciseId)}
-                  >
-                    <Plus size={14} className="mr-1" />
-                    Set
-                  </Button>
-                </div>
               </div>
 
               {/* Último registro (progressão) */}

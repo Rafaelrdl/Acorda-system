@@ -265,12 +265,12 @@ export function StudyCentral({ userId }: StudyCentralProps) {
                   tabIndex={0}
                   onKeyDown={(e) => e.key === 'Enter' && handleOpenSessionDetails(session)}
                 >
-                  <div className="flex flex-col">
+                  <div className="flex flex-col flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      {isOverdue && <Warning size={14} className="text-destructive" />}
-                      <span className="text-sm font-medium">{getReviewSubject(item)}</span>
+                      {isOverdue && <Warning size={14} className="text-destructive shrink-0" />}
+                      <span className="text-sm font-medium truncate">{getReviewSubject(item)}</span>
                       {questionCount > 0 && (
-                        <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                        <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded shrink-0">
                           {questionCount} pergunta{questionCount > 1 ? 's' : ''}
                         </span>
                       )}
@@ -315,11 +315,11 @@ export function StudyCentral({ userId }: StudyCentralProps) {
                   tabIndex={0}
                   onKeyDown={(e) => e.key === 'Enter' && handleOpenSessionDetails(session)}
                 >
-                  <div className="flex flex-col">
+                  <div className="flex flex-col flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{getReviewSubject(item)}</span>
+                      <span className="text-sm font-medium truncate">{getReviewSubject(item)}</span>
                       {questionCount > 0 && (
-                        <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                        <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded shrink-0">
                           {questionCount}
                         </span>
                       )}
@@ -377,16 +377,16 @@ export function StudyCentral({ userId }: StudyCentralProps) {
                   tabIndex={0}
                   onKeyDown={(e) => e.key === 'Enter' && handleOpenSubjectSessions(subject)}
                 >
-                  <div className="flex items-center gap-2">
-                    <BookOpen size={18} className="text-primary" weight="duotone" />
-                    <span className="font-medium text-sm">{subject.name}</span>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <BookOpen size={18} className="text-primary shrink-0" weight="duotone" />
+                    <span className="font-medium text-sm truncate">{subject.name}</span>
                     {totalQuestions > 0 && (
-                      <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                      <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded shrink-0">
                         {totalQuestions} pergunta{totalQuestions > 1 ? 's' : ''}
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs text-muted-foreground shrink-0">
                     {subjectSessions.length} sessões · {formatTime(totalTime)}
                   </div>
                 </div>

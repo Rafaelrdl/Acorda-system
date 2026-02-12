@@ -105,7 +105,7 @@ export function ProgressoTab({
                 onClick={() => setSelectedExerciseId(exercise.id)}
                 className="w-full text-left p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
               >
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{exercise.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
@@ -120,13 +120,13 @@ export function ProgressoTab({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    {/* Sparkline */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {/* Sparkline - escondido em telas muito pequenas */}
                     {sparklineData.length > 1 && (
                       <Sparkline 
                         data={sparklineData} 
-                        width={60} 
-                        height={24}
+                        width={48} 
+                        height={20}
                         color={trend.trend === 'up' ? '#22c55e' : trend.trend === 'down' ? '#ef4444' : '#888'}
                       />
                     )}

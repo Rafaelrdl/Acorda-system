@@ -337,55 +337,56 @@ export function TransactionsTab({
                 return (
                   <div
                     key={transaction.id}
-                    className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/5 transition-colors group"
+                    className="p-3 rounded-lg border border-border hover:bg-accent/5 transition-colors group"
                   >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className={`p-1.5 rounded-full ${
-                        transaction.type === 'income' ? 'bg-accent/10' : 'bg-destructive/10'
-                      }`}>
-                        {transaction.type === 'income' ? (
-                          <TrendUp className="w-4 h-4 text-accent" />
-                        ) : (
-                          <TrendDown className="w-4 h-4 text-destructive" />
+                    {/* Linha 1: Ícone + Descrição + Valor */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className={`p-1.5 rounded-full shrink-0 ${
+                          transaction.type === 'income' ? 'bg-accent/10' : 'bg-destructive/10'
+                        }`}>
+                          {transaction.type === 'income' ? (
+                            <TrendUp className="w-4 h-4 text-accent" />
+                          ) : (
+                            <TrendDown className="w-4 h-4 text-destructive" />
+                          )}
+                        </div>
+                        <p className="font-medium text-sm truncate">
+                          {transaction.description}
+                        </p>
+                        {transaction.aiSuggested && (
+                          <Sparkle className="w-3 h-3 text-accent flex-shrink-0" />
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-sm truncate">
-                            {transaction.description}
-                          </p>
-                          {transaction.aiSuggested && (
-                            <Sparkle className="w-3 h-3 text-accent flex-shrink-0" />
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {category && (
-                            <Badge variant="secondary" className="text-xs">
-                              {category.name}
-                            </Badge>
-                          )}
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(transaction.date).toLocaleDateString('pt-BR')}
-                          </span>
-                          {account && (
-                            <span className="text-xs text-muted-foreground">
-                              • {account.name}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      <p className={`font-semibold ${
+                      <p className={`font-semibold text-sm whitespace-nowrap shrink-0 ${
                         transaction.type === 'income' ? 'text-accent' : 'text-foreground'
                       }`}>
                         {transaction.type === 'income' ? '+' : '-'}
                         {formatCurrency(transaction.amount)}
                       </p>
+                    </div>
+                    {/* Linha 2: Badges + Data + Conta */}
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5 ml-9">
+                      {category && (
+                        <Badge variant="secondary" className="text-xs">
+                          {category.name}
+                        </Badge>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(transaction.date).toLocaleDateString('pt-BR')}
+                      </span>
+                      {account && (
+                        <span className="text-xs text-muted-foreground">
+                          • {account.name}
+                        </span>
+                      )}
+                    </div>
+                    {/* Linha 3: Botão excluir */}
+                    <div className="flex justify-end mt-1.5">
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                        className="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
                         onClick={() => handleDeleteTransaction(transaction.id)}
                       >
                         <Trash className="w-4 h-4 text-destructive" />

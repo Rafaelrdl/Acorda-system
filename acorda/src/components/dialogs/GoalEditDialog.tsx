@@ -362,7 +362,7 @@ export function GoalEditDialog({
                                   type="button"
                                   size="sm"
                                   variant="ghost"
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
+                                  className="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
                                   onClick={() => handleRemoveCheckpoint(kr.id, checkpoint.id)}
                                   aria-label={`Remover checkpoint ${checkpoint.title}`}
                                 >

@@ -713,7 +713,7 @@ export function HojeTab({
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="h-6 px-2 text-xs"
+                                  className="h-8 px-3 text-xs"
                                   onClick={() => handleStartTodayWorkout(plan.id)}
                                 >
                                   Treinar
@@ -832,35 +832,38 @@ export function HojeTab({
                   return (
                     <div 
                       key={expense.id}
-                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                      className={`p-3 rounded-lg border transition-colors ${
                         isLate 
                           ? 'bg-destructive/10 border-destructive/30' 
                           : 'bg-accent/10 border-accent/20 hover:border-accent/40'
                       }`}
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium truncate">{expense.name}</p>
-                          <Badge 
-                            variant={isLate ? 'destructive' : 'secondary'} 
-                            className="text-xs px-1.5 py-0 shrink-0"
-                          >
-                            {isLate && <Warning size={10} className="mr-0.5" weight="fill" />}
-                            {daysText}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {category?.name || 'Sem categoria'} • Dia {dayOfMonth}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0 ml-2">
-                        <p className="font-semibold text-destructive text-sm">
+                      {/* Linha 1: Nome + Valor */}
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium truncate">{expense.name}</p>
+                        <p className="font-semibold text-destructive text-sm whitespace-nowrap shrink-0">
                           {formatCurrency(Number(expense.amount))}
                         </p>
+                      </div>
+                      {/* Linha 2: Badge + Categoria */}
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                        <Badge 
+                          variant={isLate ? 'destructive' : 'secondary'} 
+                          className="text-xs px-1.5 py-0"
+                        >
+                          {isLate && <Warning size={10} className="mr-0.5" weight="fill" />}
+                          {daysText}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {category?.name || 'Sem categoria'} • Dia {dayOfMonth}
+                        </span>
+                      </div>
+                      {/* Linha 3: Botão Pagar */}
+                      <div className="flex justify-end mt-2">
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-7 px-2"
+                          className="h-8 px-3"
                           onClick={() => handleConfirmExpense(expense)}
                         >
                           <Check size={14} className="mr-1" />

@@ -504,7 +504,7 @@ export function PlanejarTab({
                                         type="button"
                                         size="sm"
                                         variant="ghost"
-                                        className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
+                                        className="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0"
                                         onClick={() => onDeleteTask(checkpoint.id)}
                                         aria-label={`Remover checkpoint ${checkpoint.title}`}
                                       >
@@ -678,7 +678,7 @@ export function PlanejarTab({
                           </span>
                         </div>
                       </div>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                         <Button 
                           size="sm" 
                           variant="ghost" 
