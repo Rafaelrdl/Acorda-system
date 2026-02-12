@@ -44,7 +44,7 @@ export function ReadingCentral({
   const [activeTab, setActiveTab] = useState('livros')
 
   return (
-    <div className="pb-24 px-4 max-w-5xl mx-auto">
+    <div className="pb-24 px-4 max-w-5xl mx-auto overflow-x-hidden">
       <div className="space-y-4 pt-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">

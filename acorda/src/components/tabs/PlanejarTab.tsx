@@ -138,7 +138,7 @@ export function PlanejarTab({
   const activeHabits = filterDeleted(habits).filter(h => h.isActive)
 
   return (
-    <div className="pb-24 px-4 pt-4 max-w-5xl mx-auto" style={{ paddingBottom: `calc(6rem + env(safe-area-inset-bottom, 0px))` }}>
+    <div className="pb-24 px-4 pt-4 max-w-5xl mx-auto overflow-x-hidden" style={{ paddingBottom: `calc(6rem + env(safe-area-inset-bottom, 0px))` }}>
       <Tabs defaultValue="inbox" className="space-y-4">
         {/* Tabs com scroll horizontal para mobile */}
         <TabsList className="w-full justify-start gap-1 overflow-x-auto flex-nowrap bg-transparent p-0 h-auto">
@@ -388,7 +388,7 @@ export function PlanejarTab({
         </TabsContent>
 
         <TabsContent value="semana" className="space-y-4">
-          <Card className="p-4">
+          <Card className="p-4 overflow-hidden">
             <WeeklyCalendar
               userId={userId}
               calendarBlocks={filterDeleted(calendarBlocks)}
@@ -1069,13 +1069,13 @@ function TaskList({
             )}
           </div>
           <div className="flex gap-0.5 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-            <Button size="sm" variant="ghost" className="h-10 w-10 p-0 touch-target hover:bg-primary/10 hover:text-primary" onClick={() => onSchedule(task)} title="Programar na semana">
+            <Button size="sm" variant="ghost" className="h-8 w-8 md:h-10 md:w-10 p-0 touch-target hover:bg-primary/10 hover:text-primary" onClick={() => onSchedule(task)} title="Programar na semana">
               <Play size={16} weight="fill" />
             </Button>
-            <Button size="sm" variant="ghost" className="h-10 w-10 p-0 touch-target" onClick={() => onEdit(task)} title="Editar">
+            <Button size="sm" variant="ghost" className="h-8 w-8 md:h-10 md:w-10 p-0 touch-target" onClick={() => onEdit(task)} title="Editar">
               <PencilSimple size={16} />
             </Button>
-            <Button size="sm" variant="ghost" className="h-10 w-10 p-0 touch-target hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(task)} title="Excluir">
+            <Button size="sm" variant="ghost" className="h-8 w-8 md:h-10 md:w-10 p-0 touch-target hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(task)} title="Excluir">
               <Trash size={16} />
             </Button>
           </div>

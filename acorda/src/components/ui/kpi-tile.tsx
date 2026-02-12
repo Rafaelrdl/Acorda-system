@@ -38,7 +38,7 @@ export function KpiTile({
       onClick={onClick}
       className={cn(
         'flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50',
-        'w-full text-left',
+        'min-w-0 w-full text-left',
         onClick && [
           'cursor-pointer transition-all duration-200',
           'hover:bg-accent/50 hover:border-border',

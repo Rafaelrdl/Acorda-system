@@ -329,7 +329,7 @@ export function ExercisePrescriptionDialog({
             
             {/* Presets */}
             {!useStructure && (
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                 {PRESETS.map((preset) => (
                   <button
                     key={preset.label}

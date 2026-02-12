@@ -187,7 +187,7 @@ export function StudyCentral({ userId }: StudyCentralProps) {
   }
 
   return (
-    <div className="space-y-6 pb-24 px-4 max-w-5xl mx-auto pt-4">
+    <div className="space-y-6 pb-24 px-4 max-w-5xl mx-auto pt-4 overflow-x-hidden">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -197,7 +197,7 @@ export function StudyCentral({ userId }: StudyCentralProps) {
       </div>
       
       {/* KPI Row */}
-      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide md:grid md:grid-cols-3">
+      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide md:grid md:grid-cols-3 [&>*]:flex-shrink-0 [&>*]:min-w-[140px] [&>*]:md:min-w-0">
         <KpiTile
           icon={<Clock size={20} weight="duotone" />}
           value={formatTime(totalStudyTime)}

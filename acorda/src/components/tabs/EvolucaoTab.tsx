@@ -128,7 +128,7 @@ export function EvolucaoTab({
   const todayDietCompleted = todayDietMeals.filter(m => m.isCompleted).length
 
   return (
-    <div className="pb-24 px-4 pt-4 space-y-4 max-w-5xl mx-auto" style={{ paddingBottom: `calc(6rem + env(safe-area-inset-bottom, 0px))` }}>
+    <div className="pb-24 px-4 pt-4 space-y-4 max-w-5xl mx-auto overflow-x-hidden" style={{ paddingBottom: `calc(6rem + env(safe-area-inset-bottom, 0px))` }}>
       {/* Header com toggle de período */}
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold">Dashboard</h1>
@@ -136,7 +136,7 @@ export function EvolucaoTab({
       </div>
       
       {/* KPI Row - scroll horizontal no mobile */}
-      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide md:grid md:grid-cols-4">
+      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide md:grid md:grid-cols-4 [&>*]:flex-shrink-0 [&>*]:min-w-[140px] [&>*]:md:min-w-0">
         <KpiTile
           icon={<Target size={20} weight="duotone" />}
           value={`${avgGoalProgress}%`}
@@ -172,7 +172,7 @@ export function EvolucaoTab({
       
       {/* Row 2: KPIs de Treino e Dieta (somente se houver dados) */}
       {(hasTrainingData || hasDietData) && (
-        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide md:grid md:grid-cols-4">
+        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide md:grid md:grid-cols-4 [&>*]:flex-shrink-0 [&>*]:min-w-[140px] [&>*]:md:min-w-0">
           {hasTrainingData && (
             <>
               <KpiTile
@@ -368,7 +368,7 @@ export function EvolucaoTab({
         title={`Tendências (${period}d vs anterior)`}
         icon={<TrendUp size={18} weight="duotone" />}
       >
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
           <div className="text-center">
             <div className="text-xs text-muted-foreground mb-1">Foco</div>
             <TrendIndicator 

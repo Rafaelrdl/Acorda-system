@@ -25,7 +25,7 @@ export function TrainingCentral({ userId }: TrainingCentralProps) {
   const [workoutUiState, setWorkoutUiState] = useKV<WorkoutUiState>(getSyncKey(userId, 'workoutUiState'), { updatedAt: 0 })
 
   return (
-    <div className="pb-24 px-4 max-w-5xl mx-auto">
+    <div className="pb-24 px-4 max-w-5xl mx-auto overflow-x-hidden">
       <div className="space-y-4 pt-4">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
           <TabsList className="grid w-full grid-cols-3">
