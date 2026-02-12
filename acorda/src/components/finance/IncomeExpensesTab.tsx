@@ -438,29 +438,29 @@ export function IncomeExpensesTab({
               return (
                 <div
                   key={income.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-background border border-border"
+                  className="flex items-start justify-between gap-2 p-3 rounded-lg bg-background border border-border"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="p-1.5 rounded-full bg-accent/10">
+                  <div className="flex items-start gap-2 min-w-0 flex-1">
+                    <div className="p-1.5 rounded-full bg-accent/10 shrink-0">
                       <TrendUp className="w-4 h-4 text-accent" />
                     </div>
-                    <div>
-                      <p className="font-medium text-sm">{income.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate">{income.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
                         Dia {income.dayOfMonth || 1} • {account?.name}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <p className="font-semibold text-accent">
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1.5 shrink-0">
+                    <p className="font-semibold text-accent text-sm whitespace-nowrap">
                       +{formatCurrency(income.amount)}
                     </p>
                     <Button
                       size="sm"
                       onClick={() => handleConfirmIncome(income)}
-                      className="gap-1"
+                      className="gap-1 h-7 text-xs px-2"
                     >
-                      <Check className="w-4 h-4" />
+                      <Check className="w-3.5 h-3.5" />
                       Confirmar
                     </Button>
                   </div>
@@ -474,30 +474,30 @@ export function IncomeExpensesTab({
               return (
                 <div
                   key={expense.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-background border border-border"
+                  className="flex items-start justify-between gap-2 p-3 rounded-lg bg-background border border-border"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="p-1.5 rounded-full bg-destructive/10">
+                  <div className="flex items-start gap-2 min-w-0 flex-1">
+                    <div className="p-1.5 rounded-full bg-destructive/10 shrink-0">
                       <TrendDown className="w-4 h-4 text-destructive" />
                     </div>
-                    <div>
-                      <p className="font-medium text-sm">{expense.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate">{expense.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
                         {category?.name} • Dia {expense.dayOfMonth || 1} • {account?.name}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <p className="font-semibold text-destructive">
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1.5 shrink-0">
+                    <p className="font-semibold text-destructive text-sm whitespace-nowrap">
                       -{formatCurrency(expense.amount)}
                     </p>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => handleConfirmExpense(expense)}
-                      className="gap-1"
+                      className="gap-1 h-7 text-xs px-2"
                     >
-                      <Check className="w-4 h-4" />
+                      <Check className="w-3.5 h-3.5" />
                       Confirmar
                     </Button>
                   </div>
@@ -632,55 +632,64 @@ export function IncomeExpensesTab({
                 return (
                   <div
                     key={income.id}
-                    className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-secondary/30 transition-colors group"
+                    className="p-3 rounded-lg border border-border hover:bg-secondary/30 transition-colors group"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-sm">{income.name}</p>
-                        {income.autoConfirm ? (
-                          <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                            <Lightning className="w-3 h-3 mr-0.5" weight="fill" />
-                            Auto
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs px-1.5 py-0">
-                            <Clock className="w-3 h-3 mr-0.5" />
-                            Manual
-                          </Badge>
-                        )}
-                        {isConfirmedThisMonth && (
-                          <Badge className="text-xs px-1.5 py-0 bg-accent/20 text-accent border-0">
-                            <Check className="w-3 h-3 mr-0.5" weight="bold" />
-                            Confirmado
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {income.frequency ? frequencyLabels[income.frequency] : 'Mensal'}
-                        {income.dayOfMonth && ` • Dia ${income.dayOfMonth}`}
-                        {account && ` • ${account.name}`}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-accent">
+                    {/* Linha 1: Nome + Valor */}
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-medium text-sm truncate">{income.name}</p>
+                      <p className="font-semibold text-accent text-sm whitespace-nowrap shrink-0">
                         {formatCurrency(income.amount)}
                       </p>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                        onClick={() => openEditIncome(income)}
-                      >
-                        <PencilSimple className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                        onClick={() => handleDeleteIncome(income.id)}
-                      >
-                        <Trash className="w-4 h-4 text-destructive" />
-                      </Button>
+                    </div>
+
+                    {/* Linha 2: Badges */}
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                      {income.autoConfirm ? (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+                          <Lightning className="w-3 h-3 mr-0.5" weight="fill" />
+                          Auto
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+                          <Clock className="w-3 h-3 mr-0.5" />
+                          Manual
+                        </Badge>
+                      )}
+                      {isConfirmedThisMonth && (
+                        <Badge className="text-[10px] px-1.5 py-0 bg-accent/20 text-accent border-0 shrink-0">
+                          <Check className="w-3 h-3 mr-0.5" weight="bold" />
+                          Confirmado
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Linha 3: Detalhes + Ações */}
+                    <div className="flex items-center justify-between mt-1.5">
+                      <p className="text-xs text-muted-foreground truncate">
+                        {income.frequency ? frequencyLabels[income.frequency] : 'Mensal'}
+                        {income.dayOfMonth && ` · Dia ${income.dayOfMonth}`}
+                        {account && ` · ${account.name}`}
+                      </p>
+                      <div className="flex items-center gap-0.5 shrink-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={() => openEditIncome(income)}
+                          title="Editar"
+                        >
+                          <PencilSimple className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={() => handleDeleteIncome(income.id)}
+                          title="Excluir"
+                        >
+                          <Trash className="w-3.5 h-3.5 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )
@@ -836,56 +845,65 @@ export function IncomeExpensesTab({
                 return (
                   <div
                     key={expense.id}
-                    className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-secondary/30 transition-colors group"
+                    className="p-3 rounded-lg border border-border hover:bg-secondary/30 transition-colors group"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-sm">{expense.name}</p>
-                        {expense.autoConfirm ? (
-                          <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                            <Lightning className="w-3 h-3 mr-0.5" weight="fill" />
-                            Auto
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs px-1.5 py-0">
-                            <Clock className="w-3 h-3 mr-0.5" />
-                            Manual
-                          </Badge>
-                        )}
-                        {isConfirmedThisMonth && (
-                          <Badge className="text-xs px-1.5 py-0 bg-destructive/20 text-destructive border-0">
-                            <Check className="w-3 h-3 mr-0.5" weight="bold" />
-                            Confirmado
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {category?.name || 'Sem categoria'}
-                        {expense.frequency && ` • ${frequencyLabels[expense.frequency]}`}
-                        {expense.dayOfMonth && ` • Dia ${expense.dayOfMonth}`}
-                        {account && ` • ${account.name}`}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-destructive">
+                    {/* Linha 1: Nome + Valor */}
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-medium text-sm truncate">{expense.name}</p>
+                      <p className="font-semibold text-destructive text-sm whitespace-nowrap shrink-0">
                         {formatCurrency(expense.amount)}
                       </p>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                        onClick={() => openEditExpense(expense)}
-                      >
-                        <PencilSimple className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                        onClick={() => handleDeleteExpense(expense.id)}
-                      >
-                        <Trash className="w-4 h-4 text-destructive" />
-                      </Button>
+                    </div>
+
+                    {/* Linha 2: Badges */}
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                      {expense.autoConfirm ? (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+                          <Lightning className="w-3 h-3 mr-0.5" weight="fill" />
+                          Auto
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+                          <Clock className="w-3 h-3 mr-0.5" />
+                          Manual
+                        </Badge>
+                      )}
+                      {isConfirmedThisMonth && (
+                        <Badge className="text-[10px] px-1.5 py-0 bg-destructive/20 text-destructive border-0 shrink-0">
+                          <Check className="w-3 h-3 mr-0.5" weight="bold" />
+                          Confirmado
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Linha 3: Detalhes + Ações */}
+                    <div className="flex items-center justify-between mt-1.5">
+                      <p className="text-xs text-muted-foreground truncate">
+                        {category?.name || 'Sem categoria'}
+                        {expense.frequency && ` · ${frequencyLabels[expense.frequency]}`}
+                        {expense.dayOfMonth && ` · Dia ${expense.dayOfMonth}`}
+                        {account && ` · ${account.name}`}
+                      </p>
+                      <div className="flex items-center gap-0.5 shrink-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={() => openEditExpense(expense)}
+                          title="Editar"
+                        >
+                          <PencilSimple className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={() => handleDeleteExpense(expense.id)}
+                          title="Excluir"
+                        >
+                          <Trash className="w-3.5 h-3.5 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )

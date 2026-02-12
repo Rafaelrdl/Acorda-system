@@ -140,54 +140,54 @@ export function PlanejarTab({
   return (
     <div className="pb-24 px-4 pt-4 max-w-5xl mx-auto overflow-x-hidden" style={{ paddingBottom: `calc(6rem + env(safe-area-inset-bottom, 0px))` }}>
       <Tabs defaultValue="inbox" className="space-y-4">
-        {/* Tabs com scroll horizontal para mobile */}
-        <TabsList className="w-full justify-start gap-1 overflow-x-auto flex-nowrap bg-transparent p-0 h-auto">
+        {/* Tabs responsivas - grid no mobile, inline no desktop */}
+        <TabsList className="w-full grid grid-cols-3 sm:flex sm:flex-wrap sm:justify-start gap-1 bg-transparent p-0 h-auto">
           <TabsTrigger 
             value="inbox" 
-            className="flex-shrink-0 gap-1.5 data-[state=active]:bg-secondary rounded-full px-3 py-1.5 text-sm"
+            className="gap-1 data-[state=active]:bg-secondary rounded-full px-2.5 py-1.5 text-xs sm:text-sm sm:px-3"
           >
-            <Tray size={16} weight="bold" />
-            Inbox
+            <Tray size={16} weight="bold" className="shrink-0" />
+            <span className="truncate">Inbox</span>
             {unprocessedInbox.length > 0 && (
-              <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs">
+              <Badge variant="secondary" className="ml-0.5 h-5 min-w-5 px-1 text-xs">
                 {unprocessedInbox.length}
               </Badge>
             )}
           </TabsTrigger>
           <TabsTrigger 
             value="tarefas" 
-            className="flex-shrink-0 gap-1.5 data-[state=active]:bg-secondary rounded-full px-3 py-1.5 text-sm"
+            className="gap-1 data-[state=active]:bg-secondary rounded-full px-2.5 py-1.5 text-xs sm:text-sm sm:px-3"
           >
-            <CheckSquare size={16} weight="bold" />
-            Tarefas
+            <CheckSquare size={16} weight="bold" className="shrink-0" />
+            <span className="truncate">Tarefas</span>
           </TabsTrigger>
           <TabsTrigger 
             value="semana" 
-            className="flex-shrink-0 gap-1.5 data-[state=active]:bg-secondary rounded-full px-3 py-1.5 text-sm"
+            className="gap-1 data-[state=active]:bg-secondary rounded-full px-2.5 py-1.5 text-xs sm:text-sm sm:px-3"
           >
-            <CalendarBlank size={16} weight="bold" />
-            Semana
+            <CalendarBlank size={16} weight="bold" className="shrink-0" />
+            <span className="truncate">Semana</span>
           </TabsTrigger>
           <TabsTrigger 
             value="metas" 
-            className="flex-shrink-0 gap-1.5 data-[state=active]:bg-secondary rounded-full px-3 py-1.5 text-sm"
+            className="gap-1 data-[state=active]:bg-secondary rounded-full px-2.5 py-1.5 text-xs sm:text-sm sm:px-3"
           >
-            <Target size={16} weight="bold" />
-            Metas
+            <Target size={16} weight="bold" className="shrink-0" />
+            <span className="truncate">Metas</span>
           </TabsTrigger>
           <TabsTrigger 
             value="habitos" 
-            className="flex-shrink-0 gap-1.5 data-[state=active]:bg-secondary rounded-full px-3 py-1.5 text-sm"
+            className="gap-1 data-[state=active]:bg-secondary rounded-full px-2.5 py-1.5 text-xs sm:text-sm sm:px-3"
           >
-            <Star size={16} weight="bold" />
-            Hábitos
+            <Star size={16} weight="bold" className="shrink-0" />
+            <span className="truncate">Hábitos</span>
           </TabsTrigger>
           <TabsTrigger 
             value="anotacoes" 
-            className="flex-shrink-0 gap-1.5 data-[state=active]:bg-secondary rounded-full px-3 py-1.5 text-sm"
+            className="gap-1 data-[state=active]:bg-secondary rounded-full px-2.5 py-1.5 text-xs sm:text-sm sm:px-3"
           >
-            <NotePencil size={16} weight="bold" />
-            Anotações
+            <NotePencil size={16} weight="bold" className="shrink-0" />
+            <span className="truncate">Notas</span>
           </TabsTrigger>
         </TabsList>
 
