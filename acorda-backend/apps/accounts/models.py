@@ -89,7 +89,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         'Tema',
         max_length=10,
         choices=[('light', 'Claro'), ('dark', 'Escuro')],
-        default='light'
+        default='dark'
     )
     week_starts_on = models.IntegerField(
         'Início da semana',

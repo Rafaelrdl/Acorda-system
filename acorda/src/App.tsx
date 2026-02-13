@@ -144,7 +144,7 @@ function MainApp({ user }: { user: User }) {
     }
     
     // Use backend values, fallback to defaults if not set
-    const backendAppearance = user.appearance || 'light'
+    const backendAppearance = user.appearance || 'dark'
     const backendWeekStartsOn = user.week_starts_on ?? 1
     const backendModules = user.enabled_modules || {}
     
@@ -166,7 +166,7 @@ function MainApp({ user }: { user: User }) {
 
   // Apply theme when userSettings.appearance changes
   useEffect(() => {
-    const theme = userSettings?.appearance ?? 'light'
+    const theme = userSettings?.appearance ?? 'dark'
     if (import.meta.env.DEV) console.log('[App] userSettings.appearance changed:', theme)
     applyTheme(theme)
   }, [userSettings])

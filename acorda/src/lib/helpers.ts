@@ -412,7 +412,7 @@ export function createUserSettings(userId: UserId): UserSettings {
     userId,
     weekStartsOn: 1,
     minimalMode: false,
-    appearance: 'light',
+    appearance: 'dark',
     hasSeenHabitSuggestions: false,
     modules: {
       financas: false,
