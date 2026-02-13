@@ -45,7 +45,7 @@ export function ActivateAccountScreen() {
       
       // Redirect to app after 2 seconds
       setTimeout(() => {
-        navigate('/')
+        navigate('/app')
       }, 2000)
     } catch (err: unknown) {
       const error = err as { message?: string }
