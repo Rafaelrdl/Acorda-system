@@ -529,12 +529,15 @@ interface User {
 interface Plan {
   id: string
   name: string
-  plan_type: 'pro' | 'pro_ia' | 'lifetime'
+  plan_type: 'leve' | 'pro' | 'pro_ia' | 'lifetime'
   billing_cycle: 'monthly' | 'yearly' | 'lifetime'
   price: string
   currency: string
   has_ai: boolean
   ai_requests_limit: number | null
+  pdf_max_count: number | null
+  pdf_max_total_mb: number | null
+  pdf_max_file_mb: number | null
 }
 
 interface Subscription {

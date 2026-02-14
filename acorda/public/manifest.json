@@ -2,7 +2,7 @@
   "name": "Acorda - Sistema Operacional Pessoal",
   "short_name": "Acorda",
   "description": "Organize sua vida: tarefas, metas, hábitos, finanças, treino e muito mais.",
-  "start_url": "/",
+  "start_url": "/app",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
@@ -67,17 +67,17 @@
       "name": "Quick Capture",
       "short_name": "Capturar",
       "description": "Captura rápida de ideias",
-      "url": "/?quick-capture=true",
+      "url": "/app?quick-capture=true",
       "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     },
     {
       "name": "Pomodoro",
       "short_name": "Pomodoro",
       "description": "Iniciar timer Pomodoro",
-      "url": "/?pomodoro=true",
+      "url": "/app?pomodoro=true",
       "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     }
   ],
   "handle_links": "preferred",
-  "scope": "/"
+  "scope": "/app"
 }

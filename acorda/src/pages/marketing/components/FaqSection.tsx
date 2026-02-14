@@ -16,7 +16,7 @@ const faqs = [
   },
   {
     q: 'Qual a diferença entre os planos?',
-    a: 'Todos os planos dão acesso completo ao Acorda (tarefas, metas, hábitos, todas as centrais). Os planos com IA incluem sugestões inteligentes de categorização e insights. O plano vitalício é pago uma única vez e garante acesso para sempre.',
+    a: 'Todos os planos dão acesso completo ao Acorda (tarefas, metas, hábitos, todas as centrais). A principal diferença está nos limites de armazenamento de PDFs: o Leve permite até 20 PDFs (500 MB), enquanto o Pro permite até 120 PDFs (5 GB). O plano Vitalício tem os mesmos limites do Pro e é pago uma única vez.',
   },
   {
     q: 'Posso cancelar a assinatura?',
@@ -37,6 +37,10 @@ const faqs = [
   {
     q: 'Não recebi o e-mail de ativação. O que fazer?',
     a: 'Verifique a pasta de spam/lixo eletrônico. Se não encontrar, entre em contato conosco pelo e-mail contato@acorda.app que reenviaremos o link.',
+  },
+  {
+    q: 'O que acontece se eu atingir o limite de PDFs?',
+    a: 'Você pode continuar usando o app normalmente, mas o upload de novos PDFs será bloqueado até que você remova arquivos antigos ou faça upgrade do plano.',
   },
 ]
 

@@ -142,7 +142,6 @@ export function LandingPage() {
               { icon: Brain, title: 'Estudos', desc: 'Sessões focadas, revisão espaçada automática (D+1, D+3, D+7, D+14).' },
               { icon: Heart, title: 'Bem-estar', desc: 'Check-in diário de humor, energia, sono e programas guiados de bem-estar.' },
               { icon: ShieldCheck, title: 'Privacidade', desc: 'Seus dados são seus. Sync criptografado e controle total sobre a conta.' },
-              { icon: Lightning, title: 'IA (Pro)', desc: 'Sugestões inteligentes de categorização, hábitos e insights no módulo IA.' },
             ].map(({ icon: Icon, title, desc }) => (
               <div
                 key={title}

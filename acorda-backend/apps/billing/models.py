@@ -11,9 +11,10 @@ class Plan(models.Model):
     """Subscription plans available."""
     
     class PlanType(models.TextChoices):
+        LEVE = 'leve', 'Acorda Leve'
         PRO = 'pro', 'Acorda Pro'
         PRO_IA = 'pro_ia', 'Acorda Pro IA'
-        LIFETIME = 'lifetime', 'Lifetime (sem IA)'
+        LIFETIME = 'lifetime', 'Lifetime (Pro)'
     
     class BillingCycle(models.TextChoices):
         MONTHLY = 'monthly', 'Mensal'
@@ -55,6 +56,26 @@ class Plan(models.Model):
         blank=True
     )
     
+    # PDF limits
+    pdf_max_count = models.IntegerField(
+        'Máx. PDFs',
+        null=True,
+        blank=True,
+        help_text='Número máximo de PDFs permitidos'
+    )
+    pdf_max_total_mb = models.IntegerField(
+        'Máx. armazenamento (MB)',
+        null=True,
+        blank=True,
+        help_text='Armazenamento total máximo em MB'
+    )
+    pdf_max_file_mb = models.IntegerField(
+        'Máx. tamanho por arquivo (MB)',
+        null=True,
+        blank=True,
+        help_text='Tamanho máximo por arquivo em MB'
+    )
+
     # Status
     is_active = models.BooleanField('Ativo', default=True)
     

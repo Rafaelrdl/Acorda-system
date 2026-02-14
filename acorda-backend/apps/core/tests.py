@@ -4,15 +4,18 @@ Validates all 3 PDF endpoints:
 1. POST /api/pdfs/upload/
 2. GET /api/pdfs/<document_id>/
 3. DELETE /api/pdfs/<document_id>/
+And plan-based PDF upload limits.
 """
 import uuid
 import io
+from decimal import Decimal
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 
 from apps.accounts.models import User
+from apps.billing.models import Plan, Subscription
 from apps.core.models import PDFFile
 
 
@@ -79,7 +82,7 @@ class TestAllPDFEndpoints(APITestCase):
     """
     
     def setUp(self):
-        """Set up test client and user."""
+        """Set up test client and user with an active plan."""
         self.client = APIClient()
         self.user = User.objects.create_user(
             email='pdf-test@example.com',
@@ -87,6 +90,22 @@ class TestAllPDFEndpoints(APITestCase):
             status='active'
         )
         self.client.force_authenticate(user=self.user)
+
+        # Create a Pro plan so uploads are allowed
+        self.pro_plan = Plan.objects.create(
+            name='Acorda Pro Mensal',
+            plan_type='pro',
+            billing_cycle='monthly',
+            price=Decimal('21.90'),
+            pdf_max_count=120,
+            pdf_max_total_mb=5120,
+            pdf_max_file_mb=50,
+        )
+        Subscription.objects.create(
+            user=self.user,
+            plan=self.pro_plan,
+            status='active',
+        )
     
     # ============ 1. POST UPLOAD ENDPOINT ============
     
@@ -403,3 +422,140 @@ class TestAllPDFEndpoints(APITestCase):
                 user=self.user
             ).exists()
         )
+
+
+class TestPDFPlanLimits(APITestCase):
+    """Tests for plan-based PDF upload limits (B2)."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            email='limits@example.com',
+            password='testpass123',
+            status='active',
+        )
+        self.client.force_authenticate(user=self.user)
+
+    def _create_plan(self, plan_type, billing_cycle, max_count, max_total_mb, max_file_mb, price='12.90'):
+        return Plan.objects.create(
+            name=f'Test {plan_type}',
+            plan_type=plan_type,
+            billing_cycle=billing_cycle,
+            price=Decimal(price),
+            pdf_max_count=max_count,
+            pdf_max_total_mb=max_total_mb,
+            pdf_max_file_mb=max_file_mb,
+        )
+
+    def _subscribe(self, plan):
+        return Subscription.objects.create(
+            user=self.user,
+            plan=plan,
+            status='active',
+        )
+
+    def test_no_plan_returns_403(self):
+        """User without active subscription cannot upload PDFs."""
+        response = self.client.post('/api/pdfs/upload/', {
+            'document_id': str(uuid.uuid4()),
+            'file': create_test_pdf(),
+        }, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertIn('no_active_plan', str(response.data.get('error_code', '')))
+
+    def test_leve_count_limit_blocks_21st_pdf(self):
+        """Leve plan (max 20) should block the 21st new PDF."""
+        plan = self._create_plan('leve', 'monthly', max_count=20, max_total_mb=500, max_file_mb=25)
+        self._subscribe(plan)
+
+        # Upload 20 PDFs
+        for i in range(20):
+            resp = self.client.post('/api/pdfs/upload/', {
+                'document_id': str(uuid.uuid4()),
+                'file': create_test_pdf(),
+            }, format='multipart')
+            self.assertEqual(resp.status_code, status.HTTP_200_OK, f'Failed on PDF #{i+1}')
+
+        # 21st should fail
+        resp = self.client.post('/api/pdfs/upload/', {
+            'document_id': str(uuid.uuid4()),
+            'file': create_test_pdf(),
+        }, format='multipart')
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(resp.data.get('error_code'), 'pdf_count_exceeded')
+
+    def test_replacement_does_not_increase_count(self):
+        """Replacing an existing document_id does NOT increment count."""
+        plan = self._create_plan('leve', 'monthly', max_count=1, max_total_mb=500, max_file_mb=25)
+        self._subscribe(plan)
+
+        doc_id = str(uuid.uuid4())
+
+        # First upload
+        resp = self.client.post('/api/pdfs/upload/', {
+            'document_id': doc_id,
+            'file': create_test_pdf(),
+        }, format='multipart')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # Replace same document — should still succeed even though count is 1/1
+        resp = self.client.post('/api/pdfs/upload/', {
+            'document_id': doc_id,
+            'file': create_test_pdf(),
+        }, format='multipart')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_leve_file_size_limit(self):
+        """Leve plan blocks files > 25 MB."""
+        plan = self._create_plan('leve', 'monthly', max_count=20, max_total_mb=500, max_file_mb=25)
+        self._subscribe(plan)
+
+        # Create a fake PDF > 25 MB (header is real PDF magic, rest is padding)
+        size_bytes = 26 * 1024 * 1024  # 26 MB
+        big_content = b'%PDF-1.4' + b'\x00' * (size_bytes - 8)
+        big_file = SimpleUploadedFile('big.pdf', big_content, content_type='application/pdf')
+
+        resp = self.client.post('/api/pdfs/upload/', {
+            'document_id': str(uuid.uuid4()),
+            'file': big_file,
+        }, format='multipart')
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(resp.data.get('error_code'), 'file_too_large')
+
+    def test_leve_storage_limit(self):
+        """Leve plan blocks uploads that exceed total storage (500 MB)."""
+        # Use a tiny limit (1 MB total) to make testing feasible
+        plan = self._create_plan('leve', 'monthly', max_count=100, max_total_mb=1, max_file_mb=25)
+        self._subscribe(plan)
+
+        # Upload a ~600 KB file
+        content = b'%PDF-1.4' + b'\x00' * (600 * 1024)
+        f1 = SimpleUploadedFile('a.pdf', content, content_type='application/pdf')
+        resp = self.client.post('/api/pdfs/upload/', {
+            'document_id': str(uuid.uuid4()),
+            'file': f1,
+        }, format='multipart')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # Second ~600 KB file should exceed 1 MB total
+        f2 = SimpleUploadedFile('b.pdf', content, content_type='application/pdf')
+        resp = self.client.post('/api/pdfs/upload/', {
+            'document_id': str(uuid.uuid4()),
+            'file': f2,
+        }, format='multipart')
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(resp.data.get('error_code'), 'storage_exceeded')
+
+    def test_pro_allows_higher_limits(self):
+        """Pro plan allows larger files and more PDFs."""
+        plan = self._create_plan('pro', 'monthly', max_count=120, max_total_mb=5120, max_file_mb=50)
+        self._subscribe(plan)
+
+        # A 30 MB file should be allowed (Pro limit is 50 MB/file)
+        content = b'%PDF-1.4' + b'\x00' * (30 * 1024 * 1024 - 8)
+        big_file = SimpleUploadedFile('pro.pdf', content, content_type='application/pdf')
+        resp = self.client.post('/api/pdfs/upload/', {
+            'document_id': str(uuid.uuid4()),
+            'file': big_file,
+        }, format='multipart')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)

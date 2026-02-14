@@ -1,72 +1,63 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { api } from '@/lib/api'
 import type { Plan } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, Sparkle, SpinnerGap, Crown } from '@phosphor-icons/react'
+import { CheckCircle, SpinnerGap, Crown, FileText } from '@phosphor-icons/react'
 import { CheckoutModal } from './CheckoutModal'
 
 const formatPrice = (price: string, currency: string) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(Number(price))
 
-const cycleLabel: Record<string, string> = {
-  monthly: 'Mensal',
-  yearly: 'Anual',
-  lifetime: 'Vitalício',
+function formatStorage(mb: number | null): string {
+  if (!mb) return '—'
+  if (mb >= 1024) return `${(mb / 1024).toFixed(0)} GB`
+  return `${mb} MB`
 }
 
-const cycleSuffix: Record<string, string> = {
-  monthly: '/mês',
-  yearly: '/ano',
-  lifetime: 'único',
+type BillingCycle = 'monthly' | 'yearly'
+
+interface PlanCardProps {
+  plan: Plan
+  badge?: string
+  badgeClass?: string
+  onSelect: (plan: Plan) => void
 }
 
-/** Sort order: monthly → yearly → lifetime */
-const cycleOrder: Record<string, number> = { monthly: 0, yearly: 1, lifetime: 2 }
-
-function PlanCard({ plan, onSelect }: { plan: Plan; onSelect: (plan: Plan) => void }) {
-  const isPopular = plan.billing_cycle === 'yearly'
-  const isBestValue = plan.billing_cycle === 'lifetime'
+function PlanCard({ plan, badge, badgeClass, onSelect }: PlanCardProps) {
+  const isLifetime = plan.billing_cycle === 'lifetime'
+  const isPro = plan.plan_type === 'pro' || plan.plan_type === 'lifetime'
 
   return (
     <div
       className={`relative flex flex-col rounded-2xl border p-6 transition-all hover:shadow-lg ${
-        isPopular
+        isPro
           ? 'border-primary/60 bg-primary/5 shadow-md shadow-primary/10 scale-[1.02]'
           : 'border-border/50 bg-card/50 hover:border-border'
       }`}
     >
-      {/* Selo */}
-      {isPopular && (
+      {badge && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <Badge className="bg-primary text-primary-foreground px-3 py-0.5 text-xs font-semibold shadow-sm">
-            Mais popular
-          </Badge>
-        </div>
-      )}
-      {isBestValue && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <Badge className="bg-amber-500 text-white px-3 py-0.5 text-xs font-semibold shadow-sm">
-            Melhor custo-benefício
+          <Badge className={`px-3 py-0.5 text-xs font-semibold shadow-sm ${badgeClass ?? 'bg-primary text-primary-foreground'}`}>
+            {badge}
           </Badge>
         </div>
       )}
 
       {/* Header */}
       <div className="mb-4">
-        <h3 className="font-bold text-lg flex items-center gap-2">
-          {plan.name}
-          {plan.has_ai && <Sparkle size={16} weight="fill" className="text-amber-400" />}
-        </h3>
+        <h3 className="font-bold text-lg">{plan.name}</h3>
         <p className="text-xs text-muted-foreground mt-1">
-          {cycleLabel[plan.billing_cycle]}
+          {isLifetime ? 'Pagamento único' : plan.billing_cycle === 'yearly' ? 'Anual' : 'Mensal'}
         </p>
       </div>
 
-      {/* Preço */}
+      {/* Price */}
       <div className="mb-6">
         <span className="text-3xl font-extrabold">{formatPrice(plan.price, plan.currency)}</span>
-        <span className="text-sm text-muted-foreground ml-1.5">{cycleSuffix[plan.billing_cycle]}</span>
+        <span className="text-sm text-muted-foreground ml-1.5">
+          {isLifetime ? 'único' : plan.billing_cycle === 'yearly' ? '/ano' : '/mês'}
+        </span>
       </div>
 
       {/* Features */}
@@ -76,20 +67,11 @@ function PlanCard({ plan, onSelect }: { plan: Plan; onSelect: (plan: Plan) => vo
         <Feature>6 centrais especializadas</Feature>
         <Feature>Sync entre dispositivos</Feature>
         <Feature>PWA — instale no celular</Feature>
-        {plan.has_ai && (
-          <Feature highlight>
-            IA integrada{' '}
-            {plan.ai_requests_limit
-              ? `(${plan.ai_requests_limit} req/mês)`
-              : '(ilimitado)'}
-          </Feature>
-        )}
-        {plan.billing_cycle === 'lifetime' && (
-          <Feature highlight>Acesso vitalício — pague uma vez</Feature>
-        )}
-        {plan.billing_cycle === 'yearly' && (
-          <Feature highlight>Economia vs. mensal</Feature>
-        )}
+        {isLifetime && <Feature highlight>Acesso vitalício — pague uma vez</Feature>}
+        {/* PDF limits */}
+        <Feature icon={<FileText size={16} weight="fill" className="text-primary mt-0.5 shrink-0" />}>
+          {plan.pdf_max_count ?? 0} PDFs • {formatStorage(plan.pdf_max_total_mb)} • {plan.pdf_max_file_mb ?? 0} MB/PDF
+        </Feature>
       </ul>
 
       {/* CTA */}
@@ -97,24 +79,26 @@ function PlanCard({ plan, onSelect }: { plan: Plan; onSelect: (plan: Plan) => vo
         onClick={() => onSelect(plan)}
         size="lg"
         className={`w-full ${
-          isPopular ? '' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+          isPro ? '' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
         }`}
       >
-        {isBestValue && <Crown size={16} weight="fill" className="mr-1" />}
-        Assinar {plan.name}
+        {isLifetime && <Crown size={16} weight="fill" className="mr-1" />}
+        {isLifetime ? 'Comprar Vitalício' : 'Assinar agora'}
       </Button>
     </div>
   )
 }
 
-function Feature({ children, highlight }: { children: React.ReactNode; highlight?: boolean }) {
+function Feature({ children, highlight, icon }: { children: React.ReactNode; highlight?: boolean; icon?: React.ReactNode }) {
   return (
     <li className="flex items-start gap-2 text-sm">
-      <CheckCircle
-        size={16}
-        weight="fill"
-        className={`mt-0.5 shrink-0 ${highlight ? 'text-amber-400' : 'text-primary'}`}
-      />
+      {icon ?? (
+        <CheckCircle
+          size={16}
+          weight="fill"
+          className={`mt-0.5 shrink-0 ${highlight ? 'text-amber-400' : 'text-primary'}`}
+        />
+      )}
       <span className={highlight ? 'text-foreground font-medium' : 'text-muted-foreground'}>
         {children}
       </span>
@@ -127,13 +111,12 @@ export function PricingSection() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null)
+  const [cycle, setCycle] = useState<BillingCycle>('yearly')
 
   useEffect(() => {
     async function load() {
       try {
         const data = await api.getPlans()
-        // Sort by cycle order
-        data.sort((a, b) => (cycleOrder[a.billing_cycle] ?? 9) - (cycleOrder[b.billing_cycle] ?? 9))
         setPlans(data)
       } catch {
         setError('Não foi possível carregar os planos. Tente recarregar a página.')
@@ -143,6 +126,14 @@ export function PricingSection() {
     }
     load()
   }, [])
+
+  // Derive displayed plans: Leve (cycle) + Pro (cycle) + Vitalício
+  const displayPlans = useMemo(() => {
+    const leve = plans.find(p => p.plan_type === 'leve' && p.billing_cycle === cycle)
+    const pro = plans.find(p => p.plan_type === 'pro' && p.billing_cycle === cycle)
+    const lifetime = plans.find(p => p.plan_type === 'lifetime')
+    return { leve, pro, lifetime }
+  }, [plans, cycle])
 
   if (loading) {
     return (
@@ -170,16 +161,53 @@ export function PricingSection() {
 
   return (
     <>
-      <div className={`grid gap-6 ${
-        plans.length === 1
-          ? 'max-w-sm mx-auto'
-          : plans.length === 2
-            ? 'grid-cols-1 md:grid-cols-2 max-w-2xl mx-auto'
-            : 'grid-cols-1 md:grid-cols-3'
-      }`}>
-        {plans.map((plan) => (
-          <PlanCard key={plan.id} plan={plan} onSelect={setSelectedPlan} />
-        ))}
+      {/* Cycle toggle */}
+      <div className="flex items-center justify-center gap-3 mb-10">
+        <button
+          onClick={() => setCycle('monthly')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            cycle === 'monthly'
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted/40 text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Mensal
+        </button>
+        <button
+          onClick={() => setCycle('yearly')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors relative ${
+            cycle === 'yearly'
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted/40 text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Anual
+          <span className="absolute -top-2.5 -right-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+            2 meses grátis
+          </span>
+        </button>
+      </div>
+
+      {/* Cards grid: Leve | Pro | Vitalício */}
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
+        {displayPlans.leve && (
+          <PlanCard plan={displayPlans.leve} onSelect={setSelectedPlan} />
+        )}
+        {displayPlans.pro && (
+          <PlanCard
+            plan={displayPlans.pro}
+            badge="Mais popular"
+            onSelect={setSelectedPlan}
+          />
+        )}
+        {displayPlans.lifetime && (
+          <PlanCard
+            plan={displayPlans.lifetime}
+            badge="Melhor custo-benefício"
+            badgeClass="bg-amber-500 text-white"
+            onSelect={setSelectedPlan}
+          />
+        )}
       </div>
 
       {/* Checkout Modal */}

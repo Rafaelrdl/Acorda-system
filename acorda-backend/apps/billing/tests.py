@@ -23,14 +23,18 @@ class TestPlanModel(TestCase):
     def test_create_plan(self):
         """Test creating a plan."""
         plan = Plan.objects.create(
-            name='Acorda Pro Mensal',
-            plan_type='pro',
+            name='Acorda Leve Mensal',
+            plan_type='leve',
             billing_cycle='monthly',
-            price=Decimal('14.90')
+            price=Decimal('12.90'),
+            pdf_max_count=20,
+            pdf_max_total_mb=500,
+            pdf_max_file_mb=25,
         )
-        self.assertEqual(plan.name, 'Acorda Pro Mensal')
-        self.assertEqual(plan.plan_type, 'pro')
-        self.assertEqual(plan.price, Decimal('14.90'))
+        self.assertEqual(plan.name, 'Acorda Leve Mensal')
+        self.assertEqual(plan.plan_type, 'leve')
+        self.assertEqual(plan.price, Decimal('12.90'))
+        self.assertEqual(plan.pdf_max_count, 20)
     
     def test_plan_str(self):
         """Test plan string representation."""
@@ -38,7 +42,10 @@ class TestPlanModel(TestCase):
             name='Acorda Pro',
             plan_type='pro',
             billing_cycle='monthly',
-            price=Decimal('14.90')
+            price=Decimal('21.90'),
+            pdf_max_count=120,
+            pdf_max_total_mb=5120,
+            pdf_max_file_mb=50,
         )
         self.assertIn('Acorda Pro', str(plan))
 
@@ -57,7 +64,10 @@ class TestSubscriptionModel(TestCase):
             name='Acorda Pro',
             plan_type='pro',
             billing_cycle='monthly',
-            price=Decimal('14.90')
+            price=Decimal('21.90'),
+            pdf_max_count=120,
+            pdf_max_total_mb=5120,
+            pdf_max_file_mb=50,
         )
         subscription = Subscription.objects.create(
             user=user,
@@ -91,27 +101,35 @@ class TestAllBillingEndpoints(APITestCase):
         self.client.force_authenticate(user=self.user)
         
         # Create test plans
+        self.leve_plan = Plan.objects.create(
+            name='Acorda Leve Mensal',
+            plan_type='leve',
+            billing_cycle='monthly',
+            price=Decimal('12.90'),
+            has_ai=False,
+            pdf_max_count=20,
+            pdf_max_total_mb=500,
+            pdf_max_file_mb=25,
+        )
         self.pro_plan = Plan.objects.create(
             name='Acorda Pro Mensal',
             plan_type='pro',
             billing_cycle='monthly',
-            price=Decimal('14.90'),
+            price=Decimal('21.90'),
             has_ai=False,
-        )
-        self.pro_ia_plan = Plan.objects.create(
-            name='Acorda Pro + IA Mensal',
-            plan_type='pro_ia',
-            billing_cycle='monthly',
-            price=Decimal('29.90'),
-            has_ai=True,
-            ai_requests_limit=1000,
+            pdf_max_count=120,
+            pdf_max_total_mb=5120,
+            pdf_max_file_mb=50,
         )
         self.lifetime_plan = Plan.objects.create(
-            name='Acorda Lifetime',
+            name='Acorda Vitalício',
             plan_type='lifetime',
             billing_cycle='lifetime',
-            price=Decimal('297.00'),
-            has_ai=True,
+            price=Decimal('319.00'),
+            has_ai=False,
+            pdf_max_count=120,
+            pdf_max_total_mb=5120,
+            pdf_max_file_mb=50,
         )
     
     # ============ 1. GET PLANS ENDPOINT ============
@@ -130,7 +148,7 @@ class TestAllBillingEndpoints(APITestCase):
         self.assertGreaterEqual(len(response.data), 3)
     
     def test_plans_contains_required_fields(self):
-        """Test that each plan has required fields."""
+        """Test that each plan has required fields including PDF limits."""
         response = self.client.get('/api/billing/plans/')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -139,6 +157,9 @@ class TestAllBillingEndpoints(APITestCase):
             self.assertIn('name', plan)
             self.assertIn('plan_type', plan)
             self.assertIn('price', plan)
+            self.assertIn('pdf_max_count', plan)
+            self.assertIn('pdf_max_total_mb', plan)
+            self.assertIn('pdf_max_file_mb', plan)
     
     def test_plans_requires_authentication(self):
         """Test that plans endpoint requires authentication."""
@@ -292,10 +313,10 @@ class TestAllBillingEndpoints(APITestCase):
     
     def test_usage_returns_feature_list(self):
         """Test that usage returns list of feature usage."""
-        # Give user a Pro IA subscription
+        # Give user a Pro subscription
         Subscription.objects.create(
             user=self.user,
-            plan=self.pro_ia_plan,
+            plan=self.pro_plan,
             status='active'
         )
         
@@ -379,7 +400,10 @@ class TestWebhookApprovedActivation(APITestCase):
             name='Pro Mensal',
             plan_type='pro',
             billing_cycle='monthly',
-            price=Decimal('14.90'),
+            price=Decimal('21.90'),
+            pdf_max_count=120,
+            pdf_max_total_mb=5120,
+            pdf_max_file_mb=50,
         )
 
     def test_approved_payment_creates_user_and_subscription(self):

@@ -12,7 +12,8 @@ class PlanSerializer(serializers.ModelSerializer):
         model = Plan
         fields = [
             'id', 'name', 'plan_type', 'billing_cycle',
-            'price', 'currency', 'has_ai', 'ai_requests_limit'
+            'price', 'currency', 'has_ai', 'ai_requests_limit',
+            'pdf_max_count', 'pdf_max_total_mb', 'pdf_max_file_mb',
         ]
 
 
