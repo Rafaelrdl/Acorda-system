@@ -24,9 +24,9 @@ COPY . .
 # Collect static files (use dummy SECRET_KEY so the production guard doesn't fire)
 RUN SECRET_KEY=build-only-placeholder python manage.py collectstatic --noinput
 
-# Copy and set entrypoint
+# Copy and set entrypoint (sed strips Windows CRLF line-endings)
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 # Create non-root user
 RUN adduser --disabled-password --gecos '' appuser && \
