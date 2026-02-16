@@ -9,16 +9,14 @@ from decimal import Decimal
 
 from django.test import TestCase, override_settings
 from django.contrib.admin.sites import AdminSite
-from django.contrib.auth import get_user_model
+from django.http import HttpResponse
 from django.test import RequestFactory
-from django.contrib.messages.storage.fallback import FallbackStorage
-from django.contrib.sessions.backends.db import SessionStore
 from django.urls import reverse
 from django.core.management import call_command
 from io import StringIO
 
 from apps.accounts.admin import UserAdmin, ActivationTokenAdmin, PasswordResetTokenAdmin
-from apps.accounts.models import ActivationToken, PasswordResetToken
+from apps.accounts.models import User, ActivationToken, PasswordResetToken
 
 from apps.billing.admin import PlanAdmin, SubscriptionAdmin, PaymentAdmin, UsageRecordAdmin
 from apps.billing.models import Plan, Subscription, Payment, UsageRecord
@@ -52,7 +50,7 @@ from apps.core.models import (
     DietMealTemplate, DietMealEntry, DataExport,
 )
 
-User = get_user_model()
+# User imported directly from apps.accounts.models
 
 
 def _now_ms():
@@ -83,8 +81,9 @@ class AdminSiteTestMixin:
         request = self.factory.get(url)
         request.user = self.admin_user
         # Add session and messages support for admin actions
-        SessionMiddleware(lambda r: None).process_request(request)
-        MessageMiddleware(lambda r: None).process_request(request)
+        get_response = lambda r: HttpResponse()
+        SessionMiddleware(get_response).process_request(request)
+        MessageMiddleware(get_response).process_request(request)
         request.session.save()
         return request
 
