@@ -41,6 +41,9 @@ requests>=2.31,<3.0
 python-dateutil>=2.8,<3.0
 uuid>=1.30
 
+# Admin Theme
+django-jazzmin>=3.0,<4.0
+
 # Production
 gunicorn>=23.0,<24.0
 whitenoise>=6.6,<7.0

@@ -25,8 +25,156 @@ if not DEBUG and SECRET_KEY.startswith('django-insecure'):
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
+# ── Jazzmin Admin Theme ───────────────────────────────────────
+JAZZMIN_SETTINGS = {
+    # Branding
+    "site_title": "Acorda Admin",
+    "site_header": "Acorda",
+    "site_brand": "Acorda",
+    "site_logo": None,
+    "login_logo": None,
+    "login_logo_dark": None,
+    "site_logo_classes": "img-circle",
+    "site_icon": None,
+    "welcome_sign": "Bem-vindo ao painel administrativo do Acorda",
+    "copyright": "Acorda App",
+
+    # Search model
+    "search_model": ["accounts.User", "billing.Subscription", "billing.Payment"],
+
+    # Top menu
+    "topmenu_links": [
+        {"name": "Início", "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"name": "API Docs", "url": "/api/", "new_window": True},
+        {"model": "accounts.User"},
+    ],
+
+    # User menu
+    "usermenu_links": [
+        {"name": "Suporte", "url": "https://acorda.app/suporte", "new_window": True, "icon": "fas fa-headset"},
+    ],
+
+    # Side menu
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "hide_apps": [],
+    "hide_models": [],
+    "order_with_respect_to": [
+        "accounts",
+        "billing",
+        "core",
+        "django_celery_beat",
+        "token_blacklist",
+    ],
+
+    # App/model icons
+    "icons": {
+        "accounts": "fas fa-users-cog",
+        "accounts.User": "fas fa-user",
+        "accounts.ActivationToken": "fas fa-key",
+        "accounts.PasswordResetToken": "fas fa-unlock-alt",
+        "billing": "fas fa-credit-card",
+        "billing.Plan": "fas fa-tags",
+        "billing.Subscription": "fas fa-file-invoice-dollar",
+        "billing.Payment": "fas fa-money-bill-wave",
+        "billing.UsageRecord": "fas fa-chart-bar",
+        "core.Task": "fas fa-tasks",
+        "core.Goal": "fas fa-bullseye",
+        "core.KeyResult": "fas fa-chart-line",
+        "core.Habit": "fas fa-redo",
+        "core.HabitLog": "fas fa-check-double",
+        "core.Project": "fas fa-project-diagram",
+        "core.InboxItem": "fas fa-inbox",
+        "core.PomodoroSession": "fas fa-clock",
+        "core.PomodoroPreset": "fas fa-stopwatch",
+        "core.CalendarBlock": "fas fa-calendar-alt",
+        "core.DailyNote": "fas fa-sticky-note",
+        "core.UserSettings": "fas fa-cog",
+        "core.Reference": "fas fa-bookmark",
+        "core.GoogleCalendarConnection": "fab fa-google",
+        "core.GoogleCalendarEvent": "fas fa-calendar-check",
+        "core.FinanceCategory": "fas fa-wallet",
+        "core.FinanceAccount": "fas fa-university",
+        "core.Transaction": "fas fa-exchange-alt",
+        "core.Income": "fas fa-hand-holding-usd",
+        "core.FixedExpense": "fas fa-file-invoice",
+        "core.FinanceAuditLog": "fas fa-history",
+        "core.Book": "fas fa-book",
+        "core.ReadingLog": "fas fa-book-reader",
+        "core.PDFDocument": "fas fa-file-pdf",
+        "core.PDFHighlight": "fas fa-highlighter",
+        "core.PDFFile": "fas fa-file-upload",
+        "core.Subject": "fas fa-graduation-cap",
+        "core.StudySession": "fas fa-chalkboard-teacher",
+        "core.ConsentLog": "fas fa-shield-alt",
+        "core.RecordedStudySession": "fas fa-microphone",
+        "core.ReviewScheduleItem": "fas fa-calendar-day",
+        "core.WellnessProgram": "fas fa-spa",
+        "core.WellnessCheckIn": "fas fa-heartbeat",
+        "core.WellnessDayAction": "fas fa-running",
+        "core.WorkoutExercise": "fas fa-dumbbell",
+        "core.WorkoutPlan": "fas fa-clipboard-list",
+        "core.WorkoutPlanItem": "fas fa-list-ol",
+        "core.WorkoutSession": "fas fa-fire",
+        "core.WorkoutSetLog": "fas fa-weight",
+        "core.WorkoutPlanDayStatus": "fas fa-calendar-check",
+        "core.DietMealTemplate": "fas fa-utensils",
+        "core.DietMealEntry": "fas fa-carrot",
+        "core.DataExport": "fas fa-download",
+        "django_celery_beat": "fas fa-cogs",
+        "token_blacklist": "fas fa-ban",
+        "auth": "fas fa-shield-alt",
+    },
+
+    # Custom CSS/JS
+    "custom_css": None,
+    "custom_js": None,
+    "use_google_fonts_cdn": True,
+    "show_ui_builder": False,
+    "changeform_format": "horizontal_tabs",
+    "changeform_format_overrides": {
+        "accounts.User": "collapsible",
+        "billing.Payment": "horizontal_tabs",
+    },
+    "related_modal_active": False,
+    "language_chooser": False,
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-dark",
+    "accent": "accent-primary",
+    "navbar": "navbar-dark navbar-primary",
+    "no_navbar_border": False,
+    "navbar_fixed": True,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": False,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "darkly",
+    "dark_mode_theme": "darkly",
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success",
+    },
+}
+
 # Application definition
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -122,10 +270,11 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Storage configuration (Django 4.2+ STORAGES dict)
-# Replaces deprecated STATICFILES_STORAGE and DEFAULT_FILE_STORAGE
+# Use CompressedStaticFilesStorage to avoid post-processing failures
+# with third-party CSS referencing missing source maps (e.g. Jazzmin/Bootswatch)
 STORAGES = {
     'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
     },
 }
 
