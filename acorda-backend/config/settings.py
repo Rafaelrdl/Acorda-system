@@ -51,7 +51,7 @@ JAZZMIN_SETTINGS = {
 
     # User menu
     "usermenu_links": [
-        {"name": "Suporte", "url": "https://acorda.app/suporte", "new_window": True, "icon": "fas fa-headset"},
+        {"name": "Suporte", "url": "https://somosacorda.com/suporte", "new_window": True, "icon": "fas fa-headset"},
     ],
 
     # Side menu
@@ -378,7 +378,7 @@ EMAIL_BACKEND = config(
     'EMAIL_BACKEND',
     default='django.core.mail.backends.console.EmailBackend'
 )
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Acorda <noreply@acorda.app>')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Acorda <noreply@somosacorda.com>')
 
 # SendGrid (if using)
 SENDGRID_API_KEY = config('SENDGRID_API_KEY', default='')
@@ -394,7 +394,7 @@ MP_PUBLIC_KEY = config('MP_PUBLIC_KEY', default='', cast=str)
 MP_WEBHOOK_SECRET = config('MP_WEBHOOK_SECRET', default='', cast=str)
 
 # Frontend URL (for email links)
-FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5174')
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
 
 # Backend URL (for webhooks / notification URLs)
 BACKEND_URL = config('BACKEND_URL', default='http://localhost:8000')

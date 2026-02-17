@@ -48,8 +48,8 @@ export function PaymentPendingPage() {
 
           <p className="text-xs text-muted-foreground mt-4">
             Dúvidas? Entre em contato pelo{' '}
-            <a href="mailto:contato@acorda.app" className="text-primary hover:underline">
-              contato@acorda.app
+            <a href="mailto:contato@somosacorda.com" className="text-primary hover:underline">
+              contato@somosacorda.com
             </a>.
           </p>
         </div>

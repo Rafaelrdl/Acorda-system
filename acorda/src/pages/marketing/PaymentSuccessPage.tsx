@@ -47,8 +47,8 @@ export function PaymentSuccessPage() {
           <p className="text-xs text-muted-foreground mt-4">
             Não recebeu o e-mail? Verifique a pasta de <strong>spam/lixo eletrônico</strong>.{' '}
             Se o problema persistir, entre em contato pelo{' '}
-            <a href="mailto:contato@acorda.app" className="text-primary hover:underline">
-              contato@acorda.app
+            <a href="mailto:contato@somosacorda.com" className="text-primary hover:underline">
+              contato@somosacorda.com
             </a>.
           </p>
         </div>

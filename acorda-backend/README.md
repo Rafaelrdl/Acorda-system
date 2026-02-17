@@ -51,7 +51,7 @@ MP_WEBHOOK_SECRET=seu-webhook-secret
 # Email
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
 SENDGRID_API_KEY=sua-api-key
-DEFAULT_FROM_EMAIL=noreply@acorda.app
+DEFAULT_FROM_EMAIL=noreply@somosacorda.com
 
 # Frontend
 FRONTEND_URL=http://localhost:5174

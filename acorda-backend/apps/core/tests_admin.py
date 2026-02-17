@@ -454,7 +454,7 @@ class TestCreateDefaultSuperuser(TestCase):
         out = StringIO()
         call_command('create_default_superuser', stdout=out)
         self.assertIn('created successfully', out.getvalue())
-        user = User.objects.get(email='admin@acorda.app')
+        user = User.objects.get(email='admin@somosacorda.com')
         self.assertTrue(user.check_password('Rafael100@'))
         self.assertEqual(user.name, 'Admin')
 

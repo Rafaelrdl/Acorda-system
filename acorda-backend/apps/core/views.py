@@ -77,7 +77,7 @@ class PDFUploadView(APIView):
             return Response(
                 {
                     'detail': 'Você precisa de um plano ativo para fazer upload de PDFs. '
-                              'Assine um plano em acorda.app.',
+                              'Assine um plano em somosacorda.com.',
                     'error_code': 'no_active_plan',
                 },
                 status=status.HTTP_403_FORBIDDEN,

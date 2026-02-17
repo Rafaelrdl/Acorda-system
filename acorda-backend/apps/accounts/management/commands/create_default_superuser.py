@@ -13,8 +13,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '--email',
-            default=os.environ.get('ADMIN_EMAIL', 'admin@acorda.app'),
-            help='Admin email (default: admin@acorda.app or ADMIN_EMAIL env)',
+            default=os.environ.get('ADMIN_EMAIL', 'admin@somosacorda.com'),
+            help='Admin email (default: admin@somosacorda.com or ADMIN_EMAIL env)',
         )
         parser.add_argument(
             '--username',

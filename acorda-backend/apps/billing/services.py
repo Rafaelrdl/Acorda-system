@@ -84,6 +84,7 @@ class MercadoPagoService:
     ) -> dict:
         """
         Create a subscription (preapproval) for recurring payments.
+        Uses redirect-based checkout (user enters card on MP page).
         """
         # Calculate frequency based on plan
         if plan.billing_cycle == 'monthly':
@@ -92,6 +93,15 @@ class MercadoPagoService:
         else:  # yearly
             frequency = 12
             frequency_type = "months"
+        
+        # MP rejects localhost as back_url for preapprovals.
+        # Use FRONTEND_URL if it's a real domain, otherwise use a placeholder
+        # that we'll handle on the frontend side.
+        frontend_url = settings.FRONTEND_URL
+        if 'localhost' in frontend_url or '127.0.0.1' in frontend_url:
+            back_url = "https://somosacorda.com/pagamento/sucesso"
+        else:
+            back_url = f"{frontend_url}/pagamento/sucesso"
         
         preapproval_data = {
             "reason": plan.name,
@@ -102,9 +112,16 @@ class MercadoPagoService:
                 "currency_id": plan.currency,
             },
             "payer_email": payer_email,
-            "back_url": f"{settings.FRONTEND_URL}/pagamento/sucesso",
+            "back_url": back_url,
             "external_reference": external_reference,
         }
+        
+        # Log which MP plan this corresponds to (plan ID is used for
+        # management on the MP dashboard; the redirect-based checkout flow
+        # does not require preapproval_plan_id — that's for transparent checkout
+        # with card tokenization on the frontend).
+        if plan.mp_plan_id:
+            logger.info("Creating preapproval for plan %s (mp_plan_id=%s)", plan.name, plan.mp_plan_id)
         
         try:
             result = self.sdk.preapproval().create(preapproval_data)
@@ -117,7 +134,7 @@ class MercadoPagoService:
                 "success": True,
                 "preapproval_id": result["response"]["id"],
                 "init_point": result["response"]["init_point"],
-                "sandbox_init_point": result["response"]["sandbox_init_point"],
+                "sandbox_init_point": result["response"].get("sandbox_init_point", ""),
             }
         else:
             logger.error(f"MP Preapproval creation failed: {result}")

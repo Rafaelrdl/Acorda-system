@@ -234,7 +234,7 @@ export function LandingPage() {
             <div className="flex items-center gap-6 text-xs text-muted-foreground">
               <a href="#" className="hover:text-foreground transition-colors">Termos de uso</a>
               <a href="#" className="hover:text-foreground transition-colors">Privacidade</a>
-              <a href="mailto:contato@acorda.app" className="hover:text-foreground transition-colors">Contato</a>
+              <a href="mailto:contato@somosacorda.com" className="hover:text-foreground transition-colors">Contato</a>
             </div>
           </div>
           <p className="text-center text-xs text-muted-foreground/60 mt-6">

@@ -36,7 +36,7 @@ const faqs = [
   },
   {
     q: 'Não recebi o e-mail de ativação. O que fazer?',
-    a: 'Verifique a pasta de spam/lixo eletrônico. Se não encontrar, entre em contato conosco pelo e-mail contato@acorda.app que reenviaremos o link.',
+    a: 'Verifique a pasta de spam/lixo eletrônico. Se não encontrar, entre em contato conosco pelo e-mail contato@somosacorda.com que reenviaremos o link.',
   },
   {
     q: 'O que acontece se eu atingir o limite de PDFs?',

@@ -45,8 +45,8 @@ export function PaymentErrorPage() {
                 <p className="text-sm font-medium mb-1">Precisa de ajuda?</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Entre em contato pelo{' '}
-                  <a href="mailto:contato@acorda.app" className="text-primary hover:underline">
-                    contato@acorda.app
+                  <a href="mailto:contato@somosacorda.com" className="text-primary hover:underline">
+                    contato@somosacorda.com
                   </a>{' '}
                   e resolveremos juntos.
                 </p>
