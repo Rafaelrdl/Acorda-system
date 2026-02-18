@@ -356,7 +356,6 @@ Acorda é um sistema operacional pessoal minimalista que conecta metas, hábitos
   - Delete apaga todos os dados do usuário
   - Confirmação funciona corretamente
 
-
 ## Edge Case Handling
 
 - **Usuário não autenticado**: Mostra tela de boas-vindas com CTA para login GitHub
@@ -1004,7 +1003,6 @@ Acorda é um sistema operacional pessoal minimalista que conecta metas, hábitos
 - `createGoogleCalendarConnection(userId)` - Factory para conexão do Google Calendar
 - `getWellnessProgramActions(type, day)` - Retorna ações do dia para um programa
 - `addDaysToDate(dateStr, days)` - Adiciona dias a uma data string
-
 
 ## Design Direction
 
