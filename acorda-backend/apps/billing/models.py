@@ -90,7 +90,7 @@ class Plan(models.Model):
         ordering = ['price']
     
     def __str__(self):
-        return f'{self.name} - {self.get_billing_cycle_display()}'
+        return f'{self.name} - {self.get_billing_cycle_display()}'  # type: ignore[attr-defined]
 
 
 class Subscription(models.Model):

@@ -188,7 +188,7 @@ class MercadoPagoService:
             logger.error(f"MP Cancel subscription failed: {result}")
             return False
     
-    def refund_payment(self, payment_id: str, amount: float = None) -> bool:
+    def refund_payment(self, payment_id: str, amount: float | None = None) -> bool:
         """Refund a payment (full or partial)."""
         refund_data = {}
         if amount:

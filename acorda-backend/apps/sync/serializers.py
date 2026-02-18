@@ -492,7 +492,7 @@ class SyncPushSerializer(serializers.Serializer):
     """Serializer for push sync request."""
     
     entity_type = serializers.ChoiceField(choices=list(ENTITY_SERIALIZERS.keys()))
-    data = serializers.ListField(child=serializers.DictField())
+    data = serializers.ListField(child=serializers.DictField())  # type: ignore[assignment]
     
     def validate(self, attrs):
         entity_type = attrs['entity_type']

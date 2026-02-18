@@ -3,6 +3,7 @@ Core data models for Acorda app.
 These mirror the TypeScript types in the frontend.
 """
 import uuid
+from decimal import Decimal
 from django.db import models
 from django.conf import settings
 
@@ -356,7 +357,7 @@ class FinanceAccount(SyncableModel):
 
     name = models.CharField('Nome', max_length=200)
     type = models.CharField('Tipo', max_length=20)
-    balance = models.DecimalField('Saldo', max_digits=12, decimal_places=2, default=0)
+    balance = models.DecimalField('Saldo', max_digits=12, decimal_places=2, default=Decimal("0"))
     color = models.CharField('Cor', max_length=20, blank=True)
     icon = models.CharField('Ícone', max_length=50, blank=True)
 

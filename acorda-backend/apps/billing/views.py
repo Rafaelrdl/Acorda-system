@@ -160,9 +160,9 @@ class CreateCheckoutView(APIView):
         serializer = CreateCheckoutSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        plan = serializer.plan
-        payer_email = serializer.validated_data['payer_email']
-        payer_name = serializer.validated_data.get('payer_name', '')
+        plan = serializer.plan  # type: ignore[attr-defined]
+        payer_email = serializer.validated_data['payer_email']  # type: ignore[index]
+        payer_name = serializer.validated_data.get('payer_name', '')  # type: ignore[union-attr]
         
         # Generate external reference with plan id + billing cycle for reliable lookup
         external_reference = _build_external_reference(plan, payer_email)
@@ -263,7 +263,7 @@ class WebhookView(APIView):
             logger.warning(f"Payment not found: {payment_id}")
             return
         
-        mp_status = mp_payment.get('status')
+        mp_status: str = mp_payment.get('status') or ''
         payer_email = mp_payment.get('payer', {}).get('email', '')
         payer_name = (
             mp_payment.get('payer', {}).get('first_name', '') + ' ' +
@@ -427,7 +427,7 @@ class WebhookView(APIView):
             safe_delay(send_activation_email, str(user.id), activation_token.token)
             logger.info(f"Activation email sent to {user.email}")
     
-    def _get_plan_from_reference(self, external_reference: str, metadata: dict) -> Plan:
+    def _get_plan_from_reference(self, external_reference: str, metadata: dict) -> "Plan | None":
         """Extract plan from external reference or metadata."""
         parsed = _parse_external_reference(external_reference)
 
@@ -480,7 +480,7 @@ class WebhookView(APIView):
         if not mp_subscription:
             return
         
-        mp_status = mp_subscription.get('status')
+        mp_status: str = mp_subscription.get('status') or ''
         
         # Try to find subscription by mp_subscription_id first
         subscription = Subscription.objects.filter(

@@ -23,10 +23,10 @@ from .models import (
 
 class SyncableModelAdmin(admin.ModelAdmin):
     """Base admin for all syncable models with common config."""
-    list_filter = ['user']
-    search_fields = ['user__email']
+    list_filter: list[str] = ['user']
+    search_fields: list[str] = ['user__email']
     raw_id_fields = ['user']
-    readonly_fields = ['id', 'created_at', 'updated_at', 'deleted_at', 'sync_version']
+    readonly_fields: list[str] = ['id', 'created_at', 'updated_at', 'deleted_at', 'sync_version']
     list_per_page = 25
 
     def get_list_display(self, request):
@@ -90,7 +90,7 @@ class TaskAdmin(SyncableModelAdmin):
 
 class KeyResultInline(admin.TabularInline):
     model = KeyResult
-    fk_name = None  # KeyResult uses goal_id UUID, not FK
+    fk_name: str | None = None  # KeyResult uses goal_id UUID, not FK
     extra = 0
 
     def get_queryset(self, request):

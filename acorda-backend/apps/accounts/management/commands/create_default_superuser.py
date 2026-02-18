@@ -44,7 +44,7 @@ class Command(BaseCommand):
             ))
             return
 
-        User.objects.create_superuser(
+        User.objects.create_superuser(  # type: ignore[attr-defined]
             email=email,
             password=password,
             name=username,

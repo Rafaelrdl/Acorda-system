@@ -97,10 +97,11 @@ class ActivateAccountSerializer(serializers.Serializer):
     
     def save(self):
         user = self.activation_token.user
-        user.set_password(self.validated_data['password'])
+        data: dict = self.validated_data  # type: ignore[assignment]
+        user.set_password(data['password'])
         
-        if self.validated_data.get('name'):
-            user.name = self.validated_data['name']
+        if data.get('name'):
+            user.name = data['name']
         
         user.activate()
         self.activation_token.use()
@@ -164,7 +165,8 @@ class ResetPasswordSerializer(serializers.Serializer):
     
     def save(self):
         user = self.reset_token.user
-        user.set_password(self.validated_data['password'])
+        data: dict = self.validated_data  # type: ignore[assignment]
+        user.set_password(data['password'])
         user.save(update_fields=['password', 'updated_at'])
         self.reset_token.use()
         
@@ -210,6 +212,7 @@ class ChangePasswordSerializer(serializers.Serializer):
     
     def save(self):
         user = self.context['request'].user
-        user.set_password(self.validated_data['new_password'])
+        data: dict = self.validated_data  # type: ignore[assignment]
+        user.set_password(data['new_password'])
         user.save(update_fields=['password', 'updated_at'])
         return user

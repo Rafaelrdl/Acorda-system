@@ -1,3 +1,4 @@
+# pyright: reportAttributeAccessIssue=false
 """
 Tests for the sync app - validates all 42 entities and 4 sync endpoints.
 """

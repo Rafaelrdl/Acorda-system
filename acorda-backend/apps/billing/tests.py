@@ -1,3 +1,4 @@
+# pyright: reportAttributeAccessIssue=false, reportOptionalMemberAccess=false
 """
 Tests for the billing app.
 Validates all 6 billing endpoints:

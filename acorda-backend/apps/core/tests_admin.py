@@ -1,3 +1,4 @@
+# pyright: reportAttributeAccessIssue=false
 """
 Comprehensive tests for Django Admin configuration.
 Tests cover: admin registration, list views, search, filters,

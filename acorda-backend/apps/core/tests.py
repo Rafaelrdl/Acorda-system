@@ -1,3 +1,4 @@
+# pyright: reportAttributeAccessIssue=false
 """
 Tests for the core app - PDF file handling.
 Validates all 3 PDF endpoints:

@@ -60,7 +60,7 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        user = serializer.validated_data['user']
+        user = serializer.validated_data['user']  # type: ignore[index]
         
         # Update last login
         user.last_login = timezone.now()
@@ -104,7 +104,7 @@ class LogoutView(APIView):
                 refresh_token = request.data.get('refresh')
             
             if refresh_token:
-                token = RefreshToken(refresh_token)
+                token = RefreshToken(refresh_token)  # type: ignore[arg-type]
                 token.blacklist()
         except TokenError:
             # Token already blacklisted or invalid - that's fine
@@ -131,7 +131,7 @@ class ActivateAccountView(APIView):
         user = serializer.save()
         
         # Generate tokens for auto-login
-        refresh = RefreshToken.for_user(user)
+        refresh = RefreshToken.for_user(user)  # type: ignore[arg-type]
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
         
@@ -192,7 +192,7 @@ class ResetPasswordView(APIView):
         user = serializer.save()
         
         # Generate tokens for auto-login
-        refresh = RefreshToken.for_user(user)
+        refresh = RefreshToken.for_user(user)  # type: ignore[arg-type]
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
         
@@ -467,7 +467,7 @@ class RefreshTokenView(APIView):
         
         try:
             # Validate and rotate refresh token
-            old_refresh = RefreshToken(refresh_token)
+            old_refresh = RefreshToken(refresh_token)  # type: ignore[arg-type]
             
             # Blacklist old token if rotation is enabled
             if settings.SIMPLE_JWT.get('ROTATE_REFRESH_TOKENS', False):
