@@ -67,7 +67,7 @@ class CookieJWTAuthentication(JWTAuthentication):
         Safe methods (GET, HEAD, OPTIONS) are allowed through by Django's
         CsrfViewMiddleware itself – only unsafe methods are checked.
         """
-        check = _CSRFCheck(lambda req: None)
+        check = _CSRFCheck(lambda req: None)  # type: ignore[arg-type]
         # Populate request.META['CSRF_COOKIE'] from the csrftoken cookie
         check.process_request(request)
         reason = check.process_view(request, None, (), {})

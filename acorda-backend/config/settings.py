@@ -17,7 +17,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Fail loudly in production if SECRET_KEY is still the insecure default
-if not DEBUG and SECRET_KEY.startswith('django-insecure'):
+if not DEBUG and str(SECRET_KEY).startswith('django-insecure'):
     raise RuntimeError(
         'SECRET_KEY insegura detectada em produção. '
         'Defina a variável de ambiente SECRET_KEY com uma chave forte.'
@@ -232,7 +232,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 DATABASES = {
     'default': dj_database_url.config(
-        default=config('DATABASE_URL', default='sqlite:///db.sqlite3'),
+        default=config('DATABASE_URL', default='sqlite:///db.sqlite3'),  # type: ignore[arg-type]
         conn_max_age=600,
     )
 }

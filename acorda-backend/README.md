@@ -37,7 +37,7 @@ python manage.py runserver
 
 ## Variáveis de Ambiente
 
-```
+```ini
 SECRET_KEY=sua-chave-secreta
 DEBUG=True
 DATABASE_URL=postgres://user:pass@localhost:5432/acorda
@@ -59,7 +59,7 @@ FRONTEND_URL=http://localhost:5174
 
 ## Estrutura
 
-```
+```text
 acorda-backend/
 ├── config/              # Configurações Django
 ├── apps/
@@ -74,6 +74,7 @@ acorda-backend/
 ## API Endpoints
 
 ### Auth
+
 - `POST /api/auth/login` - Login com email/senha
 - `POST /api/auth/logout` - Logout
 - `POST /api/auth/activate` - Ativar conta com token
@@ -82,17 +83,19 @@ acorda-backend/
 - `GET /api/auth/me` - Dados do usuário logado
 
 ### Billing
+
 - `POST /api/billing/checkout` - Criar checkout Mercado Pago
 - `POST /api/billing/webhook` - Webhook Mercado Pago
 - `GET /api/billing/subscription` - Status da assinatura
 
 ### Sync
+
 - `POST /api/sync/push` - Enviar mudanças locais
 - `GET /api/sync/pull` - Baixar mudanças do servidor
 
 ## Planos
 
-| Plano | Mensal | Anual | Lifetime |
-|-------|--------|-------|----------|
-| Pro | R$ 14,90 | R$ 149 | R$ 499 |
-| Pro IA | R$ 34,90 | R$ 349 | - |
+| Plano  | Mensal   | Anual  | Lifetime |
+|--------|----------|--------|----------|
+| Pro    | R$ 14,90 | R$ 149 | R$ 499   |
+| Pro IA | R$ 34,90 | R$ 349 | -        |

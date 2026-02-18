@@ -2,7 +2,7 @@
 
 ## Fluxo de Dados
 
-```
+```text
 App.tsx (Root)
 │
 ├─ userSettings { hasSeenHabitSuggestions?: boolean }
@@ -19,12 +19,14 @@ App.tsx (Root)
          ├─ HABIT_SUGGESTIONS (const data)
          ├─ normalizeTitle (util)
          └─ onPick (user interaction)
+
 ```
 
 ## Componentes
 
 ### HabitSuggestions.tsx
-```
+
+```text
 ┌─────────────────────────────────────┐
 │ 💡 Sugestões rápidas                │
 ├─────────────────────────────────────┤
@@ -36,6 +38,7 @@ App.tsx (Root)
 │                                     │
 │ Hábitos com fundo cinzo já foram... │
 └─────────────────────────────────────┘
+
 ```
 
 ## Duplicata Detection
@@ -52,42 +55,51 @@ const suggestion = "Beber Água"
 const normalized = normalizeTitle(suggestion.title)
 const isDuplicate = existingTitles.includes(normalized)
 // → isDuplicate = true ❌
+
 ```
 
 ## State Updates
 
 ### Quando Modal Abre
-```
+
+```text
 if (open && !habit) {
   shouldShowSuggestions = (habits.length === 0) || !hasSeenSuggestions
   // Renderiza HabitSuggestions
 }
+
 ```
 
 ### Quando Clica em Sugestão
-```
+
+```text
 handleQuickPickSuggestion(suggestion):
+
   1. Normaliza título
   2. Valida duplicado → toast erro se existe
   3. Cria hábito com createHabit()
   4. Chama onSave(habitData)
   5. Chama onMarkSuggestionsAsViewed()
   6. Toast sucesso
+
 ```
 
 ### Primeiro Hábito Adicionado
-```
+
+```text
 handleAddHabit(habit):
+
   1. Adiciona hábito ao state
   2. if (habits.length === 0):
        - handleMarkHabitSuggestionsAsViewed()
        - setUserSettings({ hasSeenHabitSuggestions: true })
   3. Toast "Hábito criado"
+
 ```
 
 ## Persistência
 
-```
+```text
 UserSettings {
   id: string
   userId: UserId
@@ -100,13 +112,14 @@ UserSettings {
   createdAt: number
   updatedAt: number
 }
+
 ```
 
 Storage: Sincronizado via `useKV(getSyncKey(userId, 'userSettings'))`
 
 ## Testes
 
-```
+```text
 normalizeTitle tests:
 ├─ removes leading and trailing whitespace ✓
 ├─ converts to lowercase ✓
@@ -117,6 +130,7 @@ normalizeTitle tests:
 └─ detects duplicates correctly ✓
 
 All 7 tests passing ✓
+
 ```
 
 ## Acessibilidade Checklist
@@ -126,7 +140,7 @@ All 7 tests passing ✓
 - ✓ Foco visível: Classes focus:outline-none focus:ring-2
 - ✓ Estados desabilitados: opacity-50 cursor-not-allowed
 - ✓ Assistive text: "Hábitos com fundo cinzo já foram adicionados"
-- ✓ Semantic HTML: <Button type="button">
+- ✓ Semantic HTML: `<Button type="button">`
 
 ## Performance
 

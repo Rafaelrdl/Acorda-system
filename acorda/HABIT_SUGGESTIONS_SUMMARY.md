@@ -20,13 +20,15 @@ Implementada a feature "Sugestões rápidas de hábitos" no modal de criar hábi
 ## 📦 Arquivos Entregues
 
 ### Novos
+
 1. **src/constants/habitSuggestions.ts** - 10 sugestões pré-definidas
 2. **src/components/dialogs/HabitSuggestions.tsx** - Componente de UI
-3. **src/lib/__tests__/habitSuggestions.test.ts** - Testes (7 testes ✓)
+3. **src/lib/**tests**/habitSuggestions.test.ts** - Testes (7 testes ✓)
 4. **HABIT_SUGGESTIONS_IMPLEMENTATION.md** - Documentação técnica
 5. **HABIT_SUGGESTIONS_ARCHITECTURE.md** - Diagrama de arquitetura
 
 ### Modificados
+
 1. **src/lib/types.ts** - Campo `hasSeenHabitSuggestions` em UserSettings
 2. **src/lib/helpers.ts** - Função `normalizeTitle()` + atualização factory
 3. **src/components/dialogs/HabitDialog.tsx** - Integração de sugestões
@@ -35,7 +37,7 @@ Implementada a feature "Sugestões rápidas de hábitos" no modal de criar hábi
 
 ## 🧪 Testes
 
-```
+```text
 ✓ normalizeTitle > removes leading and trailing whitespace
 ✓ normalizeTitle > converts to lowercase
 ✓ normalizeTitle > collapses multiple spaces into one
@@ -45,12 +47,13 @@ Implementada a feature "Sugestões rápidas de hábitos" no modal de criar hábi
 ✓ normalizeTitle > detects duplicates correctly
 
 Test Files: 1 passed (1) | Tests: 7 passed (7) ✓
+
 ```
 
 ## 🎨 Sugestões Pré-Definidas
 
 | Emoji | Título | Frequência | Tipo |
-|-------|--------|-----------|------|
+| ----- | ------ | ---------- | ---- |
 | 💧 | Beber água | daily | check |
 | 🚶 | Caminhada 10 min | daily | 10 min |
 | 🧘 | Meditar 5 min | daily | 5 min |
@@ -64,21 +67,29 @@ Test Files: 1 passed (1) | Tests: 7 passed (7) ✓
 
 ## 🔄 Fluxo de Usuário
 
-```
+```text
+
 1. Novo usuário abre app
    ↓
+
 2. Clica em "Novo Hábito" na tab Planejar
    ↓
+
 3. Modal abre mostrando "Sugestões rápidas" no topo
    ↓
+
 4. Clica em uma sugestão (ex: "Beber água")
    ↓
+
 5. Toast: "Hábito adicionado! 🎉"
    ↓
+
 6. Modal fecha, hábito aparece na lista
    ↓
+
 7. Reabre modal → sugestões NÃO aparecem mais
    (hasSeenHabitSuggestions = true)
+
 ```
 
 ## 🔐 Validações

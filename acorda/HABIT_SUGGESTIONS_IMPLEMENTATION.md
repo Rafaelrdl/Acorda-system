@@ -7,6 +7,7 @@ Adicionado bloco "Sugestões rápidas" no modal de criar hábito para novos usu�
 ## ✅ Arquivos Criados
 
 ### 1. **src/constants/habitSuggestions.ts**
+
 - Array `HABIT_SUGGESTIONS` com 10 sugestões pré-definidas em pt-BR
 - Cada sugestão com: `id`, `title`, `emoji`, `cadence` (daily/weekly), `targetMinutes` (opcional), `description`
 - Sugestões:
@@ -22,6 +23,7 @@ Adicionado bloco "Sugestões rápidas" no modal de criar hábito para novos usu�
   - 💪 Exercício
 
 ### 2. **src/components/dialogs/HabitSuggestions.tsx**
+
 - Componente que renderiza sugestões em chips com scroll horizontal (mobile-first)
 - Props:
   - `suggestions`: Array de sugestões
@@ -34,17 +36,20 @@ Adicionado bloco "Sugestões rápidas" no modal de criar hábito para novos usu�
   - Foco visível
   - Chips desabilitados para hábitos que já existem
 
-### 3. **src/lib/__tests__/habitSuggestions.test.ts**
+### 3. **src/lib/**tests**/habitSuggestions.test.ts**
+
 - Testes para `normalizeTitle()` (7 testes, todos passando)
 - Validação de casos: espaços, maiúsculas, colapse de espaços, detecção de duplicados
 
 ## ✅ Arquivos Modificados
 
 ### 1. **src/lib/types.ts**
+
 - Adicionado campo `hasSeenHabitSuggestions?: boolean` em `UserSettings`
 - Padrão: `false` para novos usuários
 
 ### 2. **src/lib/helpers.ts**
+
 - Adicionada função `normalizeTitle(title: string): string`
   - Normaliza títulos: trim + lowercase + colapsa espaços
   - Usada para validação de duplicados
@@ -52,6 +57,7 @@ Adicionado bloco "Sugestões rápidas" no modal de criar hábito para novos usu�
   - Novo campo `hasSeenHabitSuggestions: false` por padrão
 
 ### 3. **src/components/dialogs/HabitDialog.tsx**
+
 - Adicionadas props:
   - `habits?: Habit[]` - Lista de hábitos para validação
   - `hasSeenSuggestions?: boolean` - Flag para mostrar/esconder sugestões
@@ -62,12 +68,14 @@ Adicionado bloco "Sugestões rápidas" no modal de criar hábito para novos usu�
   - Toast de sucesso ou erro ao adicionar
 
 ### 4. **src/components/tabs/PlanejarTab.tsx**
+
 - Adicionadas props:
   - `hasSeenHabitSuggestions?: boolean`
   - `onMarkHabitSuggestionsAsViewed?: () => void`
 - Passa props ao `<HabitDialog>`
 
 ### 5. **src/App.tsx**
+
 - Adicionada função `handleMarkHabitSuggestionsAsViewed()`
   - Seta `userSettings.hasSeenHabitSuggestions = true`
   - Atualiza `updatedAt` para sincronização
@@ -78,32 +86,38 @@ Adicionado bloco "Sugestões rápidas" no modal de criar hábito para novos usu�
 
 ## 🔍 Validação de Requisitos
 
-✅ **1. Mostrar sugestões quando**: 
+✅ **1. Mostrar sugestões quando**:
+
 - `habits.length === 0` OU `hasSeenHabitSuggestions === false`
 
 ✅ **2. Renderizar 8-12 sugestões em chips/botões**:
+
 - 10 sugestões pré-definidas
 - Mobile-first com scroll horizontal
 - Grid responsivo (flex em mobile, wrap em desktop)
 
 ✅ **3. Criar hábito imediatamente ao clicar**:
+
 - Usa mesmo fluxo do formulário (`createHabit`, `onSave`)
 - Valida duplicados: normaliza título para comparação
 - Toast: "Hábito adicionado!" ou "Você já tem esse hábito"
 - Seta `hasSeenHabitSuggestions = true` automaticamente
 
 ✅ **4. Persistência de hasSeenHabitSuggestions**:
+
 - Armazenado em `UserSettings`
 - Sincronizável via backend (já integrado ao sistema de sync)
 - Default `false` para novos usuários
 
 ✅ **5. Acessibilidade**:
+
 - `aria-label`: "Adicionar hábito: {title}"
 - Navegação por teclado (Tab, Enter, Space)
 - Foco visível com classes tailwind padrão
 - Chips desabilitados com feedback visual
 
 ✅ **6. UI Minimalista**:
+
 - Sem dependências pesadas
 - Reutiliza componentes existentes (`Button`, `cn` utils)
 - Design consistente com resto do app
@@ -112,10 +126,12 @@ Adicionado bloco "Sugestões rápidas" no modal de criar hábito para novos usu�
 ## 🧪 Testes
 
 ```bash
-npm test -- src/lib/__tests__/habitSuggestions.test.ts
+npm test -- src/lib/**tests**/habitSuggestions.test.ts
+
 ```
 
 Resultado: **7 testes passando** ✓
+
 - normalizeTitle remove espaços
 - normalizeTitle converte para minúsculas
 - normalizeTitle collapsa múltiplos espaços
@@ -142,6 +158,7 @@ Resultado: **7 testes passando** ✓
 ## 📦 Dependências
 
 Nenhuma dependência nova adicionada. Usa:
+
 - React (já incluído)
 - Sonner (toast - já incluído)
 - Tailwind CSS (estilos - já incluído)
