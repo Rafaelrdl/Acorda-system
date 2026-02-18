@@ -23,14 +23,20 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             '--password',
-            default=os.environ.get('ADMIN_PASSWORD', 'Rafael100@'),
-            help='Admin password (default: from ADMIN_PASSWORD env)',
+            default=os.environ.get('ADMIN_PASSWORD', ''),
+            help='Admin password (REQUIRED: set via ADMIN_PASSWORD env var)',
         )
 
     def handle(self, *args, **options):
         email = options['email']
         username = options['username']
         password = options['password']
+
+        if not password:
+            self.stdout.write(self.style.ERROR(
+                'ADMIN_PASSWORD env var is required. Skipping superuser creation.'
+            ))
+            return
 
         if User.objects.filter(email=email).exists():
             self.stdout.write(self.style.WARNING(

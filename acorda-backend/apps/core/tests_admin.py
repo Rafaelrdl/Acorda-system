@@ -452,11 +452,22 @@ class TestCreateDefaultSuperuser(TestCase):
     def test_default_credentials(self):
         """Test that default args produce the expected admin user."""
         out = StringIO()
-        call_command('create_default_superuser', stdout=out)
+        call_command(
+            'create_default_superuser',
+            '--password', 'TestPass123!',
+            stdout=out,
+        )
         self.assertIn('created successfully', out.getvalue())
         user = User.objects.get(email='admin@somosacorda.com')
-        self.assertTrue(user.check_password('Rafael100@'))
+        self.assertTrue(user.check_password('TestPass123!'))
         self.assertEqual(user.name, 'Admin')
+
+    def test_no_password_skips_creation(self):
+        """Without ADMIN_PASSWORD the command must refuse to create a user."""
+        out = StringIO()
+        call_command('create_default_superuser', stdout=out)
+        self.assertIn('ADMIN_PASSWORD', out.getvalue())
+        self.assertFalse(User.objects.filter(email='admin@somosacorda.com').exists())
 
 
 # ═══════════════════════════════════════════════════════════════

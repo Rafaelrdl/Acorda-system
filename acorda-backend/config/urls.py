@@ -7,7 +7,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('painel-acorda/', admin.site.urls),
     path('api/auth/', include('apps.accounts.urls')),
     path('api/billing/', include('apps.billing.urls')),
     path('api/sync/', include('apps.sync.urls')),

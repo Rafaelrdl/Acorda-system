@@ -27,6 +27,10 @@ class SyncableModel(models.Model):
     
     class Meta:
         abstract = True
+        indexes = [
+            models.Index(fields=['user', 'sync_version'], name='%(class)s_user_syncver_idx'),
+            models.Index(fields=['user', 'deleted_at'], name='%(class)s_user_deleted_idx'),
+        ]
     
     def soft_delete(self):
         import time

@@ -3,11 +3,31 @@ Core API views for file handling and utilities.
 """
 import uuid
 
-from django.db import IntegrityError
+from django.db import IntegrityError, connection
 from django.db.models import Sum
-from django.http import FileResponse
+from django.http import FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status
+from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
+
+
+class HealthCheckView(APIView):
+    """Health check endpoint for load balancers and monitoring."""
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        # Verify database connectivity
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT 1')
+        except Exception:
+            return JsonResponse(
+                {'status': 'unhealthy', 'database': 'unreachable'},
+                status=503,
+            )
+        return JsonResponse({'status': 'ok'})
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -192,7 +212,10 @@ class PDFFileView(APIView):
             content_type=pdf_file.content_type or 'application/pdf'
         )
         response['Content-Length'] = str(pdf_file.file_size)
-        response['Content-Disposition'] = f'attachment; filename="{pdf_file.file_name}"'
+        # Sanitize filename to prevent header injection
+        from django.utils.encoding import escape_uri_path
+        safe_name = pdf_file.file_name.replace('"', '').replace('\r', '').replace('\n', '')
+        response['Content-Disposition'] = f"attachment; filename*=UTF-8''{escape_uri_path(safe_name)}"
         return response
 
     def delete(self, request, document_id):

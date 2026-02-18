@@ -29,6 +29,7 @@ from .serializers import (
 )
 from .tasks import send_password_reset_email
 from apps.core.utils import safe_delay
+from rest_framework.throttling import AnonRateThrottle
 from .authentication import (
     set_auth_cookies,
     clear_auth_cookies,
@@ -39,10 +40,21 @@ from .authentication import (
 logger = logging.getLogger(__name__)
 
 
+class AuthAnonThrottle(AnonRateThrottle):
+    """Strict rate limit for authentication endpoints."""
+    rate = '10/min'
+
+
+class PasswordResetThrottle(AnonRateThrottle):
+    """Strict rate limit for password reset / forgot password."""
+    rate = '5/hour'
+
+
 class LoginView(APIView):
     """Login endpoint - returns JWT tokens in HttpOnly cookies."""
     
     permission_classes = [AllowAny]
+    throttle_classes = [AuthAnonThrottle]
     
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -110,6 +122,7 @@ class ActivateAccountView(APIView):
     """Activate account with token and set password."""
     
     permission_classes = [AllowAny]
+    throttle_classes = [AuthAnonThrottle]
     
     def post(self, request):
         serializer = ActivateAccountSerializer(data=request.data)
@@ -145,6 +158,7 @@ class ForgotPasswordView(APIView):
     """Request password reset email."""
     
     permission_classes = [AllowAny]
+    throttle_classes = [PasswordResetThrottle]
     
     def post(self, request):
         serializer = ForgotPasswordSerializer(data=request.data)
@@ -169,6 +183,7 @@ class ResetPasswordView(APIView):
     """Reset password with token."""
     
     permission_classes = [AllowAny]
+    throttle_classes = [PasswordResetThrottle]
     
     def post(self, request):
         serializer = ResetPasswordSerializer(data=request.data)
