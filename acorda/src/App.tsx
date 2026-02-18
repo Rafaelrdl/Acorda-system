@@ -7,8 +7,10 @@ import { BottomNav, TabType } from '@/components/BottomNav'
 import { FAB } from '@/components/FAB'
 import { QuickCapture } from '@/components/QuickCapture'
 import { applyTheme } from '@/lib/appearance'
+import type { OnboardingResult } from '@/components/onboarding/OnboardingFlow'
 
 // Lazy-loaded heavy modules (split into separate chunks)
+const OnboardingFlow = lazy(() => import('@/components/onboarding/OnboardingFlow').then(m => ({ default: m.OnboardingFlow })))
 const HojeTab = lazy(() => import('@/components/tabs/HojeTab').then(m => ({ default: m.HojeTab })))
 const PlanejarTab = lazy(() => import('@/components/tabs/PlanejarTab').then(m => ({ default: m.PlanejarTab })))
 const EvolucaoTab = lazy(() => import('@/components/tabs/EvolucaoTab').then(m => ({ default: m.EvolucaoTab })))
@@ -101,7 +103,7 @@ function MainApp({ user }: { user: User }) {
     [userId]
   )
 
-  const [userSettings, setUserSettings] = useKV<UserSettings>(
+  const [userSettings, setUserSettings, userSettingsLoading] = useKV<UserSettings>(
     getSyncKey(userId, 'userSettings'), 
     defaultSettings
   )
@@ -647,6 +649,75 @@ function MainApp({ user }: { user: User }) {
     })
     
     return lines.join('\n')
+  }
+
+  // ── Onboarding ────────────────────────────────────────────
+  const needsOnboarding = userSettings?.onboardingCompleted !== true
+  console.log('[Onboarding] check:', { 
+    onboardingCompleted: userSettings?.onboardingCompleted, 
+    needsOnboarding, 
+    userSettingsLoading,
+    settingsKeys: userSettings ? Object.keys(userSettings) : 'null'
+  })
+
+  const handleOnboardingComplete = (data: OnboardingResult) => {
+    // Salvar meta + KRs
+    if (data.goal) {
+      setGoals(current => [...(current || []), data.goal!])
+    }
+    if (data.keyResults && data.keyResults.length > 0) {
+      setKeyResults(current => [...(current || []), ...data.keyResults!])
+    }
+
+    // Salvar hábitos
+    if (data.habits.length > 0) {
+      setHabits(current => [...(current || []), ...data.habits])
+    }
+
+    // Marcar onboarding como concluído
+    setUserSettings(current => ({
+      ...(current || defaultSettings),
+      onboardingCompleted: true,
+      updatedAt: Date.now(),
+    }))
+
+    toast.success('Setup concluído! Bem-vindo ao Acorda 🎉')
+  }
+
+  const handleOnboardingSkip = () => {
+    setUserSettings(current => ({
+      ...(current || defaultSettings),
+      onboardingCompleted: true,
+      updatedAt: Date.now(),
+    }))
+  }
+
+  // Mostrar loading enquanto carrega settings do IndexedDB
+  if (userSettingsLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="animate-pulse text-muted-foreground">Carregando...</div>
+      </div>
+    )
+  }
+
+  // Mostrar onboarding no primeiro login
+  if (needsOnboarding) {
+    console.log('[Onboarding] Rendering OnboardingFlow')
+    return (
+      <Suspense fallback={
+        <div className="flex items-center justify-center h-screen bg-background">
+          <div className="animate-pulse text-muted-foreground">Carregando...</div>
+        </div>
+      }>
+        <OnboardingFlow
+          user={user}
+          userId={userId}
+          onComplete={handleOnboardingComplete}
+          onSkip={handleOnboardingSkip}
+        />
+      </Suspense>
+    )
   }
 
   // Adaptar user para a interface UserInfo usada no AppHeader

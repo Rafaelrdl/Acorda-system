@@ -30,6 +30,7 @@ export interface UserSettings {
   appearance?: Appearance
   modules: ModuleSettings
   hasSeenHabitSuggestions?: boolean
+  onboardingCompleted?: boolean
   createdAt: number
   updatedAt: number
 }

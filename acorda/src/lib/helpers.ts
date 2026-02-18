@@ -414,6 +414,7 @@ export function createUserSettings(userId: UserId): UserSettings {
     minimalMode: false,
     appearance: 'dark',
     hasSeenHabitSuggestions: false,
+    onboardingCompleted: false,
     modules: {
       financas: false,
       leitura: false,
