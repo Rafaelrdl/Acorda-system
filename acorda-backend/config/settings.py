@@ -350,7 +350,7 @@ CORS_ALLOW_CREDENTIALS = True  # Required for cookies to be sent cross-origin
 # CSRF - Trust the same origins as CORS
 CSRF_TRUSTED_ORIGINS = config(
     'CSRF_TRUSTED_ORIGINS',
-    default='http://localhost:5173,http://localhost:5174,http://localhost:3000',
+    default='http://localhost,http://localhost:80,http://localhost:5173,http://localhost:5174,http://localhost:3000',
     cast=Csv()
 )
 
@@ -398,6 +398,10 @@ FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
 
 # Backend URL (for webhooks / notification URLs)
 BACKEND_URL = config('BACKEND_URL', default='http://localhost:8000')
+
+# Reverse proxy headers (nginx, ALB, etc.)
+USE_X_FORWARDED_HOST = config('USE_X_FORWARDED_HOST', default=False, cast=bool)
+USE_X_FORWARDED_PORT = config('USE_X_FORWARDED_PORT', default=False, cast=bool)
 
 # Token expiration
 ACTIVATION_TOKEN_EXPIRY_HOURS = 48
