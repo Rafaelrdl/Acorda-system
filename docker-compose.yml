@@ -1,0 +1,109 @@
+services:
+  # ── Banco de dados ────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: acorda
+      POSTGRES_USER: acorda
+      POSTGRES_PASSWORD: acorda
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U acorda"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Cache / Broker ────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend Django ────────────────────────────────────────
+  web:
+    build:
+      context: ./acorda-backend
+    command: gunicorn --bind 0.0.0.0:8000 --workers 2 --threads 4 --reload config.wsgi:application
+    volumes:
+      - ./acorda-backend:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./acorda-backend/.env
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - DATABASE_URL=postgres://acorda:acorda@db:5432/acorda
+      - REDIS_URL=redis://redis:6379/0
+      - FRONTEND_URL=http://localhost:80
+      - BACKEND_URL=http://localhost:8000
+      - EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - CORS_ALLOWED_ORIGINS=http://localhost,http://localhost:80
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── Celery Worker ─────────────────────────────────────────
+  celery:
+    build:
+      context: ./acorda-backend
+    entrypoint: []
+    command: celery -A config worker -l INFO
+    volumes:
+      - ./acorda-backend:/app
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - DATABASE_URL=postgres://acorda:acorda@db:5432/acorda
+      - REDIS_URL=redis://redis:6379/0
+      - EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── Celery Beat ───────────────────────────────────────────
+  celery-beat:
+    build:
+      context: ./acorda-backend
+    entrypoint: []
+    command: celery -A config beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=""
+    volumes:
+      - ./acorda-backend:/app
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - DATABASE_URL=postgres://acorda:acorda@db:5432/acorda
+      - REDIS_URL=redis://redis:6379/0
+      - EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── Frontend React (Nginx) ────────────────────────────────
+  frontend:
+    build:
+      context: ./acorda
+      args:
+        VITE_API_URL: http://localhost:8000
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
