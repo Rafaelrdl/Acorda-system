@@ -173,8 +173,18 @@ class ApiClient {
   private async parseError(response: Response): Promise<ApiError> {
     try {
       const data = await response.json()
+      // Django REST Framework returns errors in different shapes:
+      // - { detail: "..." }
+      // - { message: "..." }
+      // - { non_field_errors: ["..."] }
+      const message =
+        data.detail ||
+        data.message ||
+        (Array.isArray(data.non_field_errors) ? data.non_field_errors.join(' ') : null) ||
+        (typeof data === 'string' ? data : null) ||
+        'Erro desconhecido'
       return {
-        message: data.detail || data.message || 'Erro desconhecido',
+        message,
         errors: data.errors || data,
       }
     } catch {
