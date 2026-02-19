@@ -20,14 +20,15 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    allowedHosts: true, // permite qualquer host (dev only)
     watch: {
       usePolling: true, // necessário para hot-reload no Docker (Windows)
     },
     proxy: {
-      '/api': { target: 'http://web:8000', changeOrigin: true },
-      '/painel-acorda': { target: 'http://web:8000', changeOrigin: true },
-      '/static': { target: 'http://web:8000', changeOrigin: true },
-      '/media': { target: 'http://web:8000', changeOrigin: true },
+      '/api': { target: 'http://web:8000' },
+      '/painel-acorda': { target: 'http://web:8000' },
+      '/static': { target: 'http://web:8000' },
+      '/media': { target: 'http://web:8000' },
     },
   },
   build: {

@@ -13,8 +13,8 @@ export function ReadyStep({ goalCount, habitCount, onFinish, onBack }: ReadyStep
   const hasContent = goalCount > 0 || habitCount > 0
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-full px-6 py-8">
-      <div className="w-full max-w-md space-y-8 text-center">
+    <div className="flex flex-col items-center justify-center min-h-full px-4 sm:px-6 py-6 sm:py-8">
+      <div className="w-full max-w-md space-y-6 sm:space-y-8 text-center">
         {/* Back */}
         <div className="flex justify-start">
           <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition-colors">
@@ -102,7 +102,7 @@ export function ReadyStep({ goalCount, habitCount, onFinish, onBack }: ReadyStep
         </div>
 
         {/* CTA */}
-        <Button onClick={onFinish} size="lg" className="w-full h-14 text-lg gap-2">
+        <Button onClick={onFinish} size="lg" className="w-full h-12 sm:h-14 text-base sm:text-lg gap-2 mb-safe">
           <Rocket size={22} weight="bold" />
           Começar a Usar
         </Button>

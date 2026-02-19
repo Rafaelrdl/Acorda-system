@@ -70,7 +70,7 @@ export function OnboardingFlow({ user, userId, onComplete, onSkip }: OnboardingF
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col overflow-hidden">
       {/* Progress bar */}
-      <div className="px-4 pt-4 pb-2">
+      <div className="px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-2">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-muted-foreground font-medium">
             Passo {currentIndex + 1} de {STEPS.length}
@@ -86,7 +86,7 @@ export function OnboardingFlow({ user, userId, onComplete, onSkip }: OnboardingF
       </div>
 
       {/* Step content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto overscroll-contain">
         {currentStep === 'welcome' && (
           <WelcomeStep
             userName={user.name || user.email.split('@')[0]}

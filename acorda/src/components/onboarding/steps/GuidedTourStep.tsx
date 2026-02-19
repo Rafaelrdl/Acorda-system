@@ -112,8 +112,8 @@ export function GuidedTourStep({ onNext, onBack }: GuidedTourStepProps) {
   const isLast = slideIndex === slides.length - 1
 
   return (
-    <div className="flex flex-col min-h-full px-6 py-6">
-      <div className="w-full max-w-md mx-auto space-y-6 flex-1 flex flex-col">
+    <div className="flex flex-col min-h-full px-4 sm:px-6 py-4 sm:py-6">
+      <div className="w-full max-w-md mx-auto space-y-4 sm:space-y-6 flex-1 flex flex-col">
         {/* Header */}
         <div className="flex items-center gap-3">
           <button
@@ -173,7 +173,7 @@ export function GuidedTourStep({ onNext, onBack }: GuidedTourStepProps) {
         {/* Actions */}
         <Button
           onClick={isLast ? onNext : () => setSlideIndex(i => i + 1)}
-          className="w-full h-12 gap-2"
+          className="w-full h-12 gap-2 text-sm sm:text-base mb-safe"
         >
           {isLast ? 'Concluir Tour' : 'Próximo'}
           <ArrowRight size={18} weight="bold" />

@@ -84,8 +84,8 @@ export function GoalStep({ userId, onComplete, onSkip, onBack }: GoalStepProps) 
   const canFinish = objective.trim().length > 0
 
   return (
-    <div className="flex flex-col min-h-full px-6 py-6">
-      <div className="w-full max-w-md mx-auto space-y-6">
+    <div className="flex flex-col min-h-full px-4 sm:px-6 py-4 sm:py-6">
+      <div className="w-full max-w-md mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
           <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition-colors">
@@ -156,18 +156,18 @@ export function GoalStep({ userId, onComplete, onSkip, onBack }: GoalStepProps) 
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-2 pb-safe">
               <Button
                 variant="outline"
                 onClick={onSkip}
-                className="flex-1 h-12"
+                className="flex-1 h-12 text-sm sm:text-base"
               >
                 Pular
               </Button>
               <Button
                 onClick={() => setPhase('keyresults')}
                 disabled={!canProceedToKR}
-                className="flex-1 h-12"
+                className="flex-1 h-12 text-sm sm:text-base"
               >
                 Próximo
               </Button>
@@ -228,18 +228,18 @@ export function GoalStep({ userId, onComplete, onSkip, onBack }: GoalStepProps) 
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-2 pb-safe">
               <Button
                 variant="outline"
                 onClick={() => setPhase('objective')}
-                className="flex-1 h-12"
+                className="flex-1 h-12 text-sm sm:text-base"
               >
                 Voltar
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={!canFinish}
-                className="flex-1 h-12"
+                className="flex-1 h-12 text-sm sm:text-base"
               >
                 Criar Meta
               </Button>

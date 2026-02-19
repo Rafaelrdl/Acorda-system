@@ -9,8 +9,8 @@ interface WelcomeStepProps {
 
 export function WelcomeStep({ userName, onNext }: WelcomeStepProps) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-full px-6 py-8">
-      <div className="w-full max-w-md space-y-8 text-center">
+    <div className="flex flex-col items-center justify-center min-h-full px-4 sm:px-6 py-6 sm:py-8">
+      <div className="w-full max-w-md space-y-6 sm:space-y-8 text-center">
         {/* Logo */}
         <div className="flex justify-center">
           <img
@@ -57,7 +57,7 @@ export function WelcomeStep({ userName, onNext }: WelcomeStepProps) {
         </div>
 
         {/* CTA */}
-        <Button onClick={onNext} size="lg" className="w-full h-14 text-lg gap-2">
+        <Button onClick={onNext} size="lg" className="w-full h-12 sm:h-14 text-base sm:text-lg gap-2 mb-safe">
           <Rocket size={22} weight="bold" />
           Começar Setup
         </Button>

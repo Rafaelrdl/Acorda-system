@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Lightning, Check } from '@phosphor-icons/react'
 import type { UserId, Habit } from '@/lib/types'
 import { createHabit } from '@/lib/helpers'
@@ -45,8 +44,8 @@ export function HabitsStep({ userId, onComplete, onSkip, onBack }: HabitsStepPro
   }
 
   return (
-    <div className="flex flex-col min-h-full px-6 py-6">
-      <div className="w-full max-w-md mx-auto space-y-6">
+    <div className="flex flex-col min-h-full px-4 sm:px-6 py-4 sm:py-6">
+      <div className="w-full max-w-md mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
           <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition-colors">
@@ -73,7 +72,7 @@ export function HabitsStep({ userId, onComplete, onSkip, onBack }: HabitsStepPro
         )}
 
         {/* All habits */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
           {HABIT_SUGGESTIONS.map(suggestion => (
             <HabitCard
               key={suggestion.id}
@@ -90,18 +89,18 @@ export function HabitsStep({ userId, onComplete, onSkip, onBack }: HabitsStepPro
         </p>
 
         {/* Actions */}
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3 pt-2 pb-safe">
           <Button
             variant="outline"
             onClick={onSkip}
-            className="flex-1 h-12"
+            className="flex-1 h-12 text-sm sm:text-base"
           >
             Pular
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={selectedIds.size === 0}
-            className="flex-1 h-12"
+            className="flex-1 h-12 text-sm sm:text-base"
           >
             {selectedIds.size > 0
               ? `Adicionar ${selectedIds.size} hábito${selectedIds.size > 1 ? 's' : ''}`
@@ -136,9 +135,6 @@ function HabitCard({ suggestion, selected, onToggle }: {
       )}
       <span className="text-2xl">{suggestion.emoji || '✨'}</span>
       <span className="text-xs font-medium text-foreground leading-tight">{suggestion.title}</span>
-      {suggestion.cadence === 'weekly' && (
-        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">semanal</Badge>
-      )}
     </button>
   )
 }
