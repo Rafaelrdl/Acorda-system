@@ -63,6 +63,8 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
     depends_on:
+      web:
+        condition: service_started
       db:
         condition: service_healthy
       redis:
@@ -80,6 +82,8 @@ services:
       - DATABASE_URL=postgres://acorda:acorda@db:5432/acorda
       - REDIS_URL=redis://redis:6379/0
     depends_on:
+      web:
+        condition: service_started
       db:
         condition: service_healthy
       redis:
