@@ -75,6 +75,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      web:
+        condition: service_started
 
   # ── Celery Beat ───────────────────────────────────────────
   celery-beat:
@@ -95,15 +97,21 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      web:
+        condition: service_started
 
-  # ── Frontend React (Nginx) ────────────────────────────────
+  # ── Frontend React (Vite dev server) ──────────────────────
   frontend:
-    build:
-      context: ./acorda
-      args:
-        VITE_API_URL: /api
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ./acorda:/app
+      - /app/node_modules
     ports:
-      - "80:80"
+      - "80:5173"
+    environment:
+      - VITE_API_URL=/api
     depends_on:
       - web
 

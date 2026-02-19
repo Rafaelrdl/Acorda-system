@@ -17,6 +17,19 @@ export default defineConfig({
       '@': resolve(projectRoot, 'src')
     }
   },
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+    watch: {
+      usePolling: true, // necessário para hot-reload no Docker (Windows)
+    },
+    proxy: {
+      '/api': { target: 'http://web:8000', changeOrigin: true },
+      '/painel-acorda': { target: 'http://web:8000', changeOrigin: true },
+      '/static': { target: 'http://web:8000', changeOrigin: true },
+      '/media': { target: 'http://web:8000', changeOrigin: true },
+    },
+  },
   build: {
     rollupOptions: {
       output: {

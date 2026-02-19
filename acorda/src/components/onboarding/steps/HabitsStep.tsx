@@ -44,9 +44,6 @@ export function HabitsStep({ userId, onComplete, onSkip, onBack }: HabitsStepPro
     onComplete(habits)
   }
 
-  const dailyHabits = HABIT_SUGGESTIONS.filter(s => s.cadence === 'daily')
-  const weeklyHabits = HABIT_SUGGESTIONS.filter(s => s.cadence === 'weekly')
-
   return (
     <div className="flex flex-col min-h-full px-6 py-6">
       <div className="w-full max-w-md mx-auto space-y-6">
@@ -75,41 +72,17 @@ export function HabitsStep({ userId, onComplete, onSkip, onBack }: HabitsStepPro
           </div>
         )}
 
-        {/* Daily habits */}
-        <div className="space-y-3">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Diários
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {dailyHabits.map(suggestion => (
-              <HabitCard
-                key={suggestion.id}
-                suggestion={suggestion}
-                selected={selectedIds.has(suggestion.id)}
-                onToggle={() => toggleSuggestion(suggestion.id)}
-              />
-            ))}
-          </div>
+        {/* All habits */}
+        <div className="grid grid-cols-2 gap-2">
+          {HABIT_SUGGESTIONS.map(suggestion => (
+            <HabitCard
+              key={suggestion.id}
+              suggestion={suggestion}
+              selected={selectedIds.has(suggestion.id)}
+              onToggle={() => toggleSuggestion(suggestion.id)}
+            />
+          ))}
         </div>
-
-        {/* Weekly habits */}
-        {weeklyHabits.length > 0 && (
-          <div className="space-y-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Semanais
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {weeklyHabits.map(suggestion => (
-                <HabitCard
-                  key={suggestion.id}
-                  suggestion={suggestion}
-                  selected={selectedIds.has(suggestion.id)}
-                  onToggle={() => toggleSuggestion(suggestion.id)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Quick tip */}
         <p className="text-xs text-muted-foreground text-center italic">
