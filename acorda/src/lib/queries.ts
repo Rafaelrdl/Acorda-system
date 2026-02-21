@@ -6,7 +6,17 @@ import {
   KeyResult, 
   PomodoroSession,
   Goal,
-  UserId
+  UserId,
+  StudySession,
+  Subject,
+  Book,
+  ReadingLog,
+  Transaction,
+  Income,
+  FixedExpense,
+  WellnessCheckIn,
+  WellnessProgram,
+  WellnessDayAction,
 } from './types'
 import { getDateKey, isSameDay, migrateDateKeyFromUTC, filterDeleted } from './helpers'
 
@@ -806,6 +816,388 @@ export function getDietStats(
   const streak = getDietStreak(meals, templates, userId)
   
   return { adherence, totalMeals, completedMeals, streak }
+}
+
+// ============ ESTUDOS (Study) Queries ============
+
+/**
+ * Retorna série de minutos de estudo por dia
+ */
+export function getDailyStudyMinutesSeries(
+  sessions: StudySession[],
+  userId: UserId,
+  days: number
+): DailyDataPoint[] {
+  const result: DailyDataPoint[] = []
+  const today = new Date()
+
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    const dateKey = getDateKey(date)
+
+    const dayMinutes = sessions
+      .filter(s => s.userId === userId && s.date === dateKey)
+      .reduce((acc, s) => acc + s.durationMinutes, 0)
+
+    result.push({ date: dateKey, value: dayMinutes })
+  }
+
+  return result
+}
+
+/**
+ * Retorna total de minutos de estudo no período
+ */
+export function getStudyMinutesForPeriod(
+  sessions: StudySession[],
+  userId: UserId,
+  days: number
+): { current: number; previous: number } {
+  const today = new Date()
+  const cutoff = new Date(today)
+  cutoff.setDate(cutoff.getDate() - days)
+  const prevCutoff = new Date(cutoff)
+  prevCutoff.setDate(prevCutoff.getDate() - days)
+
+  const cutoffKey = getDateKey(cutoff)
+  const prevCutoffKey = getDateKey(prevCutoff)
+
+  const userSessions = sessions.filter(s => s.userId === userId)
+
+  const current = userSessions
+    .filter(s => s.date >= cutoffKey)
+    .reduce((sum, s) => sum + s.durationMinutes, 0)
+
+  const previous = userSessions
+    .filter(s => s.date >= prevCutoffKey && s.date < cutoffKey)
+    .reduce((sum, s) => sum + s.durationMinutes, 0)
+
+  return { current, previous }
+}
+
+/**
+ * Retorna minutos de estudo por matéria no período
+ */
+export function getStudyMinutesBySubject(
+  sessions: StudySession[],
+  subjects: Subject[],
+  userId: UserId,
+  days: number
+): Array<{ subjectId: string; name: string; color: string; minutes: number }> {
+  const today = new Date()
+  const cutoff = new Date(today)
+  cutoff.setDate(cutoff.getDate() - days)
+  const cutoffKey = getDateKey(cutoff)
+
+  const userSessions = sessions.filter(s => s.userId === userId && s.date >= cutoffKey)
+
+  const subjectMap = new Map<string, number>()
+  for (const s of userSessions) {
+    subjectMap.set(s.subjectId, (subjectMap.get(s.subjectId) || 0) + s.durationMinutes)
+  }
+
+  return Array.from(subjectMap.entries())
+    .map(([subjectId, minutes]) => {
+      const subject = subjects.find(s => s.id === subjectId)
+      return {
+        subjectId,
+        name: subject?.name || 'Sem matéria',
+        color: subject?.color || '#888',
+        minutes,
+      }
+    })
+    .sort((a, b) => b.minutes - a.minutes)
+}
+
+// ============ LEITURA (Reading) Queries ============
+
+/**
+ * Retorna série de páginas lidas por dia
+ */
+export function getDailyPagesReadSeries(
+  readingLogs: ReadingLog[],
+  userId: UserId,
+  days: number
+): DailyDataPoint[] {
+  const result: DailyDataPoint[] = []
+  const today = new Date()
+
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    const dateKey = getDateKey(date)
+
+    const dayPages = readingLogs
+      .filter(l => l.userId === userId && l.date === dateKey)
+      .reduce((acc, l) => acc + l.pagesRead, 0)
+
+    result.push({ date: dateKey, value: dayPages })
+  }
+
+  return result
+}
+
+/**
+ * Retorna total de páginas lidas no período
+ */
+export function getPagesReadForPeriod(
+  readingLogs: ReadingLog[],
+  userId: UserId,
+  days: number
+): { current: number; previous: number } {
+  const today = new Date()
+  const cutoff = new Date(today)
+  cutoff.setDate(cutoff.getDate() - days)
+  const prevCutoff = new Date(cutoff)
+  prevCutoff.setDate(prevCutoff.getDate() - days)
+
+  const cutoffKey = getDateKey(cutoff)
+  const prevCutoffKey = getDateKey(prevCutoff)
+
+  const userLogs = readingLogs.filter(l => l.userId === userId)
+
+  const current = userLogs
+    .filter(l => l.date >= cutoffKey)
+    .reduce((sum, l) => sum + l.pagesRead, 0)
+
+  const previous = userLogs
+    .filter(l => l.date >= prevCutoffKey && l.date < cutoffKey)
+    .reduce((sum, l) => sum + l.pagesRead, 0)
+
+  return { current, previous }
+}
+
+/**
+ * Retorna estatísticas de livros
+ */
+export function getReadingStats(
+  books: Book[],
+  userId: UserId
+): {
+  total: number
+  reading: number
+  completed: number
+  avgProgress: number
+} {
+  const userBooks = books.filter(b => b.userId === userId)
+  const reading = userBooks.filter(b => b.status === 'reading')
+  const completed = userBooks.filter(b => b.status === 'completed')
+
+  const avgProgress = reading.length > 0
+    ? Math.round(
+        reading.reduce((sum, b) => sum + (b.totalPages > 0 ? (b.currentPage / b.totalPages) * 100 : 0), 0)
+        / reading.length
+      )
+    : 0
+
+  return {
+    total: userBooks.length,
+    reading: reading.length,
+    completed: completed.length,
+    avgProgress,
+  }
+}
+
+// ============ FINANÇAS (Finance) Queries ============
+
+/**
+ * Retorna balanço financeiro do período
+ */
+export function getFinanceBalanceForPeriod(
+  transactions: Transaction[],
+  userId: UserId,
+  days: number
+): { income: number; expense: number; balance: number; prevBalance: number } {
+  const today = new Date()
+  const cutoff = new Date(today)
+  cutoff.setDate(cutoff.getDate() - days)
+  const prevCutoff = new Date(cutoff)
+  prevCutoff.setDate(prevCutoff.getDate() - days)
+
+  const cutoffKey = getDateKey(cutoff)
+  const prevCutoffKey = getDateKey(prevCutoff)
+
+  const userTx = transactions.filter(t => t.userId === userId)
+
+  const currentTx = userTx.filter(t => t.date >= cutoffKey)
+  const prevTx = userTx.filter(t => t.date >= prevCutoffKey && t.date < cutoffKey)
+
+  const income = currentTx
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0)
+
+  const expense = currentTx
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0)
+
+  const prevIncome = prevTx
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0)
+
+  const prevExpense = prevTx
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0)
+
+  return {
+    income,
+    expense,
+    balance: income - expense,
+    prevBalance: prevIncome - prevExpense,
+  }
+}
+
+/**
+ * Retorna série de gastos por dia
+ */
+export function getDailyExpenseSeries(
+  transactions: Transaction[],
+  userId: UserId,
+  days: number
+): DailyDataPoint[] {
+  const result: DailyDataPoint[] = []
+  const today = new Date()
+
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    const dateKey = getDateKey(date)
+
+    const dayExpense = transactions
+      .filter(t => t.userId === userId && t.date === dateKey && t.type === 'expense')
+      .reduce((acc, t) => acc + t.amount, 0)
+
+    result.push({ date: dateKey, value: dayExpense })
+  }
+
+  return result
+}
+
+/**
+ * Retorna taxa de economia (% do que sobrou da receita)
+ */
+export function getSavingsRate(
+  transactions: Transaction[],
+  userId: UserId,
+  days: number
+): number {
+  const { income, expense } = getFinanceBalanceForPeriod(transactions, userId, days)
+  if (income === 0) return 0
+  return Math.round(((income - expense) / income) * 100)
+}
+
+// ============ BEM-ESTAR (Wellness) Queries ============
+
+/**
+ * Retorna séries de sono, energia e humor para gráficos
+ */
+export function getWellnessSeriesForPeriod(
+  checkIns: WellnessCheckIn[],
+  userId: UserId,
+  days: number
+): {
+  sleepSeries: DailyDataPoint[]
+  energySeries: DailyDataPoint[]
+  moodSeries: DailyDataPoint[]
+} {
+  const today = new Date()
+  const sleepSeries: DailyDataPoint[] = []
+  const energySeries: DailyDataPoint[] = []
+  const moodSeries: DailyDataPoint[] = []
+
+  const moodMap: Record<string, number> = { low: 1, medium: 2, high: 3 }
+
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    const dateKey = getDateKey(date)
+
+    const checkIn = checkIns.find(c => c.userId === userId && c.date === dateKey)
+
+    sleepSeries.push({ date: dateKey, value: checkIn?.sleepHours ?? 0 })
+    energySeries.push({ date: dateKey, value: moodMap[checkIn?.energyLevel ?? ''] ?? 0 })
+    moodSeries.push({ date: dateKey, value: moodMap[checkIn?.mood ?? ''] ?? 0 })
+  }
+
+  return { sleepSeries, energySeries, moodSeries }
+}
+
+/**
+ * Retorna médias de sono e contagem de check-ins
+ */
+export function getWellnessStats(
+  checkIns: WellnessCheckIn[],
+  userId: UserId,
+  days: number
+): {
+  avgSleep: number
+  checkInCount: number
+  checkInRate: number
+  prevAvgSleep: number
+} {
+  const today = new Date()
+  const cutoff = new Date(today)
+  cutoff.setDate(cutoff.getDate() - days)
+  const prevCutoff = new Date(cutoff)
+  prevCutoff.setDate(prevCutoff.getDate() - days)
+
+  const cutoffKey = getDateKey(cutoff)
+  const prevCutoffKey = getDateKey(prevCutoff)
+
+  const userCheckIns = checkIns.filter(c => c.userId === userId)
+
+  const currentCheckIns = userCheckIns.filter(c => c.date >= cutoffKey)
+  const prevCheckIns = userCheckIns.filter(c => c.date >= prevCutoffKey && c.date < cutoffKey)
+
+  const sleepValues = currentCheckIns.filter(c => c.sleepHours != null).map(c => c.sleepHours!)
+  const avgSleep = sleepValues.length > 0
+    ? Math.round((sleepValues.reduce((a, b) => a + b, 0) / sleepValues.length) * 10) / 10
+    : 0
+
+  const prevSleepValues = prevCheckIns.filter(c => c.sleepHours != null).map(c => c.sleepHours!)
+  const prevAvgSleep = prevSleepValues.length > 0
+    ? Math.round((prevSleepValues.reduce((a, b) => a + b, 0) / prevSleepValues.length) * 10) / 10
+    : 0
+
+  return {
+    avgSleep,
+    checkInCount: currentCheckIns.length,
+    checkInRate: Math.round((currentCheckIns.length / days) * 100),
+    prevAvgSleep,
+  }
+}
+
+/**
+ * Retorna progresso dos programas de bem-estar ativos
+ */
+export function getWellnessProgramProgress(
+  programs: WellnessProgram[],
+  dayActions: WellnessDayAction[],
+  userId: UserId
+): Array<{
+  programId: string
+  type: WellnessProgram['type']
+  progress: number
+  completedDays: number
+  totalDays: number
+}> {
+  const activePrograms = programs.filter(p => p.userId === userId && p.isActive)
+
+  return activePrograms.map(program => {
+    const actions = dayActions.filter(a => a.programId === program.id)
+    const totalDays = program.duration
+    const completedDays = new Set(
+      actions.filter(a => a.completed).map(a => a.day)
+    ).size
+
+    return {
+      programId: program.id,
+      type: program.type,
+      progress: totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0,
+      completedDays,
+      totalDays,
+    }
+  })
 }
 
 
