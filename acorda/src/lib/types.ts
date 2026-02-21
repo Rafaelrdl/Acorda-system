@@ -62,6 +62,7 @@ export interface Task {
   isTwoMinuteTask: boolean
   completedAt?: number
   notes?: string
+  sourceInboxItemId?: string
   createdAt: number
   updatedAt: number
   deleted_at?: number
@@ -73,6 +74,7 @@ export interface Project {
   name: string
   description?: string
   status: ProjectStatus
+  deadline?: number
   tags: string[]
   createdAt: number
   updatedAt: number
@@ -135,6 +137,7 @@ export interface Habit {
   targetDays?: number[]
   minimumVersion?: string
   keyResultId?: string
+  preferredTime?: 'morning' | 'afternoon' | 'evening' | 'anytime'
   isActive: boolean
   createdAt: number
   updatedAt: number

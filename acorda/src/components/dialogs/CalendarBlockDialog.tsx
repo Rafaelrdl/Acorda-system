@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Calendar } from '@/components/ui/calendar'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   AlertDialog,
@@ -17,9 +18,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import type { UserId } from '@/lib/types'
-import { CalendarBlock, Task, CalendarBlockType } from '@/lib/types'
+import { CalendarBlock, Task, CalendarBlockType, Habit } from '@/lib/types'
 import { createCalendarBlock, updateTimestamp, getDateKey } from '@/lib/helpers'
-import { Warning, Trash } from '@phosphor-icons/react'
+import { Warning, Trash, Clock } from '@phosphor-icons/react'
+import { ptBR } from 'date-fns/locale'
 
 interface CalendarBlockDialogProps {
   open: boolean
@@ -29,6 +31,7 @@ interface CalendarBlockDialogProps {
   selectedDate: Date | null
   selectedTime: number | null
   tasks: Task[]
+  habits?: Habit[]
   onSave: (block: CalendarBlock) => void
   onDelete?: () => void
   onUpdateTask?: (task: Task) => void
@@ -43,6 +46,7 @@ export function CalendarBlockDialog({
   selectedDate,
   selectedTime,
   tasks,
+  habits = [],
   onSave,
   onDelete,
   onUpdateTask,
@@ -51,46 +55,73 @@ export function CalendarBlockDialog({
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [type, setType] = useState<CalendarBlockType>('personal')
-  const [date, setDate] = useState('')
+  const [calendarDate, setCalendarDate] = useState<Date | undefined>(undefined)
   const [startHour, setStartHour] = useState('')
   const [startMin, setStartMin] = useState('')
-  const [duration, setDuration] = useState('60')
+  const [durationHours, setDurationHours] = useState('1')
+  const [durationMins, setDurationMins] = useState('0')
   const [linkedTaskId, setLinkedTaskId] = useState<string>('')
+  const [linkedHabitId, setLinkedHabitId] = useState<string>('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  const hours = Array.from({ length: 18 }, (_, i) => i + 6) // 6h até 23h
 
   useEffect(() => {
     if (block) {
       setTitle(block.title)
       setDescription(block.description || '')
       setType(block.type)
-      setDate(block.date)
+      const [year, month, day] = block.date.split('-').map(Number)
+      setCalendarDate(new Date(year, month - 1, day))
       const startH = Math.floor(block.startTime / 60)
       const startM = block.startTime % 60
       setStartHour(startH.toString())
       setStartMin(startM.toString())
-      setDuration(((block.endTime - block.startTime).toString()))
+      const dur = block.endTime - block.startTime
+      setDurationHours(Math.floor(dur / 60).toString())
+      setDurationMins((dur % 60).toString())
       setLinkedTaskId(block.taskId || '')
+      setLinkedHabitId(block.habitId || '')
     } else if (selectedDate && selectedTime !== null) {
       setTitle('')
       setDescription('')
       setType('personal')
-      setDate(getDateKey(selectedDate))
+      setCalendarDate(selectedDate)
       const startH = Math.floor(selectedTime / 60)
       const startM = selectedTime % 60
       setStartHour(startH.toString())
       setStartMin(startM.toString())
-      setDuration('60')
+      setDurationHours('1')
+      setDurationMins('0')
       setLinkedTaskId('')
+      setLinkedHabitId('')
     }
   }, [block, selectedDate, selectedTime, open])
+
+  const handleMinChange = (value: string, setter: (val: string) => void, max: number = 59) => {
+    const num = parseInt(value) || 0
+    if (num < 0) setter('0')
+    else if (num > max) setter(max.toString())
+    else setter(num.toString())
+  }
+
+  const handleHourChange = (value: string, setter: (val: string) => void, max: number = 23) => {
+    const num = parseInt(value) || 0
+    if (num < 0) setter('0')
+    else if (num > max) setter(max.toString())
+    else setter(num.toString())
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!title.trim() || !date || !startHour) return
+    if (!title.trim() || !calendarDate || !startHour) return
 
+    const dateKey = getDateKey(calendarDate)
     const startTime = parseInt(startHour) * 60 + (parseInt(startMin) || 0)
-    const endTime = startTime + parseInt(duration)
+    const totalDuration = parseInt(durationHours || '0') * 60 + parseInt(durationMins || '0')
+    if (totalDuration <= 0) return
+    const endTime = startTime + totalDuration
 
     const blockData: CalendarBlock = block
       ? updateTimestamp({
@@ -98,33 +129,64 @@ export function CalendarBlockDialog({
           title: title.trim(),
           description: description.trim() || undefined,
           type,
-          date,
+          date: dateKey,
           startTime,
           endTime,
           taskId: linkedTaskId || undefined,
+          habitId: linkedHabitId || undefined,
         })
-      : createCalendarBlock(userId, title.trim(), date, startTime, endTime, type, {
+      : createCalendarBlock(userId, title.trim(), dateKey, startTime, endTime, type, {
           description: description.trim() || undefined,
           taskId: linkedTaskId || undefined,
+          habitId: linkedHabitId || undefined,
         })
 
     onSave(blockData)
   }
 
   const availableTasks = tasks.filter(t => t.status !== 'done')
+  const activeHabits = habits.filter(h => h.isActive)
 
   const handleTaskSelect = (taskId: string) => {
     setLinkedTaskId(taskId)
+    setLinkedHabitId('')
     if (taskId) {
       const task = tasks.find(t => t.id === taskId)
       if (task && !title) {
         setTitle(task.title)
         if (task.estimateMin) {
-          setDuration(task.estimateMin.toString())
+          setDurationHours(Math.floor(task.estimateMin / 60).toString())
+          setDurationMins((task.estimateMin % 60).toString())
         }
       }
+      setType('task')
     }
   }
+
+  const handleHabitSelect = (habitId: string) => {
+    setLinkedHabitId(habitId)
+    setLinkedTaskId('')
+    if (habitId) {
+      const habit = habits.find(h => h.id === habitId)
+      if (habit && !title) {
+        setTitle(habit.name)
+      }
+      setType('habit')
+    }
+  }
+
+  // Calcular duração total para exibir
+  const totalDurationMins = parseInt(durationHours || '0') * 60 + parseInt(durationMins || '0')
+  const durationLabel = totalDurationMins > 0 
+    ? `${Math.floor(totalDurationMins / 60)}h ${totalDurationMins % 60}min`
+    : '0min'
+
+  // Calcular preview do horário
+  const startTimeMin = parseInt(startHour || '0') * 60 + parseInt(startMin || '0')
+  const endTimeMin = startTimeMin + totalDurationMins
+  const timePreview = totalDurationMins > 0 && startHour
+    ? `${Math.floor(startTimeMin / 60).toString().padStart(2, '0')}:${(startTimeMin % 60).toString().padStart(2, '0')} — ${Math.floor(endTimeMin / 60).toString().padStart(2, '0')}:${(endTimeMin % 60).toString().padStart(2, '0')}`
+    : ''
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -143,21 +205,42 @@ export function CalendarBlockDialog({
             </Alert>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="block-task">Vincular tarefa (opcional)</Label>
-            <Select value={linkedTaskId || '__none__'} onValueChange={(val) => handleTaskSelect(val === '__none__' ? '' : val)}>
-              <SelectTrigger id="block-task">
-                <SelectValue placeholder="Selecione uma tarefa" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Nenhuma tarefa</SelectItem>
-                {availableTasks.map((task) => (
-                  <SelectItem key={task.id} value={task.id}>
-                    {task.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="block-task">Vincular tarefa (opcional)</Label>
+              <Select value={linkedTaskId || '__none__'} onValueChange={(val) => handleTaskSelect(val === '__none__' ? '' : val)}>
+                <SelectTrigger id="block-task" className="h-12">
+                  <SelectValue placeholder="Selecione uma tarefa" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Nenhuma tarefa</SelectItem>
+                  {availableTasks.map((task) => (
+                    <SelectItem key={task.id} value={task.id}>
+                      {task.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {activeHabits.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="block-habit">Vincular hábito (opcional)</Label>
+                <Select value={linkedHabitId || '__none__'} onValueChange={(val) => handleHabitSelect(val === '__none__' ? '' : val)}>
+                  <SelectTrigger id="block-habit" className="h-12">
+                    <SelectValue placeholder="Selecione um hábito" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Nenhum hábito</SelectItem>
+                    {activeHabits.map((habit) => (
+                      <SelectItem key={habit.id} value={habit.id}>
+                        {habit.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -168,6 +251,7 @@ export function CalendarBlockDialog({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="O que você vai fazer?"
               required
+              className="h-12"
             />
           </div>
 
@@ -185,11 +269,12 @@ export function CalendarBlockDialog({
           <div className="space-y-2">
             <Label htmlFor="block-type">Tipo</Label>
             <Select value={type} onValueChange={(v) => setType(v as CalendarBlockType)}>
-              <SelectTrigger id="block-type">
+              <SelectTrigger id="block-type" className="h-12">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="task">Tarefa</SelectItem>
+                <SelectItem value="habit">Hábito</SelectItem>
                 <SelectItem value="focus">Foco</SelectItem>
                 <SelectItem value="meeting">Reunião</SelectItem>
                 <SelectItem value="personal">Pessoal</SelectItem>
@@ -197,60 +282,85 @@ export function CalendarBlockDialog({
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="block-date">Data</Label>
-              <Input
-                id="block-date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="block-duration">Duração (min)</Label>
-              <Input
-                id="block-duration"
-                type="number"
-                min="15"
-                step="15"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                required
+          {/* Calendário */}
+          <div className="space-y-2">
+            <Label>Data</Label>
+            <div className="flex justify-center">
+              <Calendar
+                mode="single"
+                selected={calendarDate}
+                onSelect={setCalendarDate}
+                locale={ptBR}
+                className="rounded-md border"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="block-start-hour">Hora início</Label>
+          {/* Horário de início */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1">
+              <Clock size={14} />
+              Horário de início
+            </Label>
+            <div className="flex gap-2 items-center">
+              <Select value={startHour} onValueChange={setStartHour}>
+                <SelectTrigger className="w-20 h-12">
+                  <SelectValue placeholder="Hora" />
+                </SelectTrigger>
+                <SelectContent>
+                  {hours.map((h) => (
+                    <SelectItem key={h} value={h.toString()}>
+                      {h.toString().padStart(2, '0')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-muted-foreground">:</span>
               <Input
-                id="block-start-hour"
                 type="number"
-                min="0"
-                max="23"
-                value={startHour}
-                onChange={(e) => setStartHour(e.target.value)}
-                placeholder="14"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="block-start-min">Min início</Label>
-              <Input
-                id="block-start-min"
-                type="number"
-                min="0"
-                max="59"
-                step="15"
+                min={0}
+                max={59}
                 value={startMin}
-                onChange={(e) => setStartMin(e.target.value)}
+                onChange={(e) => handleMinChange(e.target.value, setStartMin)}
+                className="w-20 h-12 text-center"
                 placeholder="00"
               />
             </div>
+          </div>
+
+          {/* Duração */}
+          <div className="space-y-2">
+            <Label>Duração</Label>
+            <div className="flex gap-2 items-center">
+              <div className="flex items-center gap-1">
+                <Input
+                  type="number"
+                  min={0}
+                  max={12}
+                  value={durationHours}
+                  onChange={(e) => handleHourChange(e.target.value, setDurationHours, 12)}
+                  className="w-16 h-12 text-center"
+                  placeholder="1"
+                />
+                <span className="text-sm text-muted-foreground">h</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Input
+                  type="number"
+                  min={0}
+                  max={59}
+                  value={durationMins}
+                  onChange={(e) => handleMinChange(e.target.value, setDurationMins)}
+                  className="w-16 h-12 text-center"
+                  placeholder="0"
+                />
+                <span className="text-sm text-muted-foreground">min</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Total: {durationLabel}
+              {timePreview && <span className="ml-2">({timePreview})</span>}
+            </p>
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
@@ -259,7 +369,7 @@ export function CalendarBlockDialog({
                 type="button"
                 variant="destructive"
                 onClick={() => setShowDeleteConfirm(true)}
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto h-12 touch-target"
               >
                 <Trash className="mr-2" /> Excluir
               </Button>
@@ -269,11 +379,11 @@ export function CalendarBlockDialog({
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="flex-1"
+                className="flex-1 h-12 touch-target"
               >
                 Cancelar
               </Button>
-              <Button type="submit" className="flex-1" disabled={!title.trim()}>
+              <Button type="submit" className="flex-1 h-12 touch-target" disabled={!title.trim() || totalDurationMins <= 0}>
                 {block ? 'Salvar' : 'Criar'}
               </Button>
             </div>

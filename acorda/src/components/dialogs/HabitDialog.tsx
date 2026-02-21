@@ -51,6 +51,7 @@ export function HabitDialog({
   const [timesPerWeek, setTimesPerWeek] = useState(3)
   const [targetDays, setTargetDays] = useState<number[]>([])
   const [keyResultId, setKeyResultId] = useState('')
+  const [preferredTime, setPreferredTime] = useState<'morning' | 'afternoon' | 'evening' | 'anytime'>('anytime')
 
   // Determina se deve mostrar sugestões - sempre quando for novo hábito
   const shouldShowSuggestions = !habit
@@ -104,6 +105,7 @@ export function HabitDialog({
         setTimesPerWeek(habit.timesPerWeek || 3)
         setTargetDays(habit.targetDays || [])
         setKeyResultId(habit.keyResultId || '')
+        setPreferredTime(habit.preferredTime || 'anytime')
       } else {
         setName('')
         setDescription('')
@@ -112,6 +114,7 @@ export function HabitDialog({
         setTimesPerWeek(3)
         setTargetDays([])
         setKeyResultId('')
+        setPreferredTime('anytime')
       }
     }
   }, [habit, open])
@@ -131,6 +134,7 @@ export function HabitDialog({
           timesPerWeek: frequency === 'weekly' ? timesPerWeek : undefined,
           targetDays: frequency === 'weekly' ? targetDays : undefined,
           keyResultId: keyResultId || undefined,
+          preferredTime: preferredTime !== 'anytime' ? preferredTime : undefined,
         })
       : createHabit(userId, name.trim(), frequency, {
           description: description.trim() || undefined,
@@ -138,6 +142,7 @@ export function HabitDialog({
           timesPerWeek: frequency === 'weekly' ? timesPerWeek : undefined,
           targetDays: frequency === 'weekly' ? targetDays : undefined,
           keyResultId: keyResultId || undefined,
+          preferredTime: preferredTime !== 'anytime' ? preferredTime : undefined,
         })
 
     onSave(habitData)
@@ -230,6 +235,7 @@ export function HabitDialog({
                       key={num}
                       type="button"
                       onClick={() => setTimesPerWeek(num)}
+                      aria-pressed={timesPerWeek === num}
                       className={`w-10 h-10 rounded-md border ${
                         timesPerWeek === num 
                           ? 'bg-primary text-primary-foreground' 
@@ -250,6 +256,7 @@ export function HabitDialog({
                       key={day.value}
                       type="button"
                       onClick={() => toggleTargetDay(day.value)}
+                      aria-pressed={targetDays.includes(day.value)}
                       className={`flex-1 py-2 px-1 text-sm rounded-md border ${
                         targetDays.includes(day.value)
                           ? 'bg-primary text-primary-foreground'
@@ -285,6 +292,21 @@ export function HabitDialog({
               </Select>
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label>Horário preferido (opcional)</Label>
+            <Select value={preferredTime} onValueChange={(v) => setPreferredTime(v as typeof preferredTime)}>
+              <SelectTrigger className="h-12">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="anytime">Qualquer horário</SelectItem>
+                <SelectItem value="morning">Manhã</SelectItem>
+                <SelectItem value="afternoon">Tarde</SelectItem>
+                <SelectItem value="evening">Noite</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="h-12 touch-target">

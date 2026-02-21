@@ -8,8 +8,9 @@ import { Calendar } from '@/components/ui/calendar'
 import type { UserId } from '@/lib/types'
 import { Task, CalendarBlock } from '@/lib/types'
 import { createCalendarBlock, getDateKey, updateTimestamp } from '@/lib/helpers'
-import { CalendarBlank, Clock } from '@phosphor-icons/react'
+import { CalendarBlank, Clock, Warning } from '@phosphor-icons/react'
 import { ptBR } from 'date-fns/locale'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 interface ScheduleTaskDialogProps {
   open: boolean
@@ -17,6 +18,7 @@ interface ScheduleTaskDialogProps {
   userId: UserId
   task: Task | null
   onSchedule: (block: CalendarBlock, updatedTask: Task) => void
+  calendarBlocks?: CalendarBlock[]
 }
 
 export function ScheduleTaskDialog({
@@ -25,6 +27,7 @@ export function ScheduleTaskDialog({
   userId,
   task,
   onSchedule,
+  calendarBlocks = [],
 }: ScheduleTaskDialogProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const [startHour, setStartHour] = useState<string>('9')
@@ -114,6 +117,25 @@ export function ScheduleTaskDialog({
   const durationLabel = totalDurationMins > 0 
     ? `${Math.floor(totalDurationMins / 60)}h ${totalDurationMins % 60}min`
     : '0min'
+
+  // Preview do intervalo de tempo
+  const startTime = parseInt(startHour || '0') * 60 + parseInt(startMin || '0')
+  const endTime = startTime + totalDurationMins
+  const formatTime = (mins: number) =>
+    `${Math.floor(mins / 60).toString().padStart(2, '0')}:${(mins % 60).toString().padStart(2, '0')}`
+  const timePreview = totalDurationMins > 0 && selectedDate
+    ? `${formatTime(startTime)} — ${formatTime(Math.min(endTime, 24 * 60))}`
+    : null
+
+  // Detecção de conflitos com blocos existentes
+  const conflicts = (() => {
+    if (!selectedDate || totalDurationMins <= 0) return []
+    const dateKey = getDateKey(selectedDate)
+    const dayBlocks = calendarBlocks.filter(b => !b.deletedAt && b.date === dateKey)
+    return dayBlocks.filter(b => {
+      return startTime < b.endTime && endTime > b.startTime
+    })
+  })()
 
   if (!task) return null
 
@@ -212,7 +234,27 @@ export function ScheduleTaskDialog({
             <p className="text-xs text-muted-foreground">
               Total: {durationLabel}
             </p>
+            {timePreview && (
+              <p className="text-xs text-primary font-medium">
+                {timePreview}
+              </p>
+            )}
           </div>
+
+          {/* Aviso de conflitos */}
+          {conflicts.length > 0 && (
+            <Alert variant="destructive">
+              <Warning size={16} />
+              <AlertDescription className="text-xs">
+                Conflito com {conflicts.length === 1 ? 'bloco existente' : `${conflicts.length} blocos`}:
+                {conflicts.map(c => (
+                  <span key={c.id} className="block ml-1">
+                    • {c.title} ({formatTime(c.startTime)}–{formatTime(c.endTime)})
+                  </span>
+                ))}
+              </AlertDescription>
+            </Alert>
+          )}
 
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

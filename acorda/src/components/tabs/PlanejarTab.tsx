@@ -106,6 +106,8 @@ export function PlanejarTab({
   onDeleteReference,
 }: PlanejarTabProps) {
   const [processingItem, setProcessingItem] = useState<InboxItem | null>(null)
+  const [batchProcessing, setBatchProcessing] = useState(false)
+  const [batchIndex, setBatchIndex] = useState(0)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [showTaskDialog, setShowTaskDialog] = useState(false)
   const [showGoalDialog, setShowGoalDialog] = useState(false)
@@ -122,6 +124,7 @@ export function PlanejarTab({
   const [showNoteEditor, setShowNoteEditor] = useState(false)
   const [editingNote, setEditingNote] = useState<Reference | null>(null)
   const [noteToDelete, setNoteToDelete] = useState<Reference | null>(null)
+  const [showAllCompleted, setShowAllCompleted] = useState(false)
 
   // Filtrar itens deletados
   const activeInboxItems = filterDeleted(inboxItems)
@@ -130,11 +133,20 @@ export function PlanejarTab({
   
   const unprocessedInbox = activeInboxItems.filter(item => !item.isProcessed)
   const pendingTasks = activeTasks.filter(t => t.status !== 'done')
-  const nextTasks = pendingTasks.filter(t => t.status === 'next')
-  const scheduledTasks = pendingTasks.filter(t => t.status === 'scheduled')
+  const nextTasks = pendingTasks.filter(t => t.status === 'next').sort((a, b) => {
+    // Prioritárias primeiro
+    if (a.isTopPriority && !b.isTopPriority) return -1
+    if (!a.isTopPriority && b.isTopPriority) return 1
+    return 0
+  })
+  const scheduledTasks = pendingTasks.filter(t => t.status === 'scheduled').sort((a, b) => {
+    // Ordenar por data agendada
+    if (a.scheduledDate && b.scheduledDate) return a.scheduledDate.localeCompare(b.scheduledDate)
+    return 0
+  })
   const waitingTasks = pendingTasks.filter(t => t.status === 'waiting')
   const somedayTasks = pendingTasks.filter(t => t.status === 'someday')
-  const completedTasks = activeTasks.filter(t => t.status === 'done').slice(0, 10)
+  const completedTasks = activeTasks.filter(t => t.status === 'done')
   const activeHabits = filterDeleted(habits).filter(h => h.isActive)
 
   return (
@@ -194,9 +206,25 @@ export function PlanejarTab({
         <TabsContent value="inbox" className="space-y-4">
           <Card className="p-4">
             {unprocessedInbox.length > 0 && (
-              <p className="text-xs text-muted-foreground mb-3">
-                {unprocessedInbox.length} para processar
-              </p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs text-muted-foreground">
+                  {unprocessedInbox.length} para processar
+                </p>
+                {unprocessedInbox.length > 1 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setBatchProcessing(true)
+                      setBatchIndex(0)
+                      setProcessingItem(unprocessedInbox[0])
+                    }}
+                  >
+                    <Play size={14} weight="fill" className="mr-1" />
+                    Processar todos
+                  </Button>
+                )}
+              </div>
             )}
             
             {unprocessedInbox.length === 0 ? (
@@ -211,12 +239,20 @@ export function PlanejarTab({
                     key={item.id}
                     className="flex items-start gap-3 p-3 rounded-lg border border-border hover:border-primary/50 transition-colors"
                   >
-                    <p className="flex-1 text-sm">{item.content}</p>
-                    <div className="flex gap-1">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm">{item.content}</p>
+                      {item.notes && (
+                        <p className="text-xs text-muted-foreground mt-1 truncate">{item.notes}</p>
+                      )}
+                    </div>
+                    <div className="flex gap-1 shrink-0">
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => setProcessingItem(item)}
+                        onClick={() => {
+                          setBatchProcessing(false)
+                          setProcessingItem(item)
+                        }}
                       >
                         <Play size={16} weight="fill" />
                       </Button>
@@ -364,7 +400,7 @@ export function PlanejarTab({
                     </div>
                   </div>
                   <div className="space-y-1">
-                    {completedTasks.map((task) => (
+                    {(showAllCompleted ? completedTasks : completedTasks.slice(0, 10)).map((task) => (
                       <div
                         key={task.id}
                         className="flex items-center gap-3 p-2 rounded-lg text-muted-foreground/70"
@@ -380,6 +416,26 @@ export function PlanejarTab({
                         )}
                       </div>
                     ))}
+                    {completedTasks.length > 10 && !showAllCompleted && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowAllCompleted(true)}
+                        className="w-full text-xs text-muted-foreground mt-2"
+                      >
+                        Ver mais {completedTasks.length - 10} tarefas concluídas
+                      </Button>
+                    )}
+                    {showAllCompleted && completedTasks.length > 10 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowAllCompleted(false)}
+                        className="w-full text-xs text-muted-foreground mt-2"
+                      >
+                        Mostrar menos
+                      </Button>
+                    )}
                   </div>
                 </Card>
               )}
@@ -393,6 +449,7 @@ export function PlanejarTab({
               userId={userId}
               calendarBlocks={filterDeleted(calendarBlocks)}
               tasks={pendingTasks}
+              habits={activeHabits}
               weekStartsOn={weekStartsOn}
               googleCalendarEvents={googleCalendarEvents}
               onAddBlock={onAddCalendarBlock}
@@ -715,11 +772,34 @@ export function PlanejarTab({
       <ProcessInboxDialog
         item={processingItem}
         open={!!processingItem}
-        onOpenChange={(open) => !open && setProcessingItem(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setProcessingItem(null)
+            setBatchProcessing(false)
+          }
+        }}
         userId={userId}
         onCreateTask={onAddTask}
         onCreateReference={onAddReference}
         onMarkProcessed={onMarkInboxProcessed}
+        onAddCalendarBlock={onAddCalendarBlock}
+        projects={_projects}
+        goals={goals}
+        keyResults={keyResults}
+        batchCurrent={batchProcessing ? batchIndex + 1 : undefined}
+        batchTotal={batchProcessing ? unprocessedInbox.length : undefined}
+        onNext={batchProcessing ? () => {
+          // Avança para o próximo item não processado
+          const remaining = unprocessedInbox.filter(i => i.id !== processingItem?.id)
+          const nextIdx = 0
+          if (remaining.length > 0 && remaining[nextIdx]) {
+            setBatchIndex(prev => prev + 1)
+            setProcessingItem(remaining[nextIdx])
+          } else {
+            setProcessingItem(null)
+            setBatchProcessing(false)
+          }
+        } : undefined}
       />
 
       <ScheduleTaskDialog
@@ -727,6 +807,7 @@ export function PlanejarTab({
         onOpenChange={(open) => !open && setSchedulingTask(null)}
         userId={userId}
         task={schedulingTask}
+        calendarBlocks={filterDeleted(calendarBlocks)}
         onSchedule={(block, updatedTask) => {
           onAddCalendarBlock(block)
           onUpdateTask(updatedTask)
@@ -746,6 +827,7 @@ export function PlanejarTab({
         userId={userId}
         goals={goals}
         keyResults={keyResults}
+        projects={_projects}
         onSave={(task) => {
           if (editingTask) {
             onUpdateTask(task)

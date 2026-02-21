@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { UserId } from '@/lib/types'
-import { Task, TaskStatus, EnergyLevel, Goal, KeyResult } from '@/lib/types'
+import { Task, TaskStatus, EnergyLevel, Goal, KeyResult, Project } from '@/lib/types'
 import { createTask, updateTimestamp } from '@/lib/helpers'
+import { Star } from '@phosphor-icons/react'
 
 interface TaskDialogProps {
   task: Task | null
@@ -16,16 +17,22 @@ interface TaskDialogProps {
   userId: UserId
   goals?: Goal[]
   keyResults?: KeyResult[]
+  projects?: Project[]
   onSave: (task: Task) => void
 }
 
-export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyResults = [], onSave }: TaskDialogProps) {
+export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyResults = [], projects = [], onSave }: TaskDialogProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<TaskStatus>('next')
   const [energyLevel, setEnergyLevel] = useState<EnergyLevel>('medium')
   const [tags, setTags] = useState('')
   const [keyResultId, setKeyResultId] = useState<string>('')
+  const [scheduledDate, setScheduledDate] = useState<string>('')
+  const [projectId, setProjectId] = useState<string>('')
+  const [estimateMin, setEstimateMin] = useState<string>('')
+  const [notes, setNotes] = useState('')
+  const [isTopPriority, setIsTopPriority] = useState(false)
 
   useEffect(() => {
     if (task) {
@@ -35,6 +42,11 @@ export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyRe
       setEnergyLevel(task.energyLevel || 'medium')
       setTags(task.tags.join(', '))
       setKeyResultId(task.keyResultId || '')
+      setScheduledDate(task.scheduledDate || '')
+      setProjectId(task.projectId || '')
+      setEstimateMin(task.estimateMin ? task.estimateMin.toString() : '')
+      setNotes(task.notes || '')
+      setIsTopPriority(task.isTopPriority || false)
     } else {
       setTitle('')
       setDescription('')
@@ -42,6 +54,11 @@ export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyRe
       setEnergyLevel('medium')
       setTags('')
       setKeyResultId('')
+      setScheduledDate('')
+      setProjectId('')
+      setEstimateMin('')
+      setNotes('')
+      setIsTopPriority(false)
     }
   }, [task, open])
 
@@ -49,6 +66,8 @@ export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyRe
     e.preventDefault()
     
     if (!title.trim()) return
+
+    const parsedEstimate = estimateMin ? parseInt(estimateMin) : undefined
 
     const taskData = task 
       ? updateTimestamp({
@@ -59,6 +78,11 @@ export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyRe
           tags: tags.split(',').map(t => t.trim()).filter(Boolean),
           energyLevel,
           keyResultId: keyResultId || undefined,
+          scheduledDate: status === 'scheduled' && scheduledDate ? scheduledDate : undefined,
+          projectId: projectId || undefined,
+          estimateMin: parsedEstimate,
+          notes: notes.trim() || undefined,
+          isTopPriority,
         })
       : createTask(userId, title.trim(), {
           description: description.trim() || undefined,
@@ -66,6 +90,11 @@ export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyRe
           tags: tags.split(',').map(t => t.trim()).filter(Boolean),
           energyLevel,
           keyResultId: keyResultId || undefined,
+          scheduledDate: status === 'scheduled' && scheduledDate ? scheduledDate : undefined,
+          projectId: projectId || undefined,
+          estimateMin: parsedEstimate,
+          notes: notes.trim() || undefined,
+          isTopPriority,
         })
 
     onSave(taskData)
@@ -112,11 +141,25 @@ export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyRe
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="next">Próxima Ação</SelectItem>
+                  <SelectItem value="scheduled">Agendada</SelectItem>
                   <SelectItem value="waiting">Aguardando</SelectItem>
                   <SelectItem value="someday">Algum Dia</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            {status === 'scheduled' && (
+              <div className="space-y-2">
+                <Label htmlFor="task-scheduled-date">Data agendada</Label>
+                <Input
+                  id="task-scheduled-date"
+                  type="date"
+                  value={scheduledDate}
+                  onChange={(e) => setScheduledDate(e.target.value)}
+                  className="h-12"
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="task-energy">Energia</Label>
@@ -131,7 +174,40 @@ export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyRe
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="task-estimate">Estimativa (min)</Label>
+              <Input
+                id="task-estimate"
+                type="number"
+                min="1"
+                max="480"
+                value={estimateMin}
+                onChange={(e) => setEstimateMin(e.target.value)}
+                placeholder="Ex: 30"
+                className="h-12"
+              />
+            </div>
           </div>
+
+          {projects.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="task-project">Projeto (opcional)</Label>
+              <Select value={projectId || '__none__'} onValueChange={(val) => setProjectId(val === '__none__' ? '' : val)}>
+                <SelectTrigger id="task-project" className="w-full h-12">
+                  <SelectValue placeholder="Nenhum" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Nenhum</SelectItem>
+                  {projects.filter(p => p.status === 'active').map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="task-tags">Tags</Label>
@@ -170,6 +246,32 @@ export function TaskDialog({ task, open, onOpenChange, userId, goals = [], keyRe
               </Select>
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="task-notes">Notas (opcional)</Label>
+            <Textarea
+              id="task-notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Anotações, links, referências..."
+              rows={2}
+            />
+          </div>
+
+          {/* Prioridade */}
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant={isTopPriority ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setIsTopPriority(!isTopPriority)}
+              className="gap-1.5 h-10"
+              aria-pressed={isTopPriority}
+            >
+              <Star size={16} weight={isTopPriority ? 'fill' : 'regular'} />
+              {isTopPriority ? 'Prioridade Alta' : 'Marcar como prioridade'}
+            </Button>
+          </div>
 
           <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="h-12 touch-target">

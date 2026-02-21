@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import type { UserId } from '@/lib/types'
-import { CalendarBlock, Task, GoogleCalendarEvent } from '@/lib/types'
+import { CalendarBlock, Task, Habit, GoogleCalendarEvent } from '@/lib/types'
 import { getWeekDates, getStartOfWeek, getDateKey } from '@/lib/helpers'
 import { CaretLeft, CaretRight, Warning } from '@phosphor-icons/react'
 import { CalendarBlockDialog } from './dialogs/CalendarBlockDialog'
@@ -10,6 +10,7 @@ interface WeeklyCalendarProps {
   userId: UserId
   calendarBlocks: CalendarBlock[]
   tasks: Task[]
+  habits?: Habit[]
   weekStartsOn: 0 | 1
   googleCalendarEvents: GoogleCalendarEvent[]
   onAddBlock: (block: CalendarBlock) => void
@@ -18,10 +19,28 @@ interface WeeklyCalendarProps {
   onUpdateTask?: (task: Task) => void
 }
 
+// Color mapping by block type
+const blockTypeColors: Record<string, { bg: string; border: string; text: string }> = {
+  task: { bg: 'bg-blue-100/70 dark:bg-blue-900/30', border: 'border-blue-300 dark:border-blue-700', text: 'text-blue-900 dark:text-blue-100' },
+  habit: { bg: 'bg-green-100/70 dark:bg-green-900/30', border: 'border-green-300 dark:border-green-700', text: 'text-green-900 dark:text-green-100' },
+  focus: { bg: 'bg-purple-100/70 dark:bg-purple-900/30', border: 'border-purple-300 dark:border-purple-700', text: 'text-purple-900 dark:text-purple-100' },
+  meeting: { bg: 'bg-amber-100/70 dark:bg-amber-900/30', border: 'border-amber-300 dark:border-amber-700', text: 'text-amber-900 dark:text-amber-100' },
+  personal: { bg: 'bg-accent/20', border: 'border-accent', text: '' },
+}
+
+const blockTypeLabels: Record<string, string> = {
+  task: 'Tarefa',
+  habit: 'Hábito',
+  focus: 'Foco',
+  meeting: 'Reunião',
+  personal: 'Pessoal',
+}
+
 export function WeeklyCalendar({
   userId,
   calendarBlocks,
   tasks,
+  habits = [],
   weekStartsOn,
   googleCalendarEvents,
   onAddBlock,
@@ -158,7 +177,11 @@ export function WeeklyCalendar({
         </div>
       </div>
 
-      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide relative">
+        {/* Scroll indicator for mobile */}
+        <div className="md:hidden text-xs text-muted-foreground text-center mb-1">
+          ← Deslize para ver todos os dias →
+        </div>
         <div className="min-w-[640px]">
           <div className="grid grid-cols-8 gap-1 mb-2">
             <div className="text-xs text-muted-foreground"></div>
@@ -196,8 +219,17 @@ export function WeeklyCalendar({
                   return (
                     <div
                       key={`${date.toISOString()}-${hour}`}
+                      role={canCreateBlock ? 'button' : undefined}
+                      tabIndex={canCreateBlock ? 0 : undefined}
+                      aria-label={canCreateBlock ? `Criar bloco às ${hour}:00 em ${date.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric' })}` : undefined}
                       className="border-l border-border min-h-[60px] p-1 hover:bg-secondary/30 cursor-pointer transition-colors relative"
                       onClick={() => canCreateBlock && handleTimeSlotClick(date, timeInMinutes)}
+                      onKeyDown={(e) => {
+                        if ((e.key === 'Enter' || e.key === ' ') && canCreateBlock) {
+                          e.preventDefault()
+                          handleTimeSlotClick(date, timeInMinutes)
+                        }
+                      }}
                     >
                       {externalEvents.map((event) => (
                         <div
@@ -224,6 +256,7 @@ export function WeeklyCalendar({
                       ))}
                       {blocks.map((block) => {
                         const completed = isTaskCompleted(block)
+                        const colors = blockTypeColors[block.type] || blockTypeColors.personal
                         return (
                           <div
                             key={block.id}
@@ -232,13 +265,18 @@ export function WeeklyCalendar({
                                 ? 'bg-muted/50 border border-muted-foreground/30 opacity-60' 
                                 : hasConflict 
                                   ? 'bg-destructive/20 border border-destructive' 
-                                  : 'bg-accent/20 border border-accent'
+                                  : `${colors.bg} border ${colors.border} ${colors.text}`
                             }`}
                             onClick={(e) => {
                               e.stopPropagation()
                               handleEditBlock(block)
                             }}
                           >
+                            <div className="flex items-center gap-1">
+                              {!completed && (
+                                <span className="text-[9px] uppercase tracking-wide opacity-70">{blockTypeLabels[block.type] || block.type}</span>
+                              )}
+                            </div>
                             <div className={`font-medium truncate ${completed ? 'line-through text-muted-foreground' : ''}`}>
                               {block.title}
                             </div>
@@ -274,6 +312,7 @@ export function WeeklyCalendar({
         selectedDate={selectedDate}
         selectedTime={selectedTime}
         tasks={tasks}
+        habits={habits}
         onSave={handleSaveBlock}
         onDelete={editingBlock ? () => {
           onDeleteBlock(editingBlock.id)

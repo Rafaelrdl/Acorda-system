@@ -297,7 +297,12 @@ export function GoalEditDialog({
                   type="date"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="h-12"
                 />
+                {deadline && new Date(deadline) < new Date(new Date().toISOString().split('T')[0]) && (
+                  <p className="text-xs text-destructive">O prazo não pode ser no passado.</p>
+                )}
               </div>
             </div>
           </div>
@@ -451,10 +456,11 @@ export function GoalEditDialog({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              className="h-12 touch-target"
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={!objective.trim()}>
+            <Button type="submit" disabled={!objective.trim()} className="h-12 touch-target">
               Salvar
             </Button>
           </DialogFooter>

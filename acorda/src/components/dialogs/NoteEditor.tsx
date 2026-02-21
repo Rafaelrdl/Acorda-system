@@ -10,6 +10,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { 
   ArrowLeft, 
   TextB, 
@@ -74,7 +84,10 @@ export function NoteEditor({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [wordCount, setWordCount] = useState(0)
   const [charCount, setCharCount] = useState(0)
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (open) {
@@ -148,22 +161,45 @@ export function NoteEditor({
     toast.success(note ? 'Anotação salva' : 'Anotação criada')
   }, [title, content, tags, sourceUrl, note, userId, onSave])
 
+  // Auto-save com debounce de 3s
+  useEffect(() => {
+    if (!hasUnsavedChanges || !note) return
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+    autoSaveTimerRef.current = setTimeout(() => {
+      handleSave()
+      toast.success('Auto-salvo')
+    }, 3000)
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+    }
+  }, [hasUnsavedChanges, content, title, tags, sourceUrl])
+
   const handleClose = useCallback(() => {
     if (hasUnsavedChanges) {
-      const confirm = window.confirm('Você tem alterações não salvas. Deseja realmente sair?')
-      if (!confirm) return
+      setShowCloseConfirm(true)
+      return
     }
     onClose()
   }, [hasUnsavedChanges, onClose])
 
+  const confirmClose = () => {
+    setShowCloseConfirm(false)
+    setHasUnsavedChanges(false)
+    onClose()
+  }
+
   const handleDelete = () => {
     if (note && onDelete) {
-      const confirm = window.confirm('Tem certeza que deseja excluir esta anotação?')
-      if (confirm) {
-        onDelete(note.id)
-        onClose()
-        toast.success('Anotação excluída')
-      }
+      setShowDeleteConfirm(true)
+    }
+  }
+
+  const confirmDelete = () => {
+    if (note && onDelete) {
+      setShowDeleteConfirm(false)
+      onDelete(note.id)
+      onClose()
+      toast.success('Anotação excluída')
     }
   }
 
@@ -402,6 +438,7 @@ export function NoteEditor({
   const groups = ['text', 'heading', 'list', 'block'] as const
 
   return (
+    <>
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Header - clean minimal */}
       <header className="flex items-center justify-between px-3 sm:px-5 h-14 border-b border-border/60 bg-background">
@@ -465,7 +502,7 @@ export function NoteEditor({
                         variant="ghost"
                         size="sm"
                         onClick={() => insertFormat(action)}
-                        className="h-8 w-8 p-0 shrink-0 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
+                        className="h-10 w-10 p-0 shrink-0 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
                       >
                         {icon}
                       </Button>
@@ -488,7 +525,7 @@ export function NoteEditor({
                 size="sm"
                 onClick={() => setShowMetadata(!showMetadata)}
                 className={cn(
-                  "h-8 px-2.5 gap-1.5 shrink-0 rounded-md text-muted-foreground",
+                  "h-10 px-2.5 gap-1.5 shrink-0 rounded-md text-muted-foreground",
                   showMetadata && "bg-muted text-foreground"
                 )}
               >
@@ -595,5 +632,38 @@ export function NoteEditor({
         )}
       </footer>
     </div>
+
+    <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Alterações não salvas</AlertDialogTitle>
+          <AlertDialogDescription>
+            Você tem alterações não salvas. Deseja realmente sair sem salvar?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="flex-col-reverse sm:flex-row">
+          <AlertDialogCancel className="h-12">Continuar editando</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmClose} className="h-12">Sair sem salvar</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir anotação?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir esta anotação? Esta ação não pode ser desfeita.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="flex-col-reverse sm:flex-row">
+          <AlertDialogCancel className="h-12">Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmDelete} className="h-12 bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            Excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   )
 }

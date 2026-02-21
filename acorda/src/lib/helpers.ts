@@ -191,6 +191,7 @@ export function createTask(
     isTwoMinuteTask?: boolean
     notes?: string
     completedAt?: number
+    sourceInboxItemId?: string
   } = {}
 ): Task {
   const now = Date.now()
@@ -210,6 +211,7 @@ export function createTask(
     isTwoMinuteTask: options.isTwoMinuteTask || false,
     notes: options.notes,
     completedAt: options.completedAt,
+    sourceInboxItemId: options.sourceInboxItemId,
     createdAt: now,
     updatedAt: now,
   }
@@ -319,6 +321,7 @@ export function createHabit(
     targetDays?: number[]
     minimumVersion?: string
     keyResultId?: string
+    preferredTime?: Habit['preferredTime']
   } = {}
 ): Habit {
   const now = Date.now()
@@ -332,6 +335,7 @@ export function createHabit(
     targetDays: options.targetDays,
     minimumVersion: options.minimumVersion,
     keyResultId: options.keyResultId,
+    preferredTime: options.preferredTime,
     isActive: true,
     createdAt: now,
     updatedAt: now,

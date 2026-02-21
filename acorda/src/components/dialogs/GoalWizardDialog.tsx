@@ -275,9 +275,13 @@ export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWiz
                   type="date"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
                   autoFocus
                   className="text-base"
                 />
+                {deadline && new Date(deadline) < new Date(new Date().toISOString().split('T')[0]) && (
+                  <p className="text-xs text-destructive">O prazo não pode ser no passado.</p>
+                )}
               </div>
               <Alert>
                 <LightbulbFilament size={16} className="text-muted-foreground" />
@@ -447,6 +451,7 @@ export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWiz
             variant="ghost"
             onClick={handleBack}
             disabled={step === 1}
+            className="h-12 touch-target"
           >
             Voltar
           </Button>
@@ -456,6 +461,7 @@ export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWiz
               type="button"
               onClick={handleNext}
               disabled={!canGoNext()}
+              className="h-12 touch-target"
             >
               Continuar
             </Button>
@@ -464,6 +470,7 @@ export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWiz
               type="button"
               onClick={handleFinalize}
               disabled={!canGoNext()}
+              className="h-12 touch-target"
             >
               Criar meta
             </Button>
