@@ -674,10 +674,11 @@ function MainApp({ user }: { user: User }) {
       setHabits(current => [...(current || []), ...data.habits])
     }
 
-    // Marcar onboarding como concluído
+    // Marcar onboarding como concluído e salvar módulos escolhidos
     setUserSettings(current => ({
       ...(current || defaultSettings),
       onboardingCompleted: true,
+      ...(data.modules ? { modules: data.modules } : {}),
       updatedAt: Date.now(),
     }))
 

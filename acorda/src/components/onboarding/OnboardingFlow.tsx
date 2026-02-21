@@ -1,16 +1,17 @@
 import { useState, useCallback } from 'react'
 import { WelcomeStep } from './steps/WelcomeStep'
+import { ModulesStep } from './steps/ModulesStep'
 import { GoalStep } from './steps/GoalStep'
 import { HabitsStep } from './steps/HabitsStep'
 import { GuidedTourStep } from './steps/GuidedTourStep'
 import { ReadyStep } from './steps/ReadyStep'
-import type { UserId, Goal, KeyResult, Habit } from '@/lib/types'
+import type { UserId, Goal, KeyResult, Habit, ModuleSettings } from '@/lib/types'
 import { Progress } from '@/components/ui/progress'
 import { User } from '@/lib/api'
 
-export type OnboardingStep = 'welcome' | 'goal' | 'habits' | 'tour' | 'ready'
+export type OnboardingStep = 'welcome' | 'goal' | 'habits' | 'tour' | 'modules' | 'ready'
 
-const STEPS: OnboardingStep[] = ['welcome', 'goal', 'habits', 'tour', 'ready']
+const STEPS: OnboardingStep[] = ['welcome', 'goal', 'habits', 'tour', 'modules', 'ready']
 
 interface OnboardingFlowProps {
   user: User
@@ -23,6 +24,7 @@ export interface OnboardingResult {
   goal?: Goal
   keyResults?: KeyResult[]
   habits: Habit[]
+  modules?: ModuleSettings
 }
 
 export function OnboardingFlow({ user, userId, onComplete, onSkip }: OnboardingFlowProps) {
@@ -30,6 +32,7 @@ export function OnboardingFlow({ user, userId, onComplete, onSkip }: OnboardingF
   const [collectedGoal, setCollectedGoal] = useState<Goal | undefined>()
   const [collectedKRs, setCollectedKRs] = useState<KeyResult[]>([])
   const [collectedHabits, setCollectedHabits] = useState<Habit[]>([])
+  const [collectedModules, setCollectedModules] = useState<ModuleSettings | undefined>()
 
   const currentIndex = STEPS.indexOf(currentStep)
   const progressPercent = ((currentIndex + 1) / STEPS.length) * 100
@@ -48,6 +51,11 @@ export function OnboardingFlow({ user, userId, onComplete, onSkip }: OnboardingF
     }
   }, [currentIndex])
 
+  const handleModulesComplete = useCallback((modules: ModuleSettings) => {
+    setCollectedModules(modules)
+    goNext()
+  }, [goNext])
+
   const handleGoalComplete = useCallback((goal: Goal, keyResults: KeyResult[]) => {
     setCollectedGoal(goal)
     setCollectedKRs(keyResults)
@@ -64,8 +72,9 @@ export function OnboardingFlow({ user, userId, onComplete, onSkip }: OnboardingF
       goal: collectedGoal,
       keyResults: collectedKRs,
       habits: collectedHabits,
+      modules: collectedModules,
     })
-  }, [collectedGoal, collectedKRs, collectedHabits, onComplete])
+  }, [collectedGoal, collectedKRs, collectedHabits, collectedModules, onComplete])
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col overflow-hidden">
@@ -115,6 +124,13 @@ export function OnboardingFlow({ user, userId, onComplete, onSkip }: OnboardingF
         {currentStep === 'tour' && (
           <GuidedTourStep
             onNext={goNext}
+            onBack={goBack}
+          />
+        )}
+
+        {currentStep === 'modules' && (
+          <ModulesStep
+            onComplete={handleModulesComplete}
             onBack={goBack}
           />
         )}
