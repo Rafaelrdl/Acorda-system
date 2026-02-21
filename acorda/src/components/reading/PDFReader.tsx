@@ -52,6 +52,7 @@ export function PDFReader({
   const [selectedText, setSelectedText] = useState<string>('')
   const [selectedColor, setSelectedColor] = useState<HighlightColor>('yellow')
   const [highlightNote, setHighlightNote] = useState('')
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth)
 
   // Keep a ref to the latest doc so the debounced save always
   // spreads the correct document, even if the component re-renders.
@@ -63,6 +64,12 @@ export function PDFReader({
     setFileUrl(url)
     return () => URL.revokeObjectURL(url)
   }, [file])
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     // Capture doc.id so the cleanup / timeout can detect a document switch
@@ -85,6 +92,18 @@ export function PDFReader({
 
     return () => clearTimeout(timer)
   }, [currentPage, doc.id, onSaveProgress, onClose])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        setCurrentPage(prev => Math.max(1, prev - 1))
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        setCurrentPage(prev => Math.min(numPages, prev + 1))
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [numPages])
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages)
@@ -209,7 +228,7 @@ export function PDFReader({
                 pageNumber={currentPage}
                 renderTextLayer={true}
                 renderAnnotationLayer={true}
-                width={Math.min(window.innerWidth - 48, 800)}
+                width={Math.min(windowWidth - 48, 800)}
               />
             </Document>
           </div>
@@ -262,6 +281,7 @@ export function PDFReader({
                       selectedColor === color.value ? 'ring-2 ring-primary ring-offset-2' : ''
                     }`}
                     title={color.label}
+                    aria-label={`Destacar em ${color.label.toLowerCase()}`}
                   />
                 ))}
               </div>

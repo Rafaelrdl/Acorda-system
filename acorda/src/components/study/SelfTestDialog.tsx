@@ -87,12 +87,13 @@ export function SelfTestDialog({
                   onChange={(e) => handleUpdateQuestion(index, e.target.value)}
                   placeholder={`Pergunta ${index + 1}${index < MIN_QUESTIONS ? ' *' : ''}`}
                   className="flex-1"
+                  aria-label={`Pergunta ${index + 1}`}
                 />
                 {questions.length > MIN_QUESTIONS && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    className="h-10 w-10 text-muted-foreground hover:text-destructive"
                     onClick={() => handleRemoveQuestion(index)}
                   >
                     <Trash size={16} />

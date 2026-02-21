@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 import type { UserId } from '@/lib/types'
-import { FinanceCategory, FinanceAccount } from '@/lib/types'
+import { FinanceCategory, FinanceAccount, Transaction } from '@/lib/types'
 import { createFinanceCategory, createFinanceAccount, formatCurrency } from '@/lib/helpers'
 import { Plus, Trash } from '@phosphor-icons/react'
 import { toast } from 'sonner'
@@ -15,6 +17,7 @@ interface SettingsTabProps {
   userId: UserId
   categories: FinanceCategory[]
   accounts: FinanceAccount[]
+  transactions: Transaction[]
   onAddCategory: (category: FinanceCategory) => void
   onUpdateCategory: (category: FinanceCategory) => void
   onDeleteCategory: (id: string) => void
@@ -27,6 +30,7 @@ export function SettingsTab({
   userId,
   categories,
   accounts,
+  transactions,
   onAddCategory,
   onDeleteCategory,
   onAddAccount,
@@ -41,6 +45,8 @@ export function SettingsTab({
   const [accountName, setAccountName] = useState('')
   const [accountType, setAccountType] = useState<FinanceAccount['type']>('checking')
   const [accountBalance, setAccountBalance] = useState('')
+  const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null)
+  const [deleteAccountId, setDeleteAccountId] = useState<string | null>(null)
 
   const handleAddCategory = () => {
     if (!categoryName.trim()) {
@@ -142,10 +148,9 @@ export function SettingsTab({
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => {
-                          onDeleteCategory(category.id)
-                          toast.success('Categoria removida')
-                        }}
+                        className="h-10 w-10"
+                        onClick={() => setDeleteCategoryId(category.id)}
+                        aria-label="Excluir categoria"
                       >
                         <Trash className="w-4 h-4 text-destructive" />
                       </Button>
@@ -168,10 +173,9 @@ export function SettingsTab({
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => {
-                          onDeleteCategory(category.id)
-                          toast.success('Categoria removida')
-                        }}
+                        className="h-10 w-10"
+                        onClick={() => setDeleteCategoryId(category.id)}
+                        aria-label="Excluir categoria"
                       >
                         <Trash className="w-4 h-4 text-destructive" />
                       </Button>
@@ -232,13 +236,10 @@ export function SettingsTab({
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="account-balance">Saldo Inicial</Label>
-                    <Input
+                    <CurrencyInput
                       id="account-balance"
-                      type="number"
-                      step="0.01"
                       value={accountBalance}
-                      onChange={(e) => setAccountBalance(e.target.value)}
-                      placeholder="0.00"
+                      onChange={setAccountBalance}
                     />
                   </div>
                   <Button onClick={handleAddAccount} className="w-full">
@@ -274,10 +275,9 @@ export function SettingsTab({
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() => {
-                        onDeleteAccount(account.id)
-                        toast.success('Conta removida')
-                      }}
+                      className="h-10 w-10"
+                      onClick={() => setDeleteAccountId(account.id)}
+                      aria-label="Excluir conta"
                     >
                       <Trash className="w-4 h-4 text-destructive" />
                     </Button>
@@ -292,6 +292,51 @@ export function SettingsTab({
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteCategoryId} onOpenChange={(open) => !open && setDeleteCategoryId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir categoria</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta categoria?
+              {deleteCategoryId && transactions.some(t => t.categoryId === deleteCategoryId) && (
+                <span className="block mt-1 font-medium">Transações associadas a esta categoria ficarão sem categoria.</span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (deleteCategoryId) {
+                onDeleteCategory(deleteCategoryId)
+                toast.success('Categoria removida')
+                setDeleteCategoryId(null)
+              }
+            }}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteAccountId} onOpenChange={(open) => !open && setDeleteAccountId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir conta</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta conta?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (deleteAccountId) {
+                onDeleteAccount(deleteAccountId)
+                toast.success('Conta removida')
+                setDeleteAccountId(null)
+              }
+            }}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

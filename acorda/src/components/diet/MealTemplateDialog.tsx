@@ -11,7 +11,10 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Trash } from '@phosphor-icons/react'
+import { toast } from 'sonner'
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 
 const FREQUENCY_OPTIONS: { value: DietTemplateFrequency; label: string }[] = [
   { value: 'manual', label: 'Manual (não aplicar automaticamente)' },
@@ -54,6 +57,7 @@ export function MealTemplateDialog({
   const [newFoodName, setNewFoodName] = useState('')
   const [newFoodQty, setNewFoodQty] = useState('')
   const [newFoodUnit, setNewFoodUnit] = useState('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   useEffect(() => {
     if (open && initialData) {
@@ -72,6 +76,7 @@ export function MealTemplateDialog({
     setNewFoodName('')
     setNewFoodQty('')
     setNewFoodUnit('')
+    setShowDeleteConfirm(false)
   }, [open, initialData])
 
   const handleAddFood = () => {
@@ -96,6 +101,10 @@ export function MealTemplateDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
+    if (frequency === 'custom' && (!daysOfWeek || daysOfWeek.length === 0)) {
+      toast.error('Selecione pelo menos um dia da semana')
+      return
+    }
     
     onSave(name.trim(), parseHHMM(time), foods, frequency, frequency === 'custom' ? daysOfWeek : undefined)
   }
@@ -120,6 +129,7 @@ export function MealTemplateDialog({
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -138,7 +148,7 @@ export function MealTemplateDialog({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="text-xs h-7"
+                    className="text-xs h-10"
                     onClick={() => handleUseSuggested(s)}
                   >
                     {s.name}
@@ -174,16 +184,18 @@ export function MealTemplateDialog({
           {/* Frequência */}
           <div className="space-y-2">
             <Label htmlFor="template-frequency">Frequência</Label>
-            <select
-              id="template-frequency"
-              value={frequency}
-              onChange={(e) => setFrequency(e.target.value as DietTemplateFrequency)}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              {FREQUENCY_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
+            <Select value={frequency} onValueChange={(v) => setFrequency(v as DietTemplateFrequency)}>
+              <SelectTrigger id="template-frequency">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="manual">Manual</SelectItem>
+                <SelectItem value="daily">Diário</SelectItem>
+                <SelectItem value="weekdays">Dias úteis</SelectItem>
+                <SelectItem value="weekends">Fins de semana</SelectItem>
+                <SelectItem value="custom">Personalizado</SelectItem>
+              </SelectContent>
+            </Select>
 
             {frequency === 'custom' && (
               <div className="flex gap-1 flex-wrap pt-1">
@@ -191,6 +203,7 @@ export function MealTemplateDialog({
                   <Button
                     key={idx}
                     type="button"
+                    aria-pressed={daysOfWeek.includes(idx)}
                     variant={daysOfWeek.includes(idx) ? 'default' : 'outline'}
                     size="sm"
                     className="h-8 w-10 text-xs p-0"
@@ -229,7 +242,8 @@ export function MealTemplateDialog({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6"
+                      className="h-10 w-10"
+                      aria-label="Remover alimento"
                       onClick={() => handleRemoveFood(index)}
                     >
                       <Trash size={14} />
@@ -244,7 +258,8 @@ export function MealTemplateDialog({
               <Input
                 value={newFoodName}
                 onChange={(e) => setNewFoodName(e.target.value)}
-                placeholder="Alimento"
+                placeholder="Nome do alimento"
+                aria-label="Nome do alimento"
                 className="flex-1"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -257,20 +272,24 @@ export function MealTemplateDialog({
                 value={newFoodQty}
                 onChange={(e) => setNewFoodQty(e.target.value)}
                 placeholder="Qtd"
+                aria-label="Quantidade"
                 className="w-16"
                 type="number"
                 step="0.1"
+                min="0"
               />
               <Input
                 value={newFoodUnit}
                 onChange={(e) => setNewFoodUnit(e.target.value)}
                 placeholder="Un."
+                aria-label="Unidade"
                 className="w-16"
               />
               <Button
                 type="button"
                 variant="outline"
                 size="icon"
+                aria-label="Adicionar alimento"
                 onClick={handleAddFood}
               >
                 <Plus size={18} />
@@ -286,10 +305,7 @@ export function MealTemplateDialog({
               <Button
                 type="button"
                 variant="destructive"
-                onClick={() => {
-                  onDelete()
-                  onOpenChange(false)
-                }}
+                onClick={() => setShowDeleteConfirm(true)}
               >
                 Excluir
               </Button>
@@ -304,5 +320,26 @@ export function MealTemplateDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir template</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir este template?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={() => {
+            onDelete?.()
+            onOpenChange(false)
+          }}>
+            Excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   )
 }

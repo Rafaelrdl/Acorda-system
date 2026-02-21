@@ -131,6 +131,7 @@ export function FinanceCentral({ userId }: FinanceCentralProps) {
               userId={userId}
               categories={categories || []}
               accounts={accounts || []}
+              transactions={transactions || []}
               onAddCategory={(category) => {
                 setCategories(current => [...(current || []), category])
               }}

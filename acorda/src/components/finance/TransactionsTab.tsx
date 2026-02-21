@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -7,10 +7,15 @@ import { CurrencyInput } from '@/components/ui/currency-input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
 import type { UserId } from '@/lib/types'
 import { Transaction, FinanceCategory, FinanceAccount, FinanceAuditLog } from '@/lib/types'
 import { formatCurrency, createTransaction, getDateKey } from '@/lib/helpers'
-import { Plus, TrendUp, TrendDown, Trash, Sparkle } from '@phosphor-icons/react'
+import { Plus, TrendUp, TrendDown, Trash, Sparkle, CalendarBlank } from '@phosphor-icons/react'
+import { format, parseISO } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 
 interface TransactionsTabProps {
@@ -50,10 +55,15 @@ export function TransactionsTab({
   const [expenseCategoryId, setExpenseCategoryId] = useState('')
   const [expenseAccountId, setExpenseAccountId] = useState('')
   const [expenseDate, setExpenseDate] = useState(getDateKey(new Date()))
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [showAll, setShowAll] = useState(false)
 
-  const recentTransactions = [...transactions]
-    .sort((a, b) => b.createdAt - a.createdAt)
-    .slice(0, 15)
+  const recentTransactions = useMemo(() => 
+    [...transactions].sort((a, b) => b.createdAt - a.createdAt), 
+    [transactions]
+  )
+
+  const displayedTransactions = showAll ? recentTransactions : recentTransactions.slice(0, 15)
   
   const incomeCategories = categories.filter(c => c.type === 'income')
   const expenseCategories = categories.filter(c => c.type === 'expense')
@@ -135,8 +145,15 @@ export function TransactionsTab({
   }
 
   const handleDeleteTransaction = (id: string) => {
-    onDeleteTransaction(id)
-    toast.success('Lançamento removido')
+    setDeleteId(id)
+  }
+
+  const confirmDeleteTransaction = () => {
+    if (deleteId) {
+      onDeleteTransaction(deleteId)
+      toast.success('Lançamento removido')
+      setDeleteId(null)
+    }
   }
 
   return (
@@ -186,12 +203,22 @@ export function TransactionsTab({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="income-date">Data</Label>
-                  <Input
-                    id="income-date"
-                    type="date"
-                    value={incomeDate}
-                    onChange={(e) => setIncomeDate(e.target.value)}
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                        <CalendarBlank className="mr-2 h-4 w-4" />
+                        {incomeDate ? format(parseISO(incomeDate), "dd/MM/yyyy") : "Selecione"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={incomeDate ? parseISO(incomeDate) : undefined}
+                        onSelect={(date) => date && setIncomeDate(format(date, 'yyyy-MM-dd'))}
+                        locale={ptBR}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="income-account">Conta</Label>
@@ -275,12 +302,22 @@ export function TransactionsTab({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="expense-date">Data</Label>
-                  <Input
-                    id="expense-date"
-                    type="date"
-                    value={expenseDate}
-                    onChange={(e) => setExpenseDate(e.target.value)}
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                        <CalendarBlank className="mr-2 h-4 w-4" />
+                        {expenseDate ? format(parseISO(expenseDate), "dd/MM/yyyy") : "Selecione"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={expenseDate ? parseISO(expenseDate) : undefined}
+                        onSelect={(date) => date && setExpenseDate(format(date, 'yyyy-MM-dd'))}
+                        locale={ptBR}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="expense-account">Conta</Label>
@@ -330,7 +367,7 @@ export function TransactionsTab({
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {recentTransactions.map(transaction => {
+              {displayedTransactions.map(transaction => {
                 const category = categories.find(c => c.id === transaction.categoryId)
                 const account = accounts.find(a => a.id === transaction.accountId)
 
@@ -386,8 +423,9 @@ export function TransactionsTab({
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
+                        className="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity h-10 w-10"
                         onClick={() => handleDeleteTransaction(transaction.id)}
+                        aria-label="Excluir lançamento"
                       >
                         <Trash className="w-4 h-4 text-destructive" />
                       </Button>
@@ -396,6 +434,13 @@ export function TransactionsTab({
                 )
               })}
             </div>
+            {recentTransactions.length > 15 && (
+              <div className="flex justify-center mt-3">
+                <Button variant="ghost" size="sm" onClick={() => setShowAll(v => !v)}>
+                  {showAll ? 'Mostrar menos' : `Ver todos (${recentTransactions.length})`}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -412,6 +457,21 @@ export function TransactionsTab({
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir lançamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este lançamento?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteTransaction}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { CurrencyInput } from '@/components/ui/currency-input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import type { UserId } from '@/lib/types'
@@ -51,6 +52,10 @@ export function IncomeExpensesTab({
   // Edit dialogs
   const [editingIncome, setEditingIncome] = useState<Income | null>(null)
   const [editingExpense, setEditingExpense] = useState<FixedExpense | null>(null)
+
+  // Delete confirmation
+  const [deleteIncomeId, setDeleteIncomeId] = useState<string | null>(null)
+  const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null)
   
   // Income form state
   const [incomeName, setIncomeName] = useState('')
@@ -458,7 +463,7 @@ export function IncomeExpensesTab({
                     <Button
                       size="sm"
                       onClick={() => handleConfirmIncome(income)}
-                      className="gap-1 h-7 text-xs px-2"
+                      className="gap-1 h-10 text-xs px-2"
                     >
                       <Check className="w-3.5 h-3.5" />
                       Confirmar
@@ -495,7 +500,7 @@ export function IncomeExpensesTab({
                       size="sm"
                       variant="outline"
                       onClick={() => handleConfirmExpense(expense)}
-                      className="gap-1 h-7 text-xs px-2"
+                      className="gap-1 h-10 text-xs px-2"
                     >
                       <Check className="w-3.5 h-3.5" />
                       Confirmar
@@ -520,7 +525,17 @@ export function IncomeExpensesTab({
               Total mensal: <span className="font-semibold text-accent">{formatCurrency(totalIncome)}</span>
             </p>
           </div>
-          <Dialog open={showIncomeDialog} onOpenChange={setShowIncomeDialog}>
+          <Dialog open={showIncomeDialog} onOpenChange={(open) => {
+            if (open) {
+              setIncomeName('')
+              setIncomeAmount('')
+              setIncomeAccountId('')
+              setIncomeFrequency('monthly')
+              setIncomeDayOfMonth('')
+              setIncomeAutoConfirm(false)
+            }
+            setShowIncomeDialog(open)
+          }}>
             <DialogTrigger asChild>
               <Button size="sm">
                 <Plus className="w-4 h-4 mr-1" />
@@ -674,18 +689,18 @@ export function IncomeExpensesTab({
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-7 w-7"
+                          className="h-10 w-10"
                           onClick={() => openEditIncome(income)}
-                          title="Editar"
+                          aria-label="Editar"
                         >
                           <PencilSimple className="w-3.5 h-3.5" />
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-7 w-7"
-                          onClick={() => handleDeleteIncome(income.id)}
-                          title="Excluir"
+                          className="h-10 w-10"
+                          onClick={() => setDeleteIncomeId(income.id)}
+                          aria-label="Excluir"
                         >
                           <Trash className="w-3.5 h-3.5 text-destructive" />
                         </Button>
@@ -717,7 +732,18 @@ export function IncomeExpensesTab({
               Total mensal: <span className="font-semibold text-destructive">{formatCurrency(totalExpenses)}</span>
             </p>
           </div>
-          <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
+          <Dialog open={showExpenseDialog} onOpenChange={(open) => {
+            if (open) {
+              setExpenseName('')
+              setExpenseAmount('')
+              setExpenseCategoryId('')
+              setExpenseAccountId('')
+              setExpenseFrequency('monthly')
+              setExpenseDayOfMonth('')
+              setExpenseAutoConfirm(false)
+            }
+            setShowExpenseDialog(open)
+          }}>
             <DialogTrigger asChild>
               <Button size="sm" variant="outline">
                 <Plus className="w-4 h-4 mr-1" />
@@ -888,18 +914,18 @@ export function IncomeExpensesTab({
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-7 w-7"
+                          className="h-10 w-10"
                           onClick={() => openEditExpense(expense)}
-                          title="Editar"
+                          aria-label="Editar"
                         >
                           <PencilSimple className="w-3.5 h-3.5" />
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-7 w-7"
-                          onClick={() => handleDeleteExpense(expense.id)}
-                          title="Excluir"
+                          className="h-10 w-10"
+                          onClick={() => setDeleteExpenseId(expense.id)}
+                          aria-label="Excluir"
                         >
                           <Trash className="w-3.5 h-3.5 text-destructive" />
                         </Button>
@@ -1156,6 +1182,46 @@ export function IncomeExpensesTab({
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteIncomeId} onOpenChange={(open) => !open && setDeleteIncomeId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir receita</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta receita fixa?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (deleteIncomeId) {
+                handleDeleteIncome(deleteIncomeId)
+                setDeleteIncomeId(null)
+              }
+            }}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteExpenseId} onOpenChange={(open) => !open && setDeleteExpenseId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir despesa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta despesa fixa?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (deleteExpenseId) {
+                handleDeleteExpense(deleteExpenseId)
+                setDeleteExpenseId(null)
+              }
+            }}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

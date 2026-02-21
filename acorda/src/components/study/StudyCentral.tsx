@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useKV } from '@/lib/sync-storage'
 import { Button } from '@/components/ui/button'
 import { SectionCard, EmptyState } from '@/components/ui/section-card'
@@ -101,14 +101,14 @@ export function StudyCentral({ userId }: StudyCentralProps) {
   }
 
   // Calcular estatísticas
-  const currentSubjects = filterDeleted(subjects || [])
-  const activeSessions = filterDeleted(studySessions || [])
-  const totalStudyTime = activeSessions.reduce((acc, s) => acc + s.durationMinutes, 0)
+  const currentSubjects = useMemo(() => filterDeleted(subjects || []), [subjects])
+  const activeSessions = useMemo(() => filterDeleted(studySessions || []), [studySessions])
+  const totalStudyTime = useMemo(() => activeSessions.reduce((acc, s) => acc + s.durationMinutes, 0), [activeSessions])
   const totalSessions = activeSessions.length
 
   // Filtrar revisões pendentes
   const today = getDateKey(new Date())
-  const activeReviewItems = filterDeleted(reviewScheduleItems || [])
+  const activeReviewItems = useMemo(() => filterDeleted(reviewScheduleItems || []), [reviewScheduleItems])
   
   const pendingReviews = activeReviewItems
     .filter(item => !item.completed)
@@ -231,7 +231,7 @@ export function StudyCentral({ userId }: StudyCentralProps) {
             size="sm"
             variant="ghost"
             onClick={() => setShowHelpDialog(true)}
-            className="h-7"
+            className="h-10"
             title="Como funciona?"
           >
             <Question size={14} className="mr-1" />
@@ -342,7 +342,7 @@ export function StudyCentral({ userId }: StudyCentralProps) {
             size="sm"
             variant="ghost"
             onClick={() => setShowAddSubject(true)}
-            className="h-7"
+            className="h-10"
           >
             <Plus size={14} className="mr-1" />
             Novo

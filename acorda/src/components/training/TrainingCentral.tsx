@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useKV } from '@/lib/sync-storage'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ListBullets, Play, TrendUp } from '@phosphor-icons/react'
@@ -24,6 +24,8 @@ export function TrainingCentral({ userId }: TrainingCentralProps) {
   const [setLogs, setSetLogs] = useKV<WorkoutSetLog[]>(getSyncKey(userId, 'workoutSetLogs'), [])
   const [workoutUiState, setWorkoutUiState] = useKV<WorkoutUiState>(getSyncKey(userId, 'workoutUiState'), { updatedAt: 0 })
 
+  const activePlans = useMemo(() => (plans || []).filter(p => !p.isArchived), [plans])
+
   return (
     <div className="pb-24 px-4 max-w-5xl mx-auto overflow-x-hidden">
       <div className="space-y-4 pt-4">
@@ -46,7 +48,7 @@ export function TrainingCentral({ userId }: TrainingCentralProps) {
           <TabsContent value="treinar" className="mt-4 space-y-4">
           <TreinarTab
             userId={userId}
-            plans={(plans || []).filter(p => !p.isArchived)}
+            plans={activePlans}
             planItems={planItems || []}
             exercises={exercises || []}
             sessions={sessions || []}

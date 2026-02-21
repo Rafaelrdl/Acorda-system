@@ -2,6 +2,22 @@ import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import type { UserId, WorkoutPrescription, WorkoutTechnique } from '@/lib/types'
 import { WorkoutExercise, WorkoutPlan, WorkoutPlanItem, MuscleGroup } from '@/lib/types'
 import { createWorkoutExercise, createWorkoutPlanItem, updateTimestamp } from '@/lib/helpers'
@@ -79,6 +95,9 @@ export function PlanDetailView({
   
   // Estado para edição de item existente
   const [editingPlanItem, setEditingPlanItem] = useState<WorkoutPlanItem | null>(null)
+  
+  // Estado para confirmação de remoção
+  const [exerciseToRemove, setExerciseToRemove] = useState<string | null>(null)
 
   // Exercícios ordenados na ficha
   const sortedPlanItems = useMemo(() => {
@@ -443,7 +462,7 @@ export function PlanDetailView({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6"
+                    className="h-10 w-10"
                     onClick={() => handleMoveItem(item.id, 'up')}
                     disabled={index === 0}
                     aria-label="Mover para cima"
@@ -453,7 +472,7 @@ export function PlanDetailView({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6"
+                    className="h-10 w-10"
                     onClick={() => handleMoveItem(item.id, 'down')}
                     disabled={index === sortedPlanItems.length - 1}
                     aria-label="Mover para baixo"
@@ -515,7 +534,7 @@ export function PlanDetailView({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
-                  onClick={() => handleRemoveFromPlan(item.id)}
+                  onClick={() => setExerciseToRemove(item.id)}
                   aria-label="Remover exercício"
                 >
                   <Trash size={16} />
@@ -535,40 +554,32 @@ export function PlanDetailView({
       />
 
       {/* Modal de Biblioteca de Exercícios */}
-      {showExerciseLibrary && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
-          <div className="fixed inset-x-4 top-[5%] bottom-[5%] z-50 mx-auto max-w-md bg-background border rounded-lg shadow-lg flex flex-col">
-            {/* Header */}
-            <div className="p-4 border-b space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium">Biblioteca de Exercícios</h3>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      setShowExerciseLibrary(false)
-                      setShowExerciseDialog(true)
-                    }}
-                  >
-                    <Plus size={14} className="mr-1" />
-                    Criar
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => {
-                      setShowExerciseLibrary(false)
-                      setSearchQuery('')
-                      setSelectedGroup('all')
-                      setSelectedEquipment('all')
-                      setShowAllSuggested(false)
-                    }}
-                  >
-                    Fechar
-                  </Button>
-                </div>
-              </div>
+      <Dialog open={showExerciseLibrary} onOpenChange={(open) => {
+        if (!open) {
+          setShowExerciseLibrary(false)
+          setSearchQuery('')
+          setSelectedGroup('all')
+          setSelectedEquipment('all')
+          setShowAllSuggested(false)
+        }
+      }}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col p-0 gap-0">
+          {/* Header */}
+          <div className="p-4 border-b space-y-3">
+            <DialogHeader className="flex-row items-center justify-between space-y-0">
+              <DialogTitle>Biblioteca de Exercícios</DialogTitle>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  setShowExerciseLibrary(false)
+                  setShowExerciseDialog(true)
+                }}
+              >
+                <Plus size={14} className="mr-1" />
+                Criar
+              </Button>
+            </DialogHeader>
               
               {/* Busca */}
               <div className="relative">
@@ -589,6 +600,7 @@ export function PlanDetailView({
               <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
                 <button
                   onClick={() => setSelectedGroup('all')}
+                  aria-pressed={selectedGroup === 'all'}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                     selectedGroup === 'all'
                       ? 'bg-primary text-primary-foreground'
@@ -605,6 +617,7 @@ export function PlanDetailView({
                   <button
                     key={group.value}
                     onClick={() => setSelectedGroup(group.value)}
+                    aria-pressed={selectedGroup === group.value}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                       selectedGroup === group.value
                         ? 'bg-primary text-primary-foreground'
@@ -622,6 +635,7 @@ export function PlanDetailView({
                   <button
                     key={equip.value}
                     onClick={() => setSelectedEquipment(equip.value)}
+                    aria-pressed={selectedEquipment === equip.value}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                       selectedEquipment === equip.value
                         ? 'bg-secondary text-secondary-foreground'
@@ -752,9 +766,8 @@ export function PlanDetailView({
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       {/* Modal de Configuração do Exercício */}
       {pendingExercise && (
@@ -792,6 +805,30 @@ export function PlanDetailView({
           } : undefined}
         />
       )}
+
+      {/* Confirmação de remoção de exercício */}
+      <AlertDialog open={!!exerciseToRemove} onOpenChange={(open) => !open && setExerciseToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover exercício?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover este exercício da ficha?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (exerciseToRemove) handleRemoveFromPlan(exerciseToRemove)
+                setExerciseToRemove(null)
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

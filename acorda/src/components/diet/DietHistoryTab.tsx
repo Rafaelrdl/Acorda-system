@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { DietMealEntry } from '@/lib/types'
+import { getDateKey } from '@/lib/helpers'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { TrendUp, TrendDown, Minus } from '@phosphor-icons/react'
@@ -28,7 +29,7 @@ export function DietHistoryTab({ meals }: DietHistoryTabProps) {
     for (let i = 0; i < period; i++) {
       const date = new Date(today)
       date.setDate(today.getDate() - i)
-      const dateKey = date.toISOString().split('T')[0]
+      const dateKey = getDateKey(date)
       
       const dayMeals = (meals || []).filter(m => m.date === dateKey)
       const planned = dayMeals.length
@@ -160,7 +161,7 @@ export function DietHistoryTab({ meals }: DietHistoryTabProps) {
                 <span className="text-xs text-muted-foreground w-16 shrink-0">
                   {formatDate(day.date)}
                 </span>
-                <div className="flex-1 h-5 bg-secondary rounded-full overflow-hidden">
+                <div className="flex-1 h-5 bg-secondary rounded-full overflow-hidden" role="progressbar" aria-valuenow={day.rate} aria-valuemin={0} aria-valuemax={100} aria-label={`Adesão ${formatDate(day.date)}: ${day.rate}%`}>
                   {day.planned > 0 && (
                     <div
                       className={`h-full rounded-full transition-all ${

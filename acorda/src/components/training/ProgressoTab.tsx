@@ -44,6 +44,23 @@ export function ProgressoTab({
     )
   }, [exercisesWithHistory, searchQuery])
 
+  // Memoizar tendências e históricos para evitar recálculo no map
+  const exerciseTrends = useMemo(() => {
+    const trends: Record<string, ReturnType<typeof getExerciseProgressTrend>> = {}
+    filteredExercises.forEach(ex => {
+      trends[ex.id] = getExerciseProgressTrend(ex.id, sessions, setLogs)
+    })
+    return trends
+  }, [filteredExercises, sessions, setLogs])
+
+  const exerciseHistories = useMemo(() => {
+    const histories: Record<string, ReturnType<typeof getExerciseHistory>> = {}
+    filteredExercises.forEach(ex => {
+      histories[ex.id] = getExerciseHistory(ex.id, sessions, setLogs)
+    })
+    return histories
+  }, [filteredExercises, sessions, setLogs])
+
   const selectedExercise = selectedExerciseId 
     ? exercises.find(ex => ex.id === selectedExerciseId) 
     : null
@@ -95,8 +112,8 @@ export function ProgressoTab({
       ) : (
         <div className="space-y-2">
           {filteredExercises.map((exercise) => {
-            const trend = getExerciseProgressTrend(exercise.id, sessions, setLogs)
-            const history = getExerciseHistory(exercise.id, sessions, setLogs)
+            const trend = exerciseTrends[exercise.id]
+            const history = exerciseHistories[exercise.id]
             const sparklineData = history.slice(-10).map(h => h.topSet?.weight || 0)
 
             return (

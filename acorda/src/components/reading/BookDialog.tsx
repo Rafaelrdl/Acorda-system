@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -7,7 +10,10 @@ import { Textarea } from '@/components/ui/textarea'
 import type { UserId } from '@/lib/types'
 import { Book } from '@/lib/types'
 import { createBook, getDateKey } from '@/lib/helpers'
-import { Trash } from '@phosphor-icons/react'
+import { Trash, CalendarBlank } from '@phosphor-icons/react'
+import { format, parseISO } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { toast } from 'sonner'
 
 interface BookDialogProps {
   userId: UserId
@@ -32,6 +38,7 @@ export function BookDialog({
   const [startDate, setStartDate] = useState('')
   const [targetEndDate, setTargetEndDate] = useState('')
   const [notes, setNotes] = useState('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   useEffect(() => {
     if (book) {
@@ -52,7 +59,12 @@ export function BookDialog({
   }, [book, open])
 
   const handleSave = () => {
-    if (!title.trim() || !author.trim() || !totalPages || !startDate || !targetEndDate) return
+    if (!title.trim()) { toast.error('Digite o título do livro'); return }
+    if (!author.trim()) { toast.error('Digite o autor do livro'); return }
+    if (!totalPages || parseInt(totalPages) < 0) { toast.error('Informe o total de páginas (valor positivo)'); return }
+    if (parseInt(totalPages) > 99999) { toast.error('Total de páginas não pode exceder 99.999'); return }
+    if (!startDate) { toast.error('Selecione a data de início'); return }
+    if (!targetEndDate) { toast.error('Selecione a meta de conclusão'); return }
 
     const bookData = book
       ? { ...book, title, author, totalPages: parseInt(totalPages), startDate, targetEndDate, notes, updatedAt: Date.now() }
@@ -63,6 +75,7 @@ export function BookDialog({
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -96,6 +109,8 @@ export function BookDialog({
               id="totalPages"
               type="number"
               placeholder="300"
+              min={0}
+              max={99999}
               value={totalPages}
               onChange={(e) => setTotalPages(e.target.value)}
             />
@@ -103,23 +118,43 @@ export function BookDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="startDate">Data de Início</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+              <Label>Data de Início</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start text-left font-normal">
+                    <CalendarBlank className="mr-2 h-4 w-4" />
+                    {startDate ? format(parseISO(startDate), "dd/MM/yyyy", { locale: ptBR }) : "Selecione"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDate ? parseISO(startDate) : undefined}
+                    onSelect={(date) => date && setStartDate(getDateKey(date))}
+                    locale={ptBR}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="targetEndDate">Meta de Conclusão</Label>
-              <Input
-                id="targetEndDate"
-                type="date"
-                value={targetEndDate}
-                onChange={(e) => setTargetEndDate(e.target.value)}
-              />
+              <Label>Meta de Conclusão</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start text-left font-normal">
+                    <CalendarBlank className="mr-2 h-4 w-4" />
+                    {targetEndDate ? format(parseISO(targetEndDate), "dd/MM/yyyy", { locale: ptBR }) : "Selecione"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={targetEndDate ? parseISO(targetEndDate) : undefined}
+                    onSelect={(date) => date && setTargetEndDate(getDateKey(date))}
+                    locale={ptBR}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
@@ -140,7 +175,7 @@ export function BookDialog({
             <Button 
               variant="ghost" 
               size="icon"
-              onClick={onDelete}
+              onClick={() => setShowDeleteConfirm(true)}
               className="mr-auto text-destructive"
             >
               <Trash />
@@ -155,5 +190,23 @@ export function BookDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir livro?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir este livro? Esta ação não pode ser desfeita.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={() => { onDelete?.(); setShowDeleteConfirm(false) }}>
+            Excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   )
 }

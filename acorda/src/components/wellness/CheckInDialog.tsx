@@ -112,15 +112,17 @@ export function CheckInDialog({
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Lightning size={18} className="text-primary" />
-              <Label>Nível de energia</Label>
+              <Label id="energy-label">Nível de energia</Label>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-labelledby="energy-label">
               {(['low', 'medium', 'high'] as CheckInMood[]).map((level) => (
                 <Button
                   key={level}
                   variant={energyLevel === level ? 'default' : 'outline'}
                   onClick={() => setEnergyLevel(level)}
-                  className="w-full"
+                  className="w-full min-h-[44px]"
+                  role="radio"
+                  aria-checked={energyLevel === level}
                 >
                   {MOOD_LABELS[level]}
                 </Button>
@@ -131,15 +133,17 @@ export function CheckInDialog({
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Smiley size={18} className="text-primary" />
-              <Label>Humor</Label>
+              <Label id="mood-label">Humor</Label>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-labelledby="mood-label">
               {(['low', 'medium', 'high'] as CheckInMood[]).map((level) => (
                 <Button
                   key={level}
                   variant={mood === level ? 'default' : 'outline'}
                   onClick={() => setMood(level)}
-                  className="w-full"
+                  className="w-full min-h-[44px]"
+                  role="radio"
+                  aria-checked={mood === level}
                 >
                   {MOOD_LABELS[level]}
                 </Button>

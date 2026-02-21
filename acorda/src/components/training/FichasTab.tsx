@@ -126,7 +126,7 @@ export function FichasTab({
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
-        <Button onClick={() => setShowPlanDialog(true)} size="sm">
+        <Button onClick={() => setShowPlanDialog(true)} size="sm" className="min-h-[44px]">
           <Plus size={16} className="mr-1" />
           Nova Ficha
         </Button>
@@ -201,7 +201,7 @@ export function FichasTab({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 flex-shrink-0"
+                    className="h-10 w-10 flex-shrink-0"
                     onClick={(e) => e.stopPropagation()}
                     aria-label="Opções da ficha"
                   >

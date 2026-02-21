@@ -81,7 +81,11 @@ export function PDFsTab({
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (!file || file.type !== 'application/pdf') return
+    if (!file) return
+    if (file.type !== 'application/pdf') {
+      toast.error('Apenas arquivos PDF são aceitos')
+      return
+    }
 
     setIsUploading(true)
     
@@ -257,6 +261,7 @@ export function PDFsTab({
         </div>
         <Button 
           size="sm"
+          className="min-h-[44px]"
           onClick={() => document.getElementById('pdf-upload')?.click()}
           disabled={isUploading}
         >
@@ -289,6 +294,7 @@ export function PDFsTab({
         <Button 
           onClick={() => document.getElementById('pdf-upload')?.click()} 
           size="sm"
+          className="min-h-[44px]"
           disabled={isUploading}
         >
           {isUploading ? (
@@ -356,7 +362,7 @@ export function PDFsTab({
                 </div>
                 <div className="flex items-center gap-2">
                   {status === 'loading' ? (
-                    <Button size="sm" variant="outline" disabled>
+                    <Button size="sm" variant="outline" className="min-h-[44px]" disabled>
                       <ArrowsClockwise className="mr-2 animate-spin" size={14} />
                       Verificando...
                     </Button>
@@ -364,6 +370,7 @@ export function PDFsTab({
                     <Button
                       size="sm"
                       variant="outline"
+                      className="min-h-[44px]"
                       onClick={() => handleOpenPDF(doc)}
                     >
                       <Eye className="mr-2" size={14} />
@@ -373,6 +380,7 @@ export function PDFsTab({
                     <Button
                       size="sm"
                       variant="outline"
+                      className="min-h-[44px]"
                       onClick={() => handleOpenPDF(doc)}
                     >
                       <ArrowsClockwise className="mr-2" size={14} />
@@ -382,6 +390,7 @@ export function PDFsTab({
                   <Button
                     size="sm"
                     variant="ghost"
+                    className="min-h-[44px]"
                     onClick={() => setDeleteConfirm(doc)}
                   >
                     <Trash size={14} />

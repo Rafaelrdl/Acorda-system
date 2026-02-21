@@ -290,9 +290,10 @@ export function ExercisePrescriptionDialog({
         type="button"
         variant="outline"
         size="icon"
-        className="h-8 w-8"
+        className="h-10 w-10"
         onClick={() => onChange(Math.max(min, value - 1))}
         disabled={value <= min}
+        aria-label="Diminuir"
       >
         <Minus size={14} />
       </Button>
@@ -301,9 +302,10 @@ export function ExercisePrescriptionDialog({
         type="button"
         variant="outline"
         size="icon"
-        className="h-8 w-8"
+        className="h-10 w-10"
         onClick={() => onChange(Math.min(max, value + 1))}
         disabled={value >= max}
+        aria-label="Aumentar"
       >
         <Plus size={14} />
       </Button>

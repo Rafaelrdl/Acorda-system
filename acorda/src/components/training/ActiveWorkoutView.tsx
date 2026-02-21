@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
@@ -21,7 +21,8 @@ import {
   Barbell,
   Play,
   Pause,
-  Timer
+  Timer,
+  PencilSimple
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { SetLogDialog } from './SetLogDialog'
@@ -78,23 +79,22 @@ export function ActiveWorkoutView({
 
   // Cronômetro geral (vivo)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  // Reset series elapsed when stopped
   useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setElapsedSeconds(Math.floor((Date.now() - session.startedAt) / 1000))
-    }, 1000)
-    return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [session.startedAt])
+    if (!seriesStartedAt) setSeriesElapsed(0)
+  }, [seriesStartedAt])
 
-  // Timer da série ativa
+  // Timer consolidado: cronômetro geral + série ativa
   useEffect(() => {
-    if (!seriesStartedAt) { setSeriesElapsed(0); return }
     const id = setInterval(() => {
-      setSeriesElapsed(Math.floor((Date.now() - seriesStartedAt) / 1000))
+      setElapsedSeconds(Math.floor((Date.now() - session.startedAt) / 1000))
+      if (seriesStartedAt) {
+        setSeriesElapsed(Math.floor((Date.now() - seriesStartedAt) / 1000))
+      }
     }, 1000)
     return () => clearInterval(id)
-  }, [seriesStartedAt])
+  }, [session.startedAt, seriesStartedAt])
 
   const formatTimer = (totalSec: number) => {
     const m = Math.floor(totalSec / 60)
@@ -112,31 +112,37 @@ export function ActiveWorkoutView({
       .sort((a, b) => a.setIndex - b.setIndex)
   }
 
-  // Último treino deste exercício (para referência de progressão)
-  const getLastExerciseRecord = (exerciseId: string) => {
-    // Encontrar sessões anteriores finalizadas
+  // Último treino deste exercício (para referência de progressão) — memoizado
+  const lastExerciseRecords = useMemo(() => {
+    const records: Record<string, { date: string; sets: number; bestReps: number; bestWeight: number; unit: WeightUnit } | null> = {}
     const previousSessions = allSessions
       .filter(s => s.id !== session.id && s.endedAt)
       .sort((a, b) => b.startedAt - a.startedAt)
 
-    for (const prevSession of previousSessions) {
-      const prevLogs = allSetLogs
-        .filter(log => log.sessionId === prevSession.id && log.exerciseId === exerciseId && !log.isWarmup)
-        .sort((a, b) => b.weight - a.weight)
+    for (const item of planItems) {
+      let found = false
+      for (const prevSession of previousSessions) {
+        const prevLogs = allSetLogs
+          .filter(log => log.sessionId === prevSession.id && log.exerciseId === item.exerciseId && !log.isWarmup)
+          .sort((a, b) => b.weight - a.weight)
 
-      if (prevLogs.length > 0) {
-        const bestSet = prevLogs[0]
-        return {
-          date: prevSession.date,
-          sets: prevLogs.length,
-          bestReps: bestSet.reps,
-          bestWeight: bestSet.weight,
-          unit: bestSet.unit,
+        if (prevLogs.length > 0) {
+          const bestSet = prevLogs[0]
+          records[item.exerciseId] = {
+            date: prevSession.date,
+            sets: prevLogs.length,
+            bestReps: bestSet.reps,
+            bestWeight: bestSet.weight,
+            unit: bestSet.unit,
+          }
+          found = true
+          break
         }
       }
+      if (!found) records[item.exerciseId] = null
     }
-    return null
-  }
+    return records
+  }, [planItems, allSessions, allSetLogs, session.id])
 
   const handleAddSet = (exerciseId: string) => {
     setSelectedExerciseId(exerciseId)
@@ -219,6 +225,7 @@ export function ActiveWorkoutView({
             variant="outline"
             onClick={() => setShowCancelDialog(true)}
             className="text-destructive hover:text-destructive"
+            aria-label="Cancelar treino"
           >
             <X size={16} />
           </Button>
@@ -236,7 +243,7 @@ export function ActiveWorkoutView({
           if (!exercise) return null
 
           const exerciseSets = getExerciseSets(item.exerciseId)
-          const lastRecord = getLastExerciseRecord(item.exerciseId)
+          const lastRecord = lastExerciseRecords[item.exerciseId]
 
           return (
             <div key={item.id} className="p-3 rounded-lg border bg-card">
@@ -336,16 +343,16 @@ export function ActiveWorkoutView({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7"
+                          className="h-10 w-10"
                           onClick={() => handleEditSet(setLog)}
                           aria-label="Editar set"
                         >
-                          <span className="text-xs">✏️</span>
+                          <PencilSimple size={14} />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          className="h-10 w-10 text-muted-foreground hover:text-destructive"
                           onClick={() => handleDeleteSet(setLog.id)}
                           aria-label="Remover set"
                         >

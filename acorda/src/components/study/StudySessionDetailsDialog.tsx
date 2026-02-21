@@ -89,7 +89,7 @@ export function StudySessionDetailsDialog({
                 variant="ghost"
                 size="sm"
                 onClick={() => onEditQuestions(session)}
-                className="h-7 text-xs"
+                className="h-10 text-xs"
               >
                 <PencilSimple size={14} className="mr-1" />
                 {hasQuestions ? 'Editar' : 'Adicionar'}
@@ -139,7 +139,7 @@ export function StudySessionDetailsDialog({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-destructive hover:text-destructive h-8 text-xs"
+                className="text-destructive hover:text-destructive h-10 text-xs"
                 onClick={() => setShowCancelConfirm(true)}
               >
                 <XCircle size={14} className="mr-1" />

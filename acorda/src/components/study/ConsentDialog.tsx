@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
@@ -44,6 +44,9 @@ export function ConsentDialog({
             <ShieldCheck className="text-primary" size={24} />
             <DialogTitle>Consentimento para Gravação e Processamento</DialogTitle>
           </div>
+          <DialogDescription className="sr-only">
+            Termos de consentimento
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -76,6 +79,7 @@ export function ConsentDialog({
                 id="understood"
                 checked={understood}
                 onCheckedChange={(checked) => setUnderstood(checked === true)}
+                aria-required="true"
               />
               <Label htmlFor="understood" className="text-sm font-normal cursor-pointer">
                 Entendo que a transcrição da minha sessão será processada por IA e armazenada na minha conta
@@ -87,6 +91,7 @@ export function ConsentDialog({
                 id="agreed"
                 checked={agreedProcessing}
                 onCheckedChange={(checked) => setAgreedProcessing(checked === true)}
+                aria-required="true"
               />
               <Label htmlFor="agreed" className="text-sm font-normal cursor-pointer">
                 Concordo com o processamento dos meus dados conforme descrito acima

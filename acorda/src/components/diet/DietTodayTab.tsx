@@ -1,12 +1,13 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import type { UserId } from '@/lib/types'
 import { DietMealEntry, DietMealTemplate, DietFoodItem } from '@/lib/types'
-import { createDietMealEntry, formatHHMM, updateTimestamp } from '@/lib/helpers'
+import { createDietMealEntry, formatHHMM, updateTimestamp, getDateKey } from '@/lib/helpers'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Plus, Clock, DotsThree, CopySimple } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 import { MealDialog } from './MealDialog'
 
 interface DietTodayTabProps {
@@ -20,6 +21,7 @@ interface DietTodayTabProps {
 export function DietTodayTab({ userId, meals, setMeals, templates, today }: DietTodayTabProps) {
   const [showMealDialog, setShowMealDialog] = useState(false)
   const [editingMeal, setEditingMeal] = useState<DietMealEntry | null>(null)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
   const appliedRef = useRef<string | null>(null)
 
   // Auto-aplicar templates com frequência configurada
@@ -57,9 +59,10 @@ export function DietTodayTab({ userId, meals, setMeals, templates, today }: Diet
   }, [today, templates, meals, userId, setMeals])
 
   // Refeições do dia, ordenadas por horário
-  const todayMeals = (meals || [])
-    .filter(m => m.date === today)
-    .sort((a, b) => a.timeMinutes - b.timeMinutes)
+  const todayMeals = useMemo(() =>
+    (meals || []).filter(m => m.date === today).sort((a, b) => a.timeMinutes - b.timeMinutes),
+    [meals, today]
+  )
 
   const handleToggleComplete = (mealId: string) => {
     setMeals(current => 
@@ -104,7 +107,7 @@ export function DietTodayTab({ userId, meals, setMeals, templates, today }: Diet
   const handleCopyFromYesterday = () => {
     const yesterday = new Date()
     yesterday.setDate(yesterday.getDate() - 1)
-    const yesterdayKey = yesterday.toISOString().split('T')[0]
+    const yesterdayKey = getDateKey(yesterday)
     
     const yesterdayMeals = (meals || []).filter(m => m.date === yesterdayKey)
     
@@ -169,7 +172,7 @@ export function DietTodayTab({ userId, meals, setMeals, templates, today }: Diet
               {(meals || []).some(m => {
                 const yesterday = new Date()
                 yesterday.setDate(yesterday.getDate() - 1)
-                return m.date === yesterday.toISOString().split('T')[0]
+                return m.date === getDateKey(yesterday)
               }) && (
                 <Button variant="outline" onClick={handleCopyFromYesterday}>
                   <CopySimple size={18} className="mr-2" />
@@ -224,7 +227,8 @@ export function DietTodayTab({ userId, meals, setMeals, templates, today }: Diet
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-10 w-10"
+                  aria-label="Opções da refeição"
                   onClick={() => setEditingMeal(meal)}
                 >
                   <DotsThree size={18} />
@@ -267,6 +271,27 @@ export function DietTodayTab({ userId, meals, setMeals, templates, today }: Diet
           notes: editingMeal.notes
         } : undefined}
       />
+
+      {/* AlertDialog de confirmação de exclusão */}
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir refeição</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta refeição?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (deleteId) handleDeleteMeal(deleteId)
+              setDeleteId(null)
+            }}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -312,14 +312,15 @@ export function StudySessionDialog({
                         <Play size={20} weight="fill" className="mr-2" />
                         Iniciar Sessão
                       </Button>
-                      <button
+                      <Button
                         type="button"
+                        variant="link"
                         onClick={() => setMode('manual')}
-                        className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1"
+                        className="w-full min-h-[44px] text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1"
                       >
                         <PencilSimple size={14} />
                         Registrar manualmente
-                      </button>
+                      </Button>
                     </>
                   ) : (
                     <>
@@ -331,14 +332,15 @@ export function StudySessionDialog({
                       >
                         Salvar Sessão
                       </Button>
-                      <button
+                      <Button
                         type="button"
+                        variant="link"
                         onClick={() => setMode('timer')}
-                        className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1"
+                        className="w-full min-h-[44px] text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1"
                       >
                         <Timer size={14} />
                         Usar cronômetro
-                      </button>
+                      </Button>
                     </>
                   )}
                 </div>
@@ -359,7 +361,11 @@ export function StudySessionDialog({
               <div className="py-8 space-y-6">
                 {/* Timer grande */}
                 <div className="text-center">
-                  <div className="text-6xl font-mono font-bold tabular-nums tracking-tight">
+                  <div
+                    className="text-6xl font-mono font-bold tabular-nums tracking-tight"
+                    aria-live="polite"
+                    aria-atomic="true"
+                  >
                     {formatTime(elapsedSeconds)}
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">

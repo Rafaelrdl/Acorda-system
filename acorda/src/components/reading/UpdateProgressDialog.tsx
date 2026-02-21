@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Book, ReadingLog } from '@/lib/types'
 import { createReadingLog, getDateKey } from '@/lib/helpers'
+import { toast } from 'sonner'
 
 interface UpdateProgressDialogProps {
   book: Book | null
@@ -31,10 +32,12 @@ export function UpdateProgressDialog({
   }, [book, open])
 
   const handleSave = () => {
-    if (!book || !currentPage) return
+    if (!book) return
+    if (!currentPage) { toast.error('Informe a página atual'); return }
 
     const newPage = parseInt(currentPage)
-    if (newPage < 0 || newPage > book.totalPages) return
+    if (newPage < 0) { toast.error('A página não pode ser negativa'); return }
+    if (newPage > book.totalPages) { toast.error(`A página não pode exceder ${book.totalPages}`); return }
 
     const updatedBook: Book = {
       ...book,

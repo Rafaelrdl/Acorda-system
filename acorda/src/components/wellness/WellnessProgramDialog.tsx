@@ -85,7 +85,7 @@ export function WellnessProgramDialog({
                   key={d}
                   variant={duration === d ? 'default' : 'outline'}
                   onClick={() => setDuration(d as 7 | 14 | 30)}
-                  className="w-full"
+                  className="w-full min-h-[44px]"
                 >
                   {d} dias
                 </Button>

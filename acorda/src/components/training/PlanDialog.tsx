@@ -105,7 +105,7 @@ export function PlanDialog({ open, onOpenChange, plan, onSave }: PlanDialogProps
                   key={day.value}
                   value={String(day.value)}
                   aria-label={day.label}
-                  className="px-3 py-1.5 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                  className="px-3 py-2.5 text-xs min-h-[44px] data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                 >
                   {day.label}
                 </ToggleGroupItem>

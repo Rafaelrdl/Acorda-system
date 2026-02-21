@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, Clock, DotsThree, CalendarBlank } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 import { MealTemplateDialog } from './MealTemplateDialog'
 
 const FREQ_LABELS: Record<string, string> = {
@@ -36,6 +37,7 @@ export function DietPlanTab({
 }: DietPlanTabProps) {
   const [showTemplateDialog, setShowTemplateDialog] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<DietMealTemplate | null>(null)
+  const [deleteTemplateId, setDeleteTemplateId] = useState<string | null>(null)
 
   // Templates ordenados por horário
   const sortedTemplates = [...(templates || [])].sort((a, b) => a.defaultTimeMinutes - b.defaultTimeMinutes)
@@ -140,7 +142,8 @@ export function DietPlanTab({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-10 w-10"
+                    aria-label="Opções do template"
                     onClick={() => setEditingTemplate(template)}
                   >
                     <DotsThree size={18} />
@@ -175,6 +178,27 @@ export function DietPlanTab({
           daysOfWeek: editingTemplate.daysOfWeek
         } : undefined}
       />
+
+      {/* AlertDialog de confirmação de exclusão */}
+      <AlertDialog open={!!deleteTemplateId} onOpenChange={(open) => !open && setDeleteTemplateId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir template</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este template?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (deleteTemplateId) handleDeleteTemplate(deleteTemplateId)
+              setDeleteTemplateId(null)
+            }}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

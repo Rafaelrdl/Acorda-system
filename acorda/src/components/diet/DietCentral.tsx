@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useKV } from '@/lib/sync-storage'
 import type { UserId } from '@/lib/types'
 import { DietMealTemplate, DietMealEntry } from '@/lib/types'
@@ -23,7 +24,15 @@ export function DietCentral({ userId }: DietCentralProps) {
     []
   )
 
-  const today = getDateKey(new Date())
+  const [today, setToday] = useState(getDateKey(new Date()))
+  useEffect(() => {
+    const checkDate = () => {
+      const now = getDateKey(new Date())
+      if (now !== today) setToday(now)
+    }
+    const interval = setInterval(checkDate, 60_000)
+    return () => clearInterval(interval)
+  }, [today])
 
   return (
     <div className="pb-24 px-4 max-w-5xl mx-auto overflow-x-hidden">

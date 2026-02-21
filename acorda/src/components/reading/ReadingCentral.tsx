@@ -48,11 +48,11 @@ export function ReadingCentral({
       <div className="space-y-4 pt-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="livros" className="flex items-center gap-2">
+            <TabsTrigger value="livros" aria-label="Livros" className="flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
               <span className="hidden sm:inline">Livros</span>
             </TabsTrigger>
-            <TabsTrigger value="pdfs" className="flex items-center gap-2">
+            <TabsTrigger value="pdfs" aria-label="PDFs" className="flex items-center gap-2">
               <FilePdf className="w-4 h-4" />
               <span className="hidden sm:inline">PDFs</span>
             </TabsTrigger>

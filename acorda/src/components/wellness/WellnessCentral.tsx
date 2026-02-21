@@ -32,7 +32,17 @@ export function WellnessCentral({ userId }: WellnessCentralProps) {
   const [lastSavedCheckIn, setLastSavedCheckIn] = useState<WellnessCheckIn | null>(null)
   const [lastInsight, setLastInsight] = useState<CheckInInsight | null>(null)
 
-  const today = getDateKey(new Date())
+  // B1: today atualiza automaticamente à meia-noite
+  const [today, setToday] = useState(getDateKey(new Date()))
+
+  useEffect(() => {
+    const checkDate = () => {
+      const now = getDateKey(new Date())
+      if (now !== today) setToday(now)
+    }
+    const interval = setInterval(checkDate, 60_000)
+    return () => clearInterval(interval)
+  }, [today])
   const todayCheckIn = (checkIns || []).find(c => c.date === today)
 
   /**
@@ -141,10 +151,15 @@ export function WellnessCentral({ userId }: WellnessCentralProps) {
     if (newDayActions.length > 0) {
       setDayActions(current => [...(current || []), ...newDayActions])
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- ensureDayActions/setPrograms/setDayActions are stable setters; including them would cause an infinite loop
-  }, [programs, today, computeProgramDay, isProgramCompleted])
+  }, [programs, today, computeProgramDay, isProgramCompleted, ensureDayActions])
 
   const handleAddProgram = (program: WellnessProgram) => {
+    // B3: Prevenir programas duplicados do mesmo tipo
+    if ((programs || []).some(p => p.type === program.type && p.isActive)) {
+      toast.error('Já existe um programa ativo deste tipo')
+      return
+    }
+
     setPrograms((current) => [...(current || []), program])
     
     // Criar ações do dia 1
@@ -340,6 +355,72 @@ export function WellnessCentral({ userId }: WellnessCentralProps) {
           )
         })
       )}
+
+      {/* B8: Histórico de check-ins dos últimos 7 dias */}
+      {(() => {
+        const last7 = Array.from({ length: 7 }, (_, i) => {
+          const d = new Date()
+          d.setDate(d.getDate() - (6 - i))
+          return getDateKey(d)
+        })
+        const moodColorMap: Record<string, string> = {
+          low: 'bg-red-500',
+          medium: 'bg-yellow-400',
+          high: 'bg-green-500',
+        }
+        const energyColorMap: Record<string, string> = {
+          low: 'bg-red-400',
+          medium: 'bg-amber-400',
+          high: 'bg-emerald-500',
+        }
+        const hasAny = (checkIns || []).some(c => last7.includes(c.date))
+        if (!hasAny) return null
+        return (
+          <SectionCard
+            title="Últimos 7 dias"
+            icon={<Calendar size={18} weight="duotone" />}
+          >
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Humor</p>
+                <div className="flex gap-2 items-center">
+                  {last7.map(dateKey => {
+                    const ci = (checkIns || []).find(c => c.date === dateKey)
+                    const dayLabel = dateKey.slice(-2)
+                    return (
+                      <div key={dateKey} className="flex flex-col items-center gap-1">
+                        <div
+                          className={`w-5 h-5 rounded-full ${ci?.mood ? moodColorMap[ci.mood] : 'bg-muted'}`}
+                          title={ci?.mood ? `Humor: ${ci.mood}` : 'Sem dados'}
+                        />
+                        <span className="text-[10px] text-muted-foreground">{dayLabel}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Energia</p>
+                <div className="flex gap-2 items-center">
+                  {last7.map(dateKey => {
+                    const ci = (checkIns || []).find(c => c.date === dateKey)
+                    const dayLabel = dateKey.slice(-2)
+                    return (
+                      <div key={dateKey} className="flex flex-col items-center gap-1">
+                        <div
+                          className={`w-5 h-5 rounded-full ${ci?.energyLevel ? energyColorMap[ci.energyLevel] : 'bg-muted'}`}
+                          title={ci?.energyLevel ? `Energia: ${ci.energyLevel}` : 'Sem dados'}
+                        />
+                        <span className="text-[10px] text-muted-foreground">{dayLabel}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </SectionCard>
+        )
+      })()}
 
       {/* Nota */}
       <SectionCard

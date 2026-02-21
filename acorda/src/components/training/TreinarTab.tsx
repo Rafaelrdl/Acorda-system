@@ -163,12 +163,13 @@ export function TreinarTab({
               <Button 
                 size="icon" 
                 variant="ghost" 
-                className="h-8 w-8"
+                className="h-10 w-10"
                 onClick={onClearRecommendation}
+                aria-label="Dispensar sugestão"
               >
                 <X size={16} />
               </Button>
-              <Button size="sm" onClick={() => handleStartWorkout(recommendedPlan)}>
+              <Button size="sm" className="min-h-[44px]" onClick={() => handleStartWorkout(recommendedPlan)}>
                 <Play size={16} className="mr-1" />
                 Iniciar
               </Button>
@@ -187,7 +188,7 @@ export function TreinarTab({
                 {getPlanName(ongoingSession.planId)}
               </p>
             </div>
-            <Button size="sm" onClick={handleResumeWorkout}>
+            <Button size="sm" className="min-h-[44px]" onClick={handleResumeWorkout}>
               <Play size={16} className="mr-1" />
               Continuar
             </Button>
@@ -240,7 +241,7 @@ export function TreinarTab({
                     size="sm"
                     onClick={() => handleStartWorkout(plan)}
                     disabled={exerciseCount === 0 || !!ongoingSession}
-                    className="flex-shrink-0"
+                    className="flex-shrink-0 min-h-[44px]"
                   >
                     <Play size={16} className="mr-1" />
                     Iniciar

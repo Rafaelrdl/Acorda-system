@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Plus, Trash } from '@phosphor-icons/react'
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 
 interface MealDialogProps {
   open: boolean
@@ -43,6 +44,7 @@ export function MealDialog({
   const [newFoodName, setNewFoodName] = useState('')
   const [newFoodQty, setNewFoodQty] = useState('')
   const [newFoodUnit, setNewFoodUnit] = useState('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   useEffect(() => {
     if (open && initialData) {
@@ -59,6 +61,7 @@ export function MealDialog({
     setNewFoodName('')
     setNewFoodQty('')
     setNewFoodUnit('')
+    setShowDeleteConfirm(false)
   }, [open, initialData])
 
   const handleAddFood = () => {
@@ -88,6 +91,7 @@ export function MealDialog({
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -138,7 +142,8 @@ export function MealDialog({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6"
+                      className="h-10 w-10"
+                      aria-label="Remover alimento"
                       onClick={() => handleRemoveFood(index)}
                     >
                       <Trash size={14} />
@@ -153,7 +158,8 @@ export function MealDialog({
               <Input
                 value={newFoodName}
                 onChange={(e) => setNewFoodName(e.target.value)}
-                placeholder="Alimento"
+                placeholder="Nome do alimento"
+                aria-label="Nome do alimento"
                 className="flex-1"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -166,20 +172,24 @@ export function MealDialog({
                 value={newFoodQty}
                 onChange={(e) => setNewFoodQty(e.target.value)}
                 placeholder="Qtd"
+                aria-label="Quantidade"
                 className="w-16"
                 type="number"
                 step="0.1"
+                min="0"
               />
               <Input
                 value={newFoodUnit}
                 onChange={(e) => setNewFoodUnit(e.target.value)}
                 placeholder="Un."
+                aria-label="Unidade"
                 className="w-16"
               />
               <Button
                 type="button"
                 variant="outline"
                 size="icon"
+                aria-label="Adicionar alimento"
                 onClick={handleAddFood}
               >
                 <Plus size={18} />
@@ -204,10 +214,7 @@ export function MealDialog({
               <Button
                 type="button"
                 variant="destructive"
-                onClick={() => {
-                  onDelete()
-                  onOpenChange(false)
-                }}
+                onClick={() => setShowDeleteConfirm(true)}
               >
                 Excluir
               </Button>
@@ -222,5 +229,26 @@ export function MealDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir refeição</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir esta refeição?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={() => {
+            onDelete?.()
+            onOpenChange(false)
+          }}>
+            Excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   )
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -10,6 +10,7 @@ import type { UserId } from '@/lib/types'
 import { Subject, RecordedStudySession, ConsentLog } from '@/lib/types'
 import { createRecordedStudySession, createConsentLog, getDateKey } from '@/lib/helpers'
 import { Microphone, FileText, Sparkle, Info } from '@phosphor-icons/react'
+import { toast } from 'sonner'
 
 interface RecordedSessionDialogProps {
   open: boolean
@@ -68,10 +69,16 @@ Transcrição:
 ${transcription}`
 
       const questionsJson = await spark.llm(questionsPrompt, 'gpt-4o-mini', true)
-      const parsed = JSON.parse(questionsJson)
-      setAiQuestions(parsed.questions || [])
+      try {
+        const parsed = JSON.parse(questionsJson)
+        setAiQuestions(parsed.questions || [])
+      } catch (e) {
+        toast.error('Erro ao processar resposta da IA')
+        setAiQuestions([])
+      }
     } catch (error) {
       console.error('Erro ao processar com IA:', error)
+      toast.error('Erro ao gerar análise com IA. Tente novamente.')
     } finally {
       setIsProcessing(false)
     }
@@ -80,13 +87,19 @@ ${transcription}`
   const handleSave = () => {
     if (!subjectId || !transcription || !duration) return
 
+    const durationNum = parseInt(duration)
+    if (isNaN(durationNum) || durationNum <= 0) {
+      toast.error('Duração inválida')
+      return
+    }
+
     const consentLog = createConsentLog(userId, 'ai_processing', true)
     
     const session = createRecordedStudySession(
       userId,
       subjectId,
       getDateKey(new Date()),
-      parseInt(duration),
+      durationNum,
       consentLog.id,
       {
         transcription,
@@ -127,12 +140,15 @@ ${transcription}`
       />
 
       <Dialog open={open && consentGranted} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-md sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Microphone className="text-primary" />
               Sessão de Estudo com IA
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Registre uma sessão de estudo manualmente
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">

@@ -3,7 +3,9 @@ import type { UserId } from '@/lib/types'
 import { Book, ReadingLog } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Plus, BookOpen, TrendUp, Calendar } from '@phosphor-icons/react'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Plus, BookOpen, TrendUp, Calendar, MagnifyingGlass } from '@phosphor-icons/react'
 import { BookDialog } from './BookDialog'
 import { UpdateProgressDialog } from './UpdateProgressDialog'
 import { calculateDailyPages, getDateKey } from '@/lib/helpers'
@@ -31,9 +33,30 @@ export function BooksTab({
   const [showBookDialog, setShowBookDialog] = useState(false)
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [showProgressDialog, setShowProgressDialog] = useState(false)
+  const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState<'title' | 'progress' | 'recent'>('recent')
 
-  const activeBooks = books.filter(b => b.status === 'reading')
-  const completedBooks = books.filter(b => b.status === 'completed')
+  const filteredBooks = (books || []).filter(book => {
+    if (!search.trim()) return true
+    const term = search.toLowerCase()
+    return book.title.toLowerCase().includes(term) ||
+      (book.author && book.author.toLowerCase().includes(term))
+  })
+
+  const sortedBooks = [...filteredBooks].sort((a, b) => {
+    switch (sortBy) {
+      case 'title': return a.title.localeCompare(b.title)
+      case 'progress': {
+        const progressA = a.totalPages > 0 ? a.currentPage / a.totalPages : 0
+        const progressB = b.totalPages > 0 ? b.currentPage / b.totalPages : 0
+        return progressB - progressA
+      }
+      default: return b.updatedAt - a.updatedAt
+    }
+  })
+
+  const activeBooks = sortedBooks.filter(b => b.status === 'reading')
+  const completedBooks = sortedBooks.filter(b => b.status === 'completed')
 
   const handleUpdateProgress = (book: Book) => {
     setSelectedBook(book)
@@ -67,12 +90,34 @@ export function BooksTab({
 
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por título ou autor..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'title' | 'progress' | 'recent')}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="recent">Recentes</SelectItem>
+            <SelectItem value="title">Título</SelectItem>
+            <SelectItem value="progress">Progresso</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">Lendo agora</h2>
           <p className="text-sm text-muted-foreground">{activeBooks.length} {activeBooks.length === 1 ? 'livro' : 'livros'}</p>
         </div>
-        <Button onClick={() => setShowBookDialog(true)} size="sm">
+        <Button onClick={() => setShowBookDialog(true)} size="sm" className="min-h-[44px]">
           <Plus className="mr-2" />
           Novo Livro
         </Button>
@@ -101,6 +146,7 @@ export function BooksTab({
                   <Button 
                     size="sm" 
                     variant="outline"
+                    className="min-h-[44px]"
                     onClick={() => handleUpdateProgress(book)}
                   >
                     <TrendUp className="mr-2" />

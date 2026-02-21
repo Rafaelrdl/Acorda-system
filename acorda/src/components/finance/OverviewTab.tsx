@@ -110,7 +110,7 @@ export function OverviewTab({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Button onClick={handlePreviousMonth} variant="ghost" size="icon">
+        <Button onClick={handlePreviousMonth} variant="ghost" size="icon" aria-label="Mês anterior">
           <CaretLeft className="w-5 h-5" />
         </Button>
         <div className="text-center">
@@ -121,7 +121,7 @@ export function OverviewTab({
             </Button>
           )}
         </div>
-        <Button onClick={handleNextMonth} variant="ghost" size="icon">
+        <Button onClick={handleNextMonth} variant="ghost" size="icon" aria-label="Próximo mês">
           <CaretRight className="w-5 h-5" />
         </Button>
       </div>
@@ -192,7 +192,7 @@ export function OverviewTab({
           <CardContent>
             <div className="space-y-3">
               {monthData.categoriesArray.map(cat => {
-                const percentage = (cat.total / monthData.expenses) * 100
+                const percentage = monthData.expenses > 0 ? (cat.total / monthData.expenses) * 100 : 0
 
                 return (
                   <div key={cat.id} className="space-y-1">
@@ -203,7 +203,7 @@ export function OverviewTab({
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
+                      <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden" role="progressbar" aria-valuenow={Math.round(percentage)} aria-valuemin={0} aria-valuemax={100} aria-label={`${cat.name}: ${percentage.toFixed(0)}%`}>
                         <div
                           className="h-full bg-primary rounded-full"
                           style={{ width: `${percentage}%` }}
