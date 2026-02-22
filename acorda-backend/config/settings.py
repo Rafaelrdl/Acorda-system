@@ -378,7 +378,7 @@ EMAIL_BACKEND = config(
     'EMAIL_BACKEND',
     default='django.core.mail.backends.console.EmailBackend'
 )
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Acorda <noreply@somosacorda.com>')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Acorda <contato@somosacorda.com>')
 
 # SendGrid (if using)
 SENDGRID_API_KEY = config('SENDGRID_API_KEY', default='')
@@ -387,6 +387,16 @@ if SENDGRID_API_KEY:
     ANYMAIL = {
         'SENDGRID_API_KEY': SENDGRID_API_KEY,
     }
+
+# SMTP (Hostinger or any SMTP provider)
+EMAIL_HOST = config('EMAIL_HOST', default='')
+if EMAIL_HOST and not SENDGRID_API_KEY:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_PORT = config('EMAIL_PORT', default=465, cast=int)
+    EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+    EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
+    EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=True, cast=bool)
 
 # Mercado Pago
 MP_ACCESS_TOKEN = config('MP_ACCESS_TOKEN', default='', cast=str)
