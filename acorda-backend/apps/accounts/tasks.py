@@ -23,6 +23,7 @@ def send_activation_email(user_id: str, token: str):
         'user': user,
         'activation_url': activation_url,
         'expiry_hours': settings.ACTIVATION_TOKEN_EXPIRY_HOURS,
+        'backend_url': settings.BACKEND_URL,
     }
     
     html_message = render_to_string('emails/activation.html', context)
@@ -54,6 +55,7 @@ def send_password_reset_email(user_id: str, token: str):
         'user': user,
         'reset_url': reset_url,
         'expiry_hours': settings.PASSWORD_RESET_TOKEN_EXPIRY_HOURS,
+        'backend_url': settings.BACKEND_URL,
     }
     
     html_message = render_to_string('emails/password_reset.html', context)
@@ -82,6 +84,7 @@ def send_welcome_email(user_id: str):
     context = {
         'user': user,
         'app_url': settings.FRONTEND_URL,
+        'backend_url': settings.BACKEND_URL,
     }
     
     html_message = render_to_string('emails/welcome.html', context)

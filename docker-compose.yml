@@ -45,7 +45,6 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - FRONTEND_URL=http://localhost:80
       - BACKEND_URL=http://localhost:8000
-      - EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
       - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,web
       - CORS_ALLOWED_ORIGINS=http://localhost,http://localhost:80
       - CSRF_TRUSTED_ORIGINS=http://localhost,http://localhost:80
@@ -64,12 +63,13 @@ services:
     command: celery -A config worker -l INFO
     volumes:
       - ./acorda-backend:/app
+    env_file:
+      - ./acorda-backend/.env
     environment:
       - DEBUG=True
       - SECRET_KEY=dev-secret-key-change-in-production
       - DATABASE_URL=postgres://acorda:acorda@db:5432/acorda
       - REDIS_URL=redis://redis:6379/0
-      - EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
     depends_on:
       db:
         condition: service_healthy
@@ -86,12 +86,13 @@ services:
     command: celery -A config beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=""
     volumes:
       - ./acorda-backend:/app
+    env_file:
+      - ./acorda-backend/.env
     environment:
       - DEBUG=True
       - SECRET_KEY=dev-secret-key-change-in-production
       - DATABASE_URL=postgres://acorda:acorda@db:5432/acorda
       - REDIS_URL=redis://redis:6379/0
-      - EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
     depends_on:
       db:
         condition: service_healthy

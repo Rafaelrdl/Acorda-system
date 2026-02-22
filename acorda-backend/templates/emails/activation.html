@@ -4,108 +4,82 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ative sua conta no Acorda</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #1a1a1a;
-            background-color: #f5f5f5;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-        .card {
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-        .logo {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-        .logo img {
-            height: 48px;
-        }
-        .logo-text {
-            font-size: 28px;
-            font-weight: bold;
-            color: #7c3aed;
-        }
-        h1 {
-            font-size: 24px;
-            margin: 0 0 16px;
-            color: #1a1a1a;
-        }
-        p {
-            margin: 0 0 16px;
-            color: #4a4a4a;
-        }
-        .button {
-            display: inline-block;
-            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-            color: #ffffff !important;
-            text-decoration: none;
-            padding: 16px 32px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 16px;
-            margin: 24px 0;
-        }
-        .button:hover {
-            opacity: 0.9;
-        }
-        .note {
-            font-size: 14px;
-            color: #6b6b6b;
-            background: #f9f9f9;
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 24px;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 32px;
-            font-size: 12px;
-            color: #888;
-        }
-    </style>
 </head>
-<body>
-    <div class="container">
-        <div class="card">
-            <div class="logo">
-                <span class="logo-text">🚀 Acorda</span>
-            </div>
-            
-            <h1>Bem-vindo ao Acorda!</h1>
-            
-            <p>Olá{% if user.name %}, {{ user.name }}{% endif %}!</p>
-            
-            <p>Sua compra foi confirmada com sucesso! Agora você tem acesso ao Acorda, seu sistema completo de produtividade pessoal.</p>
-            
-            <p>Para começar a usar, clique no botão abaixo para definir sua senha e ativar sua conta:</p>
-            
-            <p style="text-align: center;">
-                <a href="{{ activation_url }}" class="button">Ativar minha conta</a>
-            </p>
-            
-            <div class="note">
-                <strong>⏰ Importante:</strong> Este link expira em {{ expiry_hours }} horas. Se você não solicitou essa conta, pode ignorar este e-mail.
-            </div>
-            
-            <p style="margin-top: 24px;">Se o botão não funcionar, copie e cole o link abaixo no seu navegador:</p>
-            <p style="word-break: break-all; font-size: 14px; color: #7c3aed;">{{ activation_url }}</p>
-        </div>
-        
-        <div class="footer">
-            <p>© {{ now.year }} Acorda. Todos os direitos reservados.</p>
-            <p>Este é um e-mail automático, por favor não responda.</p>
-        </div>
-    </div>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; background-color: #111110;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #111110;">
+        <tr>
+            <td align="center" style="padding: 40px 16px;">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+                    <!-- Logo -->
+                    <tr>
+                        <td align="center" style="padding-bottom: 32px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="vertical-align: middle; padding-right: 10px;">
+                                        <img src="{{ backend_url }}/static/emails/logo.png" alt="Acorda" width="40" height="40" style="display: block; border-radius: 8px;" />
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <span style="font-size: 24px; font-weight: 700; color: #f0efe9; letter-spacing: -0.5px;">Acorda</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- Card -->
+                    <tr>
+                        <td style="background-color: #1a1918; border: 1px solid #2d2b28; border-radius: 16px; padding: 40px 36px;">
+                            <h1 style="font-size: 22px; font-weight: 700; margin: 0 0 8px; color: #f0efe9;">Bem-vindo ao Acorda! 🚀</h1>
+                            <p style="margin: 0 0 20px; color: #a8a6a0; font-size: 15px;">Sua compra foi confirmada com sucesso</p>
+
+                            <p style="margin: 0 0 16px; color: #d0cec8; font-size: 15px;">
+                                Olá{% if user.name %}, <strong style="color: #f0efe9;">{{ user.name }}</strong>{% endif %}!
+                            </p>
+
+                            <p style="margin: 0 0 16px; color: #d0cec8; font-size: 15px;">
+                                Agora você tem acesso ao Acorda, seu sistema completo de produtividade pessoal.
+                            </p>
+
+                            <p style="margin: 0 0 28px; color: #d0cec8; font-size: 15px;">
+                                Para começar a usar, clique no botão abaixo para definir sua senha e ativar sua conta:
+                            </p>
+
+                            <!-- Button -->
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center" style="padding: 4px 0 28px;">
+                                        <a href="{{ activation_url }}" style="display: inline-block; background-color: #2d9d8f; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 10px; font-weight: 600; font-size: 15px; letter-spacing: 0.2px;">
+                                            Ativar minha conta
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Note -->
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="background-color: #242320; border-left: 3px solid #2d9d8f; border-radius: 0 8px 8px 0; padding: 14px 16px;">
+                                        <p style="margin: 0; font-size: 13px; color: #a8a6a0;">
+                                            <strong style="color: #d0cec8;">⏰ Importante:</strong> Este link expira em {{ expiry_hours }} horas. Se você não solicitou essa conta, pode ignorar este e-mail.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Fallback link -->
+                            <p style="margin: 24px 0 6px; color: #a8a6a0; font-size: 13px;">Se o botão não funcionar, copie e cole o link abaixo no seu navegador:</p>
+                            <p style="margin: 0; word-break: break-all; font-size: 13px;"><a href="{{ activation_url }}" style="color: #2d9d8f; text-decoration: underline;">{{ activation_url }}</a></p>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 28px 0 0;">
+                            <p style="margin: 0 0 4px; font-size: 12px; color: #757370;">© Acorda. Todos os direitos reservados.</p>
+                            <p style="margin: 0; font-size: 12px; color: #757370;">Este é um e-mail automático, por favor não responda.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>

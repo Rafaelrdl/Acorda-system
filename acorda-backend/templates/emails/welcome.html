@@ -4,117 +4,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bem-vindo ao Acorda!</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #1a1a1a;
-            background-color: #f5f5f5;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-        .card {
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-        .logo {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-        .logo-text {
-            font-size: 28px;
-            font-weight: bold;
-            color: #7c3aed;
-        }
-        h1 {
-            font-size: 24px;
-            margin: 0 0 16px;
-            color: #1a1a1a;
-        }
-        p {
-            margin: 0 0 16px;
-            color: #4a4a4a;
-        }
-        .button {
-            display: inline-block;
-            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-            color: #ffffff !important;
-            text-decoration: none;
-            padding: 16px 32px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 16px;
-            margin: 24px 0;
-        }
-        .features {
-            background: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 24px 0;
-        }
-        .features h3 {
-            margin: 0 0 12px;
-            font-size: 16px;
-        }
-        .features ul {
-            margin: 0;
-            padding-left: 20px;
-        }
-        .features li {
-            margin-bottom: 8px;
-            color: #4a4a4a;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 32px;
-            font-size: 12px;
-            color: #888;
-        }
-    </style>
 </head>
-<body>
-    <div class="container">
-        <div class="card">
-            <div class="logo">
-                <span class="logo-text">🎉 Acorda</span>
-            </div>
-            
-            <h1>Conta ativada com sucesso!</h1>
-            
-            <p>Olá{% if user.name %}, {{ user.name }}{% endif %}!</p>
-            
-            <p>Sua conta no Acorda foi ativada e você já pode começar a usar o app. Seja bem-vindo à sua nova jornada de produtividade!</p>
-            
-            <div class="features">
-                <h3>✨ O que você pode fazer no Acorda:</h3>
-                <ul>
-                    <li>📋 Gerenciar tarefas com GTD e Matriz de Eisenhower</li>
-                    <li>🎯 Definir metas com OKRs</li>
-                    <li>🔥 Acompanhar hábitos diários</li>
-                    <li>⏱️ Focar com Pomodoro</li>
-                    <li>📅 Planejar sua semana com blocos de tempo</li>
-                    <li>📊 Visualizar seu progresso no dashboard</li>
-                </ul>
-            </div>
-            
-            <p style="text-align: center;">
-                <a href="{{ app_url }}" class="button">Acessar o Acorda</a>
-            </p>
-            
-            <p>Dica: Instale o app no seu celular para ter acesso offline e notificações!</p>
-        </div>
-        
-        <div class="footer">
-            <p>© Acorda. Todos os direitos reservados.</p>
-            <p>Precisa de ajuda? Responda este e-mail.</p>
-        </div>
-    </div>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; background-color: #111110;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #111110;">
+        <tr>
+            <td align="center" style="padding: 40px 16px;">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+                    <!-- Logo -->
+                    <tr>
+                        <td align="center" style="padding-bottom: 32px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="vertical-align: middle; padding-right: 10px;">
+                                        <img src="{{ backend_url }}/static/emails/logo.png" alt="Acorda" width="40" height="40" style="display: block; border-radius: 8px;" />
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <span style="font-size: 24px; font-weight: 700; color: #f0efe9; letter-spacing: -0.5px;">Acorda</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- Card -->
+                    <tr>
+                        <td style="background-color: #1a1918; border: 1px solid #2d2b28; border-radius: 16px; padding: 40px 36px;">
+                            <h1 style="font-size: 22px; font-weight: 700; margin: 0 0 8px; color: #f0efe9;">Conta ativada com sucesso! 🎉</h1>
+                            <p style="margin: 0 0 24px; color: #a8a6a0; font-size: 15px;">Sua jornada de produtividade começa agora</p>
+
+                            <p style="margin: 0 0 16px; color: #d0cec8; font-size: 15px;">
+                                Olá{% if user.name %}, <strong style="color: #f0efe9;">{{ user.name }}</strong>{% endif %}!
+                            </p>
+
+                            <p style="margin: 0 0 24px; color: #d0cec8; font-size: 15px;">
+                                Sua conta no Acorda foi ativada e você já pode começar a usar o app. Seja bem-vindo à sua nova jornada de produtividade!
+                            </p>
+
+                            <!-- Features -->
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                                <tr>
+                                    <td style="background-color: #242320; border-radius: 10px; padding: 20px;">
+                                        <p style="margin: 0 0 12px; font-size: 14px; font-weight: 600; color: #f0efe9;">✨ O que você pode fazer no Acorda:</p>
+                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                                            <tr><td style="padding: 4px 0; color: #d0cec8; font-size: 14px;">📋 Gerenciar tarefas com GTD e Eisenhower</td></tr>
+                                            <tr><td style="padding: 4px 0; color: #d0cec8; font-size: 14px;">🎯 Definir metas com OKRs</td></tr>
+                                            <tr><td style="padding: 4px 0; color: #d0cec8; font-size: 14px;">🔥 Acompanhar hábitos diários</td></tr>
+                                            <tr><td style="padding: 4px 0; color: #d0cec8; font-size: 14px;">⏱️ Focar com Pomodoro</td></tr>
+                                            <tr><td style="padding: 4px 0; color: #d0cec8; font-size: 14px;">📅 Planejar sua semana com blocos de tempo</td></tr>
+                                            <tr><td style="padding: 4px 0; color: #d0cec8; font-size: 14px;">📊 Visualizar seu progresso no dashboard</td></tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Button -->
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center" style="padding: 4px 0 24px;">
+                                        <a href="{{ app_url }}" style="display: inline-block; background-color: #2d9d8f; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 10px; font-weight: 600; font-size: 15px; letter-spacing: 0.2px;">
+                                            Acessar o Acorda
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Tip -->
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="background-color: #242320; border-left: 3px solid #2d9d8f; border-radius: 0 8px 8px 0; padding: 14px 16px;">
+                                        <p style="margin: 0; font-size: 13px; color: #a8a6a0;">
+                                            <strong style="color: #d0cec8;">💡 Dica:</strong> Instale o app no seu celular para ter acesso offline e notificações!
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 28px 0 0;">
+                            <p style="margin: 0 0 4px; font-size: 12px; color: #757370;">© Acorda. Todos os direitos reservados.</p>
+                            <p style="margin: 0; font-size: 12px; color: #757370;">Precisa de ajuda? Responda este e-mail.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
