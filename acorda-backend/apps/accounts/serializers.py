@@ -19,6 +19,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'email', 'name', 'status', 
             'timezone', 'avatar_url', 'enabled_modules', 'appearance', 'week_starts_on',
+            'onboarding_completed',
             'created_at', 'last_login'
         ]
         read_only_fields = ['id', 'email', 'status', 'created_at', 'last_login']
@@ -184,7 +185,7 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['name', 'timezone', 'avatar_url', 'enabled_modules', 'appearance', 'week_starts_on']
+        fields = ['name', 'timezone', 'avatar_url', 'enabled_modules', 'appearance', 'week_starts_on', 'onboarding_completed']
 
 
 class ChangePasswordSerializer(serializers.Serializer):

@@ -306,6 +306,7 @@ class ApiClient {
     enabled_modules?: ModuleSettings;
     appearance?: Appearance;
     week_starts_on?: 0 | 1;
+    onboarding_completed?: boolean;
   }) {
     return this.request<User>('/auth/me/', {
       method: 'PATCH',
@@ -532,6 +533,7 @@ interface User {
   enabled_modules: ModuleSettings | null
   appearance: Appearance
   week_starts_on: 0 | 1
+  onboarding_completed: boolean
   created_at: string
   last_login: string | null
 }

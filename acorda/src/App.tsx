@@ -137,12 +137,17 @@ function MainApp({ user }: { user: User }) {
   const [dietTemplates] = useKV<DietMealTemplate[]>(getSyncKey(userId, 'dietMealTemplates'), [])
 
   // Sync ALL user preferences from backend when user data loads (on login)
+  // IMPORTANT: Wait for IndexedDB to finish loading before syncing,
+  // otherwise we overwrite stored onboardingCompleted with the default (false)
   useEffect(() => {
+    if (userSettingsLoading) return
+
     if (import.meta.env.DEV) {
       console.log('[App] Syncing preferences from backend. User:', user)
       console.log('[App] Backend appearance:', user.appearance)
       console.log('[App] Backend week_starts_on:', user.week_starts_on)
       console.log('[App] Backend enabled_modules:', user.enabled_modules)
+      console.log('[App] Backend onboarding_completed:', user.onboarding_completed)
     }
     
     // Use backend values, fallback to defaults if not set
@@ -151,20 +156,24 @@ function MainApp({ user }: { user: User }) {
     const backendModules = user.enabled_modules || {}
     
     setUserSettings(current => {
+      const base = current || defaultSettings
       const updated = {
-        ...(current || defaultSettings),
+        ...base,
         appearance: backendAppearance,
         weekStartsOn: backendWeekStartsOn,
         modules: {
           ...defaultSettings.modules,
           ...backendModules
         },
+        // If backend says onboarding is completed, trust it (even if local says false)
+        // If backend has no info, preserve the local value
+        onboardingCompleted: user.onboarding_completed === true ? true : base.onboardingCompleted,
         updatedAt: Date.now()
       }
       if (import.meta.env.DEV) console.log('[App] Updated settings from backend:', updated)
       return updated
     })
-  }, [user, defaultSettings, setUserSettings])
+  }, [user, defaultSettings, setUserSettings, userSettingsLoading])
 
   // Apply theme when userSettings.appearance changes
   useEffect(() => {
@@ -657,13 +666,35 @@ function MainApp({ user }: { user: User }) {
   }
 
   // ── Onboarding ────────────────────────────────────────────
-  const needsOnboarding = userSettings?.onboardingCompleted !== true
-  console.log('[Onboarding] check:', { 
-    onboardingCompleted: userSettings?.onboardingCompleted, 
-    needsOnboarding, 
-    userSettingsLoading,
-    settingsKeys: userSettings ? Object.keys(userSettings) : 'null'
-  })
+  // Heuristic: if user already has tasks, habits, or goals, they've clearly
+  // used the app before — skip onboarding even if the flag got corrupted
+  const hasExistingData = (tasks || []).length > 0 
+    || (habits || []).length > 0 
+    || (goals || []).length > 0
+    || user.onboarding_completed === true
+
+  const needsOnboarding = userSettings?.onboardingCompleted !== true && !hasExistingData
+
+  // Auto-fix corrupted flag: if user has data but flag is false, fix it silently
+  useEffect(() => {
+    if (hasExistingData && userSettings?.onboardingCompleted !== true && !userSettingsLoading) {
+      setUserSettings(current => ({
+        ...(current || defaultSettings),
+        onboardingCompleted: true,
+        updatedAt: Date.now(),
+      }))
+      api.updateProfile({ onboarding_completed: true }).catch(() => {})
+    }
+  }, [hasExistingData, userSettings?.onboardingCompleted, userSettingsLoading, setUserSettings, defaultSettings])
+
+  if (import.meta.env.DEV) {
+    console.log('[Onboarding] check:', { 
+      onboardingCompleted: userSettings?.onboardingCompleted, 
+      hasExistingData,
+      needsOnboarding, 
+      userSettingsLoading,
+    })
+  }
 
   const handleOnboardingComplete = (data: OnboardingResult) => {
     // Salvar meta + KRs
@@ -687,6 +718,12 @@ function MainApp({ user }: { user: User }) {
       updatedAt: Date.now(),
     }))
 
+    // Persistir no backend para sobreviver a limpar cache/trocar dispositivo
+    api.updateProfile({ 
+      onboarding_completed: true,
+      ...(data.modules ? { enabled_modules: data.modules } : {}),
+    }).catch(() => { /* silently fail — local state is source of truth */ })
+
     toast.success('Setup concluído! Bem-vindo ao Acorda 🎉')
   }
 
@@ -696,6 +733,10 @@ function MainApp({ user }: { user: User }) {
       onboardingCompleted: true,
       updatedAt: Date.now(),
     }))
+
+    // Persistir no backend
+    api.updateProfile({ onboarding_completed: true })
+      .catch(() => { /* silently fail */ })
   }
 
   // Mostrar loading enquanto carrega settings do IndexedDB

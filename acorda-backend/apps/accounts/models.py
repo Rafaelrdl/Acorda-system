@@ -96,6 +96,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         choices=[(0, 'Domingo'), (1, 'Segunda-feira')],
         default=1
     )
+    onboarding_completed = models.BooleanField(
+        'Onboarding concluído',
+        default=False
+    )
     
     objects = UserManager()
     
