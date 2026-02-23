@@ -83,9 +83,9 @@
 | Confirmar Nova Senha | `NovaSenha@2024!` |
 
 **Validações esperadas:**
-- [ ] Senha redefinida com sucesso
-- [ ] Validação de mínimo 8 caracteres
-- [ ] Validação de senhas coincidentes
+- [x] Senha redefinida com sucesso
+- [x] Validação de mínimo 8 caracteres
+- [x] Validação de senhas coincidentes
 
 ---
 
