@@ -242,7 +242,10 @@ export function ProcessInboxDialog({
       resetState()
       onNext()
     } else {
-      handleClose()
+      // Fechar diretamente sem passar por handleClose para não disparar
+      // o dialog de confirmação "Sair do processamento?" — a tarefa já foi criada.
+      resetState()
+      onOpenChange(false)
     }
   }
 

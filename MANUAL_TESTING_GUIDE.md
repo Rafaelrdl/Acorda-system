@@ -95,39 +95,39 @@
 > São **6 etapas**: welcome → goal → habits → tour → modules → ready
 
 ### Etapa 1: Welcome (Boas-vindas)
-- [ ] Tela informativa exibida
-- [ ] Botão "Avançar" funciona
+- [x] Tela informativa exibida
+- [x] Botão "Avançar" funciona
 
 ### Etapa 2: Goal (Meta inicial)
-- [ ] Permite definir uma meta inicial
+- [x] Permite definir uma meta inicial
 - **Sugestão:** Selecione qualquer opção pré-definida
 
 ### Etapa 3: Habits (Hábitos)
-- [ ] Permite selecionar hábitos sugeridos
+- [x] Permite selecionar hábitos sugeridos
 - **Sugestão:** Marque 3 hábitos (ex: Meditar, Exercitar, Ler)
 
 ### Etapa 4: Tour (Guia visual)
-- [ ] Exibe tour guiado pelas funcionalidades
-- [ ] Botão "Avançar" funciona
+- [x] Exibe tour guiado pelas funcionalidades
+- [x] Botão "Avançar" funciona
 
 ### Etapa 5: Modules (Módulos)
-- [ ] Permite ativar/desativar módulos (Finanças, Leitura, Estudos, Bem-estar, Treino, Dieta)
+- [x] Permite ativar/desativar módulos (Finanças, Leitura, Estudos, Bem-estar, Treino, Dieta)
 - **Sugestão:** Ative todos os 6 módulos
 
 ### Etapa 6: Ready (Pronto)
-- [ ] Exibe mensagem de conclusão
-- [ ] Botão "Começar" redireciona para o app principal
-- [ ] Onboarding não aparece em logins futuros
+- [x] Exibe mensagem de conclusão
+- [x] Botão "Começar" redireciona para o app principal
+- [x] Onboarding não aparece em logins futuros
 
 **Validação extra:**
-- [ ] Indicador de progresso (dots/steps) reflete o passo atual
-- [ ] Botão "Voltar" funciona em todos os passos
+- [x] Indicador de progresso (dots/steps) reflete o passo atual
+- [x] Botão "Voltar" funciona em todos os passos
 
 ---
 
 ## 3. Quick Capture (Inbox)
 
-> Clique no FAB (botão flutuante "+" ) ou use o campo Quick Capture na aba Coletar.
+> Clique no FAB (botão flutuante "+") para abrir a Captura Rápida. Os itens capturados aparecem na sub-aba **Inbox** dentro de **Planejar**.
 
 ### 3.1 Captura rápida simples
 
@@ -135,9 +135,9 @@
 |-------|---------------|
 | Input principal | `Comprar presente de aniversário da Maria` |
 
-- [ ] Enter envia para Inbox
-- [ ] Item aparece na lista do Inbox
-- [ ] Campo limpa após envio
+- [x] Enter envia para Inbox
+- [x] Item aparece na lista do Inbox
+- [x] Campo limpa após envio
 
 ### 3.2 Captura com detalhes (expandir)
 
@@ -146,8 +146,8 @@
 | Input principal | `Pesquisar cursos de React avançado` |
 | Detalhes | `Ver Udemy, Frontendmasters e Egghead. Comparar preços e conteúdo.` |
 
-- [ ] Detalhes salvos com o item
-- [ ] Item aparece no Inbox com os detalhes
+- [x] Detalhes salvos com o item
+- [x] Item aparece no Inbox com os detalhes
 
 ### 3.3 Criar mais itens para teste (copie e cole cada um):
 
@@ -161,96 +161,209 @@ Ler artigo sobre produtividade
 Enviar e-mail para fornecedor
 ```
 
-- [ ] Todos os 7 itens aparecem no Inbox
+- [x] Todos os 7 itens aparecem no Inbox
 
 ---
 
 ## 4. Processar Inbox (GTD)
 
-> Na aba "Coletar", clique no botão de processar em um item do Inbox.
-> O processo segue o fluxo GTD: É acionável? → Sim/Não → Destino → Detalhes
+> Na aba **Planejar → Inbox**, clique no botão ▶ ao lado de um item para processar individualmente, ou clique em **"Processar todos"** para modo batch.
+> O fluxo segue 4 passos: **Acionável?** → **Próxima Ação** → **Destino** → **Detalhes**
 
-### 4.1 Item NÃO acionável → Referência
+### 4.1 Item NÃO acionável → Anotação
 
 **Item:** `Ler artigo sobre produtividade`
 
-1. "É acionável?" → Escolha **Não**
-2. Escolha **"Referência"**
-3. Salve
+1. Clique no botão ▶ do item
+2. "Isso é acionável?" → Escolha **"Não, apenas anotação"**
+3. Preencha os campos que aparecem:
 
-- [ ] Item removido do Inbox
-- [ ] Aparece nas Referências
+| Campo | Valor sugerido |
+|-------|---------------|
+| Título | `Artigo sobre produtividade` |
+| Tags | `leitura, referência` |
 
-### 4.2 Item NÃO acionável → Lixo
+4. Clique em **"Salvar como anotação"**
 
-**Item:** `Cancelar assinatura da Netflix`
+- [x] Item removido do Inbox
+- [x] Aparece na sub-aba **Notas** (dentro de Planejar)
 
-1. "É acionável?" → Escolha **Não**
-2. Escolha **"Lixo/Excluir"**
 
-- [ ] Item removido do Inbox e descartado
+### 4.2 Item acionável → Fazer agora (Regra dos 2 minutos)
+
+**Item:** `Comprar café e leite`
+
+1. Clique no botão ▶ do item
+2. "Isso é acionável?" → Escolha **"Sim, preciso fazer algo"**
+3. **Passo "Próxima Ação"** — preencha:
+
+| Campo | Valor sugerido |
+|-------|---------------|
+| Título da tarefa | `Comprar café e leite` (já pré-preenchido) |
+| Qual a próxima ação física? | `Ir ao mercado da esquina e comprar` |
+| Tags | `pessoal` |
+
+4. Clique em **"Continuar →"**
+5. **Passo "Destino"** — "O que fazer com esta tarefa?" → Escolha **"Fazer agora (<2 min) e concluir"**
+6. Mensagem verde aparece: *"Se leva menos de 2 minutos, faça agora mesmo!"*
+7. Clique em **"Concluir"**
+
+- [x] Tarefa criada e marcada como concluída automaticamente
+- [x] Item removido do Inbox
+- [x] Tarefa aparece em "Concluídas Recentemente" na sub-aba Tarefas
 
 ### 4.3 Item acionável → Próxima Ação
 
 **Item:** `Ligar para dentista marcar consulta`
 
-1. "É acionável?" → Escolha **Sim**
-2. "É a próxima ação?" → Escolha **Sim**
-3. Destino: **"Próxima Ação"** (next)
+1. Clique no botão ▶ do item
+2. "Isso é acionável?" → Escolha **"Sim, preciso fazer algo"**
+3. **Passo "Próxima Ação"** — preencha:
 
-- [ ] Item vira tarefa com status `next`
-- [ ] Aparece na aba "Planejar" em "Próximas Ações"
+| Campo | Valor sugerido |
+|-------|---------------|
+| Título da tarefa | `Ligar para dentista marcar consulta` (já pré-preenchido) |
+| Qual a próxima ação física? | `Ligar para (11) 99999-0000 e agendar limpeza` |
+| Tags | `saúde, telefone` |
+
+4. Clique em **"Continuar →"**
+5. **Passo "Destino"** — Escolha **"Próxima ação (fazer em breve)"**
+6. Clique em **"Continuar →"**
+7. **Passo "Detalhes"** (opcional) — preencha ou pule:
+
+| Campo | Valor sugerido |
+|-------|---------------|
+| Energia | `Baixa` (low) |
+| Estimativa (min) | `5` |
+
+8. Clique em **"Criar tarefa"**
+
+- [x] Item vira tarefa com status `next`
+- [x] Aparece em **Planejar → Tarefas → Próximas Ações**
 
 ### 4.4 Item acionável → Agendado
 
 **Item:** `Revisar relatório mensal`
 
-1. "É acionável?" → Escolha **Sim**
-2. Destino: **"Agendar"** (scheduled)
-3. Selecione uma data futura (ex: próxima segunda-feira)
+1. Clique no botão ▶ do item
+2. "Isso é acionável?" → **"Sim, preciso fazer algo"**
+3. **Passo "Próxima Ação"** — preencha:
 
 | Campo | Valor sugerido |
 |-------|---------------|
-| Data | Próxima segunda-feira |
-| Horário | `09:00` |
-| Duração | `60 min` |
+| Título da tarefa | `Revisar relatório mensal` |
+| Qual a próxima ação física? | `Abrir planilha de métricas e revisar números de fevereiro` |
+| Tags | `trabalho` |
 
-- [ ] Item vira tarefa com status `scheduled`
-- [ ] Aparece no calendário na data correta
+4. Clique em **"Continuar →"**
+5. **Passo "Destino"** — Escolha **"Agendar para uma data"**
+6. Preencha os campos de agendamento que aparecem:
+
+| Campo | Valor sugerido |
+|-------|---------------|
+| Data | Próxima segunda-feira (selecione no calendário) |
+| Horário início | `09:00` |
+| Duração | `1h 00min` |
+
+7. Clique em **"Continuar →"**
+8. **Passo "Detalhes"** — preencha:
+
+| Campo | Valor sugerido |
+|-------|---------------|
+| Energia | `Alta` (high) |
+| Estimativa (min) | `60` |
+
+9. Clique em **"Criar tarefa"**
+
+- [x] Item vira tarefa com status `scheduled`
+- [x] Aparece em **Planejar → Tarefas → Agendadas**
+- [x] Aparece como bloco no calendário na sub-aba **Semana**
 
 ### 4.5 Item acionável → Algum dia/Talvez
 
 **Item:** `Organizar fotos do celular`
 
-1. "É acionável?" → Escolha **Sim**
-2. Destino: **"Algum Dia/Talvez"** (someday)
+1. Clique no botão ▶ do item
+2. "Isso é acionável?" → **"Sim, preciso fazer algo"**
+3. **Passo "Próxima Ação"** — preencha:
+
+| Campo | Valor sugerido |
+|-------|---------------|
+| Título da tarefa | `Organizar fotos do celular` |
+| Qual a próxima ação física? | `Separar fotos por pastas no Google Fotos` |
+
+4. Clique em **"Continuar →"**
+5. **Passo "Destino"** — Escolha **"Algum dia / talvez"**
+6. Clique em **"Continuar →"** → preencha detalhes ou pule
+7. Clique em **"Criar tarefa"**
 
 - [ ] Item vira tarefa com status `someday`
+- [ ] Aparece em **Planejar → Tarefas → Algum Dia / Talvez**
 
 ### 4.6 Item acionável → Aguardando
 
 **Item:** `Enviar e-mail para fornecedor`
 
-1. "É acionável?" → Escolha **Sim**
-2. Destino: **"Aguardando"** (waiting)
+1. Clique no botão ▶ do item
+2. "Isso é acionável?" → **"Sim, preciso fazer algo"**
+3. **Passo "Próxima Ação"** — preencha:
+
+| Campo | Valor sugerido |
+|-------|---------------|
+| Título da tarefa | `Enviar e-mail para fornecedor` |
+| Qual a próxima ação física? | `Enviar proposta com valores atualizados para João` |
+
+4. Clique em **"Continuar →"**
+5. **Passo "Destino"** — Escolha **"Aguardando alguém (delegada)"**
+6. Clique em **"Continuar →"** → preencha detalhes ou pule
+7. Clique em **"Criar tarefa"**
 
 - [ ] Item vira tarefa com status `waiting`
+- [ ] Aparece em **Planejar → Tarefas → Aguardando**
 
 ### 4.7 Criar tarefa com detalhes completos
 
 **Item:** `Comprar presente de aniversário da Maria`
 
-1. "É acionável?" → **Sim**
-2. Destino: **Próxima Ação**
-3. Na tela de detalhes, preencha:
+1. Clique no botão ▶ do item
+2. "Isso é acionável?" → **"Sim, preciso fazer algo"**
+3. **Passo "Próxima Ação"**:
 
 | Campo | Valor sugerido |
 |-------|---------------|
-| Energia | `medium` (Média) |
+| Título da tarefa | `Comprar presente de aniversário da Maria` |
+| Qual a próxima ação física? | `Pesquisar no Mercado Livre opções de presente` |
+| Tags | `pessoal, urgente` |
+
+4. Clique em **"Continuar →"**
+5. **Passo "Destino"** — Escolha **"Próxima ação (fazer em breve)"**
+6. Clique em **"Continuar →"**
+7. **Passo "Detalhes"** — preencha todos os campos:
+
+| Campo | Valor sugerido |
+|-------|---------------|
+| Energia | `Média` (medium) |
 | Estimativa (min) | `30` |
-| Tags | `pessoal` |
+| Projeto | (selecione um se existir) |
+| Vincular a Meta | (selecione uma se existir) |
+
+8. Clique em **"Criar tarefa"**
 
 - [ ] Tarefa criada com todos os campos preenchidos
+- [ ] Aparece em **Planejar → Tarefas → Próximas Ações**
+
+### 4.8 Processar todos em batch
+
+> Se restam itens no Inbox, use o modo batch.
+
+1. Com mais de 1 item no Inbox, clique em **"Processar todos"**
+2. O dialog mostra indicador *"(X de Y)"* no cabeçalho
+3. Processe cada item escolhendo destinos variados
+4. Ao concluir um item, o próximo abre automaticamente
+
+- [ ] Todos os itens do Inbox foram processados
+- [ ] Badge de contagem do Inbox zerou
+- [ ] Dialog fecha automaticamente ao finalizar o último item
 
 ---
 
