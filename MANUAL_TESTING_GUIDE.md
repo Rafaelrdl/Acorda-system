@@ -297,8 +297,8 @@ Enviar e-mail para fornecedor
 6. Clique em **"Continuar →"** → preencha detalhes ou pule
 7. Clique em **"Criar tarefa"**
 
-- [ ] Item vira tarefa com status `someday`
-- [ ] Aparece em **Planejar → Tarefas → Algum Dia / Talvez**
+- [x] Item vira tarefa com status `someday`
+- [x] Aparece em **Planejar → Tarefas → Algum Dia / Talvez**
 
 ### 4.6 Item acionável → Aguardando
 
@@ -318,8 +318,8 @@ Enviar e-mail para fornecedor
 6. Clique em **"Continuar →"** → preencha detalhes ou pule
 7. Clique em **"Criar tarefa"**
 
-- [ ] Item vira tarefa com status `waiting`
-- [ ] Aparece em **Planejar → Tarefas → Aguardando**
+- [x] Item vira tarefa com status `waiting`
+- [x] Aparece em **Planejar → Tarefas → Aguardando**
 
 ### 4.7 Criar tarefa com detalhes completos
 
@@ -349,8 +349,8 @@ Enviar e-mail para fornecedor
 
 8. Clique em **"Criar tarefa"**
 
-- [ ] Tarefa criada com todos os campos preenchidos
-- [ ] Aparece em **Planejar → Tarefas → Próximas Ações**
+- [x] Tarefa criada com todos os campos preenchidos
+- [x] Aparece em **Planejar → Tarefas → Próximas Ações**
 
 ### 4.8 Processar todos em batch
 
