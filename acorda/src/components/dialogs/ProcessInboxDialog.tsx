@@ -145,8 +145,9 @@ export function ProcessInboxDialog({
         handleClose()
       }
     } else {
-      // Pré-preenche o título editável
+      // Pré-preenche o título editável e a próxima ação com as notas do inbox
       if (!taskTitle) setTaskTitle(item.content)
+      if (!nextAction && item.notes) setNextAction(item.notes)
       setStep('next-action')
     }
   }
