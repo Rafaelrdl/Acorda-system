@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import type { UserId } from '@/lib/types'
 import { CalendarBlock, Task, Habit, GoogleCalendarEvent } from '@/lib/types'
-import { getWeekDates, getStartOfWeek, getDateKey } from '@/lib/helpers'
+import { getWeekDates, getDateKey } from '@/lib/helpers'
 import { CaretLeft, CaretRight, Warning } from '@phosphor-icons/react'
 import { CalendarBlockDialog } from './dialogs/CalendarBlockDialog'
 
@@ -41,24 +41,24 @@ export function WeeklyCalendar({
   calendarBlocks,
   tasks,
   habits = [],
-  weekStartsOn,
   googleCalendarEvents,
   onAddBlock,
   onUpdateBlock,
   onDeleteBlock,
   onUpdateTask,
 }: WeeklyCalendarProps) {
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => getStartOfWeek(new Date(), weekStartsOn))
+  // O dia atual é sempre a primeira coluna — a semana começa "hoje"
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    return d
+  })
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<number | null>(null)
   const [editingBlock, setEditingBlock] = useState<CalendarBlock | null>(null)
   const [showDialog, setShowDialog] = useState(false)
 
   const weekDates = getWeekDates(currentWeekStart)
-
-  useEffect(() => {
-    setCurrentWeekStart((prev) => getStartOfWeek(prev, weekStartsOn))
-  }, [weekStartsOn])
 
   const nextWeek = () => {
     const next = new Date(currentWeekStart)
@@ -73,7 +73,9 @@ export function WeeklyCalendar({
   }
 
   const today = () => {
-    setCurrentWeekStart(getStartOfWeek(new Date(), weekStartsOn))
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    setCurrentWeekStart(d)
   }
 
   const handleTimeSlotClick = (date: Date, time: number) => {
