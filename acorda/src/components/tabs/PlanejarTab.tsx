@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import type { UserId } from '@/lib/types'
 import { InboxItem, Task, Goal, KeyResult, CalendarBlock, Project, Reference, Habit, GoogleCalendarEvent } from '@/lib/types'
-import { Trash, PencilSimple, Target, ListChecks, Plus, Star, Tray, CheckSquare, CalendarBlank, Play, NotePencil, Link, Lightning, Clock, Hourglass, CheckCircle } from '@phosphor-icons/react'
+import { Trash, PencilSimple, Target, ListChecks, Plus, Star, Tray, CheckSquare, CalendarBlank, Play, NotePencil, Link, Lightning, Clock, Hourglass, CheckCircle, FolderSimple, CaretDown, CaretRight } from '@phosphor-icons/react'
 import { ProcessInboxDialog } from '../dialogs/ProcessInboxDialog'
 import { TaskDialog } from '../dialogs/TaskDialog'
 import { GoalWizardDialog } from '../dialogs/GoalWizardDialog'
@@ -76,7 +76,7 @@ export function PlanejarTab({
   goals,
   keyResults,
   habits,
-  projects: _projects,
+  projects,
   calendarBlocks,
   references,
   userId,
@@ -97,7 +97,7 @@ export function PlanejarTab({
   onDeleteHabit,
   onAddProject,
   onUpdateProject,
-  onDeleteProject: _onDeleteProject,
+  onDeleteProject,
   onAddCalendarBlock,
   onUpdateCalendarBlock,
   onDeleteCalendarBlock,
@@ -125,6 +125,9 @@ export function PlanejarTab({
   const [editingNote, setEditingNote] = useState<Reference | null>(null)
   const [noteToDelete, setNoteToDelete] = useState<Reference | null>(null)
   const [showAllCompleted, setShowAllCompleted] = useState(false)
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set())
+  const [showArchivedProjects, setShowArchivedProjects] = useState(false)
 
   // Filtrar itens deletados
   const activeInboxItems = filterDeleted(inboxItems)
@@ -148,6 +151,19 @@ export function PlanejarTab({
   const somedayTasks = pendingTasks.filter(t => t.status === 'someday')
   const completedTasks = activeTasks.filter(t => t.status === 'done')
   const activeHabits = filterDeleted(habits).filter(h => h.isActive)
+  const allProjects = filterDeleted(projects)
+  const activeProjectsList = allProjects.filter(p => p.status === 'active')
+  const completedProjects = allProjects.filter(p => p.status === 'completed')
+  const archivedProjects = allProjects.filter(p => p.status === 'archived')
+
+  const toggleProjectExpanded = (projectId: string) => {
+    setExpandedProjects(prev => {
+      const next = new Set(prev)
+      if (next.has(projectId)) next.delete(projectId)
+      else next.add(projectId)
+      return next
+    })
+  }
 
   return (
     <div className="pb-24 px-4 pt-4 max-w-5xl mx-auto overflow-x-hidden" style={{ paddingBottom: `calc(6rem + env(safe-area-inset-bottom, 0px))` }}>
@@ -200,6 +216,13 @@ export function PlanejarTab({
           >
             <NotePencil size={16} weight="bold" className="shrink-0" />
             <span className="truncate">Notas</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="projetos" 
+            className="gap-1 data-[state=active]:bg-secondary rounded-full px-2.5 py-1.5 text-xs sm:text-sm sm:px-3"
+          >
+            <FolderSimple size={16} weight="bold" className="shrink-0" />
+            <span className="truncate">Projetos</span>
           </TabsTrigger>
         </TabsList>
 
@@ -767,6 +790,191 @@ export function PlanejarTab({
             )}
           </Card>
         </TabsContent>
+
+        <TabsContent value="projetos" className="space-y-4">
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium text-sm">Projetos Ativos</h3>
+              <Button size="sm" variant="outline" onClick={() => setShowProjectDialog(true)}>
+                <Plus size={14} className="mr-1" />
+                Projeto
+              </Button>
+            </div>
+
+            {activeProjectsList.length === 0 ? (
+              <div className="text-center py-8">
+                <FolderSimple size={32} className="mx-auto text-muted-foreground/50 mb-2" weight="light" />
+                <p className="text-sm text-muted-foreground">Nenhum projeto ativo</p>
+                <p className="text-xs text-muted-foreground mt-1">Crie um projeto para organizar suas tarefas</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {activeProjectsList.map((project) => {
+                  const projectTasks = filterDeleted(tasks).filter(t => t.projectId === project.id)
+                  const completedCount = projectTasks.filter(t => t.status === 'completed').length
+                  const totalCount = projectTasks.length
+                  const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+                  const isExpanded = expandedProjects.has(project.id)
+
+                  return (
+                    <div key={project.id} className="rounded-lg border border-border">
+                      <div
+                        className="flex items-center gap-3 p-3 cursor-pointer hover:bg-secondary/50 transition-colors"
+                        onClick={() => toggleProjectExpanded(project.id)}
+                      >
+                        <div className="shrink-0 text-muted-foreground">
+                          {isExpanded ? <CaretDown size={14} /> : <CaretRight size={14} />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium truncate">{project.name}</p>
+                            {project.deadline && (
+                              <span className="text-xs text-muted-foreground shrink-0">
+                                {new Date(project.deadline).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
+                              </span>
+                            )}
+                          </div>
+                          {project.description && (
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">{project.description}</p>
+                          )}
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-primary rounded-full transition-all"
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-muted-foreground shrink-0">
+                              {completedCount}/{totalCount}
+                            </span>
+                          </div>
+                          {project.tags.length > 0 && (
+                            <div className="flex gap-1 mt-1.5 flex-wrap">
+                              {project.tags.map(tag => (
+                                <Badge key={tag} variant="secondary" className="text-xs px-1.5 py-0">{tag}</Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setEditingProject(project)
+                            }}
+                          >
+                            <PencilSimple size={14} />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setProjectToDelete(project)
+                            }}
+                          >
+                            <Trash size={14} />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {isExpanded && (
+                        <div className="border-t border-border px-3 pb-3">
+                          {projectTasks.length === 0 ? (
+                            <p className="text-xs text-muted-foreground py-3 text-center">Nenhuma tarefa vinculada</p>
+                          ) : (
+                            <div className="space-y-1 mt-2">
+                              {projectTasks.filter(t => t.status !== 'completed').map((task) => (
+                                <div key={task.id} className="flex items-center gap-2 p-2 rounded bg-background/50 text-sm">
+                                  <CheckSquare size={14} className="text-muted-foreground shrink-0" />
+                                  <span className="flex-1 truncate">{task.title}</span>
+                                  {task.priority && <Star size={12} weight="fill" className="text-yellow-500 shrink-0" />}
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => setEditingTask(task)}
+                                  >
+                                    <PencilSimple size={12} />
+                                  </Button>
+                                </div>
+                              ))}
+                              {projectTasks.filter(t => t.status === 'completed').length > 0 && (
+                                <div className="mt-2">
+                                  <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                                    <CheckCircle size={12} />
+                                    {projectTasks.filter(t => t.status === 'completed').length} concluída(s)
+                                  </p>
+                                  {projectTasks.filter(t => t.status === 'completed').map((task) => (
+                                    <div key={task.id} className="flex items-center gap-2 p-2 rounded text-sm text-muted-foreground line-through">
+                                      <CheckCircle size={14} className="shrink-0" />
+                                      <span className="flex-1 truncate">{task.title}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {(completedProjects.length > 0 || archivedProjects.length > 0) && (
+              <div className="mt-6">
+                <button
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
+                  onClick={() => setShowArchivedProjects(!showArchivedProjects)}
+                >
+                  {showArchivedProjects ? <CaretDown size={12} /> : <CaretRight size={12} />}
+                  Concluídos / Arquivados ({completedProjects.length + archivedProjects.length})
+                </button>
+
+                {showArchivedProjects && (
+                  <div className="space-y-2">
+                    {[...completedProjects, ...archivedProjects].map((project) => (
+                      <div key={project.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm text-muted-foreground truncate">{project.name}</p>
+                            <Badge variant="outline" className="text-xs">
+                              {project.status === 'completed' ? 'Concluído' : 'Arquivado'}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0"
+                            onClick={() => setEditingProject(project)}
+                          >
+                            <PencilSimple size={14} />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0"
+                            onClick={() => setProjectToDelete(project)}
+                          >
+                            <Trash size={14} />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+        </TabsContent>
       </Tabs>
 
       <ProcessInboxDialog
@@ -783,7 +991,7 @@ export function PlanejarTab({
         onCreateReference={onAddReference}
         onMarkProcessed={onMarkInboxProcessed}
         onAddCalendarBlock={onAddCalendarBlock}
-        projects={_projects}
+        projects={projects}
         goals={goals}
         keyResults={keyResults}
         batchCurrent={batchProcessing ? batchIndex + 1 : undefined}
@@ -827,7 +1035,7 @@ export function PlanejarTab({
         userId={userId}
         goals={goals}
         keyResults={keyResults}
-        projects={_projects}
+        projects={projects}
         onSave={(task) => {
           if (editingTask) {
             onUpdateTask(task)
@@ -1018,6 +1226,30 @@ export function PlanejarTab({
           setEditingNote(null)
         }}
       />
+
+      <AlertDialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+              <AlertDialogTitle>Excluir projeto?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir o projeto "{projectToDelete?.name}"? As tarefas vinculadas não serão excluídas, apenas desvinculadas. Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (projectToDelete) {
+                  onDeleteProject(projectToDelete.id)
+                  setProjectToDelete(null)
+                }
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!noteToDelete} onOpenChange={(open) => !open && setNoteToDelete(null)}>
         <AlertDialogContent>

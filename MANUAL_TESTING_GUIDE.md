@@ -361,9 +361,9 @@ Enviar e-mail para fornecedor
 3. Processe cada item escolhendo destinos variados
 4. Ao concluir um item, o próximo abre automaticamente
 
-- [ ] Todos os itens do Inbox foram processados
-- [ ] Badge de contagem do Inbox zerou
-- [ ] Dialog fecha automaticamente ao finalizar o último item
+- [x] Todos os itens do Inbox foram processados
+- [x] Badge de contagem do Inbox zerou
+- [x] Dialog fecha automaticamente ao finalizar o último item
 
 ---
 
@@ -423,40 +423,160 @@ Enviar e-mail para fornecedor
 
 ## 6. Projetos
 
-> Na aba "Planejar", seção de Projetos, clique em "+" para criar.
+> Na aba **Planejar → Projetos**, clique em **"Projeto"** (botão no canto superior direito) para criar um novo projeto. A aba Projetos mostra todos os projetos ativos com barra de progresso, tarefas vinculadas e seção de projetos concluídos/arquivados.
 
-### 6.1 Criar Projeto
+### 6.1 Acessar aba Projetos
+1. Vá para **Planejar** na navegação inferior
+2. Clique na sub-aba **"Projetos"** (ícone de pasta)
+
+- [ ] Sub-aba Projetos aparece na barra de sub-abas
+- [ ] Estado vazio exibe: ícone de pasta + "Nenhum projeto ativo" + "Crie um projeto para organizar suas tarefas"
+
+### 6.2 Criar Primeiro Projeto
+
+1. Clique no botão **"Projeto"** (com ícone "+") no topo direito
+2. Dialog "Novo Projeto" abre com os campos:
 
 | Campo | Valor sugerido |
 |-------|---------------|
 | Nome | `Lançamento App Mobile` |
 | Descrição | `MVP do aplicativo mobile com React Native` |
-| Status | `active` (Ativo) |
-| Prazo | Daqui 30 dias |
+| Status | `Ativo` (padrão) |
+| Prazo | Daqui 30 dias (selecione no campo de data) |
 | Tags | `trabalho, tech` |
 
-- [ ] Projeto criado com sucesso
-- [ ] Aparece na lista de projetos
+3. Clique em **"Criar Projeto"**
 
-### 6.2 Segundo Projeto (para teste de agrupamento)
+- [ ] Projeto criado com sucesso
+- [ ] Aparece como card na lista de projetos ativos
+- [ ] Nome, descrição e prazo exibidos no card
+- [ ] Tags aparecem como badges
+- [ ] Barra de progresso mostra **0/0** (sem tarefas vinculadas)
+
+### 6.3 Criar Segundo Projeto
+
+1. Clique novamente em **"Projeto"**
+2. Preencha:
 
 | Campo | Valor sugerido |
 |-------|---------------|
 | Nome | `Reforma do escritório` |
 | Descrição | `Pintura, móveis novos e organização` |
-| Status | `active` |
+| Status | `Ativo` |
 | Tags | `pessoal, casa` |
 
-- [ ] Projeto criado
-- [ ] Tarefas podem ser vinculadas a este projeto
+3. Clique em **"Criar Projeto"**
 
-### 6.3 Vincular Tarefa a Projeto
-- [ ] Edite a tarefa "Preparar apresentação..." e selecione o projeto "Lançamento App Mobile"
-- [ ] Tarefa aparece agrupada sob o projeto
+- [ ] Segundo projeto aparece na lista
+- [ ] Ambos os projetos visíveis com seus respectivos dados
 
-### 6.4 Arquivar Projeto
-- [ ] Mude o status do projeto "Reforma do escritório" para `archived`
-- [ ] Projeto move para seção de arquivados
+### 6.4 Vincular Tarefa a Projeto
+
+> Para que o campo "Projeto" apareça no processamento do Inbox (passo 4 — Detalhes), é necessário ter pelo menos 1 projeto ativo.
+
+1. Vá para **Planejar → Tarefas**
+2. Clique no lápis (✏️) da tarefa "Preparar apresentação..." (ou qualquer tarefa existente)
+3. No dialog de edição, selecione o **Projeto** → `Lançamento App Mobile`
+4. Salve
+
+- [ ] Tarefa vinculada ao projeto
+- [ ] Ao voltar na aba **Projetos**, o card "Lançamento App Mobile" agora mostra **0/1** na barra de progresso
+
+### 6.5 Vincular mais tarefas ao projeto
+
+Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançamento App Mobile" (ex: "Reunião com equipe de marketing" e outra tarefa existente).
+
+- [ ] Barra de progresso atualiza (ex: **0/3**)
+
+### 6.6 Expandir projeto para ver tarefas
+
+1. Na aba **Projetos**, clique no card do projeto **"Lançamento App Mobile"**
+2. O card expande mostrando as tarefas vinculadas
+
+- [ ] Seta ► muda para ▼ ao expandir
+- [ ] Tarefas pendentes listadas com ícone de checkbox
+- [ ] Tarefas com prioridade mostram estrela ★ amarela
+- [ ] Cada tarefa tem botão de editar (lápis)
+- [ ] Clicar novamente no card recolhe a lista
+
+### 6.7 Verificar progresso com tarefas concluídas
+
+1. Vá para **Planejar → Tarefas**
+2. Marque o checkbox de uma tarefa vinculada ao projeto "Lançamento App Mobile"
+3. Volte para **Planejar → Projetos**
+
+- [ ] Barra de progresso atualiza (ex: **1/3** = ~33%)
+- [ ] Ao expandir o projeto, a tarefa concluída aparece na seção "X concluída(s)" com ícone ✓ e texto riscado
+
+### 6.8 Editar Projeto
+
+1. Clique no ícone de lápis (✏️) do projeto "Reforma do escritório"
+2. Dialog "Editar Projeto" abre com os dados preenchidos
+3. Altere:
+
+| Campo | Novo valor |
+|-------|-----------|
+| Nome | `Reforma do escritório - Fase 1` |
+| Descrição | `Pintura e troca de móveis da sala principal` |
+
+4. Clique em **"Salvar"**
+
+- [ ] Nome e descrição atualizados no card
+
+### 6.9 Concluir Projeto
+
+1. Clique no ícone de lápis (✏️) do projeto "Reforma do escritório - Fase 1"
+2. Altere o **Status** para **"Concluído"**
+3. Salve
+
+- [ ] Projeto some da lista de "Projetos Ativos"
+- [ ] Seção **"Concluídos / Arquivados (1)"** aparece na parte inferior
+- [ ] Clique na seta para expandir a seção
+- [ ] Projeto aparece com badge "Concluído"
+
+### 6.10 Arquivar Projeto
+
+1. Clique no lápis (✏️) do projeto "Lançamento App Mobile"
+2. Altere o **Status** para **"Arquivado"**
+3. Salve
+
+- [ ] Projeto some da lista de ativos
+- [ ] Contador da seção "Concluídos / Arquivados" atualiza para **(2)**
+- [ ] Projeto aparece com badge "Arquivado"
+
+### 6.11 Reativar Projeto
+
+1. Na seção "Concluídos / Arquivados", clique no lápis (✏️) do projeto "Lançamento App Mobile"
+2. Altere o **Status** de volta para **"Ativo"**
+3. Salve
+
+- [ ] Projeto volta para a lista de projetos ativos
+- [ ] Contador da seção "Concluídos / Arquivados" diminui
+
+### 6.12 Excluir Projeto
+
+1. Clique no ícone de lixeira (🗑) de um projeto
+2. Dialog de confirmação aparece: *"Excluir projeto?"*
+3. Mensagem informa: *"As tarefas vinculadas não serão excluídas, apenas desvinculadas."*
+4. Clique em **"Excluir"**
+
+- [ ] Projeto removido da lista
+- [ ] Tarefas que estavam vinculadas continuam existindo (verifique em **Planejar → Tarefas**)
+
+### 6.13 Projeto no processamento do Inbox
+
+> Este teste valida que o campo "Projeto" aparece no passo 4 (Detalhes) ao processar itens do Inbox.
+
+1. Certifique-se de ter pelo menos 1 projeto ativo
+2. Crie um item no Inbox via Captura Rápida: `Criar wireframes do app`
+3. Processe o item: Acionável → Sim → Próxima Ação → Próxima ação → **Detalhes**
+4. No passo "Detalhes", verifique o campo **Projeto**
+5. Selecione o projeto ativo
+
+- [ ] Campo "Projeto" aparece no passo Detalhes
+- [ ] Lista mostra apenas projetos ativos
+- [ ] Tarefa criada fica vinculada ao projeto selecionado
+- [ ] Ao visualizar o projeto na aba Projetos, a nova tarefa aparece na lista expandida
 
 ---
 
