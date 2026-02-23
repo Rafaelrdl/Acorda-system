@@ -429,8 +429,8 @@ Enviar e-mail para fornecedor
 1. Vá para **Planejar** na navegação inferior
 2. Clique na sub-aba **"Projetos"** (ícone de pasta)
 
-- [ ] Sub-aba Projetos aparece na barra de sub-abas
-- [ ] Estado vazio exibe: ícone de pasta + "Nenhum projeto ativo" + "Crie um projeto para organizar suas tarefas"
+- [x] Sub-aba Projetos aparece na barra de sub-abas
+- [x] Estado vazio exibe: ícone de pasta + "Nenhum projeto ativo" + "Crie um projeto para organizar suas tarefas"
 
 ### 6.2 Criar Primeiro Projeto
 
@@ -447,11 +447,11 @@ Enviar e-mail para fornecedor
 
 3. Clique em **"Criar Projeto"**
 
-- [ ] Projeto criado com sucesso
-- [ ] Aparece como card na lista de projetos ativos
-- [ ] Nome, descrição e prazo exibidos no card
-- [ ] Tags aparecem como badges
-- [ ] Barra de progresso mostra **0/0** (sem tarefas vinculadas)
+- [x] Projeto criado com sucesso
+- [x] Aparece como card na lista de projetos ativos
+- [x] Nome, descrição e prazo exibidos no card
+- [x] Tags aparecem como badges
+- [x] Barra de progresso mostra **0/0** (sem tarefas vinculadas)
 
 ### 6.3 Criar Segundo Projeto
 
@@ -467,8 +467,8 @@ Enviar e-mail para fornecedor
 
 3. Clique em **"Criar Projeto"**
 
-- [ ] Segundo projeto aparece na lista
-- [ ] Ambos os projetos visíveis com seus respectivos dados
+- [x] Segundo projeto aparece na lista
+- [x] Ambos os projetos visíveis com seus respectivos dados
 
 ### 6.4 Vincular Tarefa a Projeto
 
@@ -479,25 +479,25 @@ Enviar e-mail para fornecedor
 3. No dialog de edição, selecione o **Projeto** → `Lançamento App Mobile`
 4. Salve
 
-- [ ] Tarefa vinculada ao projeto
-- [ ] Ao voltar na aba **Projetos**, o card "Lançamento App Mobile" agora mostra **0/1** na barra de progresso
+- [x] Tarefa vinculada ao projeto
+- [x] Ao voltar na aba **Projetos**, o card "Lançamento App Mobile" agora mostra **0/1** na barra de progresso
 
 ### 6.5 Vincular mais tarefas ao projeto
 
 Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançamento App Mobile" (ex: "Reunião com equipe de marketing" e outra tarefa existente).
 
-- [ ] Barra de progresso atualiza (ex: **0/3**)
+- [x] Barra de progresso atualiza (ex: **0/3**)
 
 ### 6.6 Expandir projeto para ver tarefas
 
 1. Na aba **Projetos**, clique no card do projeto **"Lançamento App Mobile"**
 2. O card expande mostrando as tarefas vinculadas
 
-- [ ] Seta ► muda para ▼ ao expandir
-- [ ] Tarefas pendentes listadas com ícone de checkbox
+- [x] Seta ► muda para ▼ ao expandir
+- [x] Tarefas pendentes listadas com ícone de checkbox
 - [ ] Tarefas com prioridade mostram estrela ★ amarela
-- [ ] Cada tarefa tem botão de editar (lápis)
-- [ ] Clicar novamente no card recolhe a lista
+- [x] Cada tarefa tem botão de editar (lápis)
+- [x] Clicar novamente no card recolhe a lista
 
 ### 6.7 Verificar progresso com tarefas concluídas
 

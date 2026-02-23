@@ -331,6 +331,7 @@ export function PlanejarTab({
                     onDelete={setTaskToDelete}
                     onTogglePriority={onToggleTaskPriority}
                     onSchedule={setSchedulingTask}
+                    projects={allProjects}
                   />
                 </Card>
               )}
@@ -353,6 +354,7 @@ export function PlanejarTab({
                     onDelete={setTaskToDelete}
                     onTogglePriority={onToggleTaskPriority}
                     onSchedule={setSchedulingTask}
+                    projects={allProjects}
                     showCheckbox={true}
                     onComplete={(task) => {
                       onUpdateTask({
@@ -384,6 +386,7 @@ export function PlanejarTab({
                     onDelete={setTaskToDelete}
                     onTogglePriority={onToggleTaskPriority}
                     onSchedule={setSchedulingTask}
+                    projects={allProjects}
                   />
                 </Card>
               )}
@@ -406,6 +409,7 @@ export function PlanejarTab({
                     onDelete={setTaskToDelete}
                     onTogglePriority={onToggleTaskPriority}
                     onSchedule={setSchedulingTask}
+                    projects={allProjects}
                   />
                 </Card>
               )}
@@ -431,6 +435,15 @@ export function PlanejarTab({
                         <CheckCircle size={16} weight="fill" className="text-accent/50 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm line-through">{task.title}</p>
+                          {task.projectId && (() => {
+                            const proj = allProjects.find(p => p.id === task.projectId)
+                            return proj ? (
+                              <Badge variant="outline" className="text-xs px-1.5 py-0 mt-1 border-violet-400/50 text-violet-600 dark:text-violet-400 bg-violet-500/5">
+                                <FolderSimple size={10} weight="fill" className="mr-0.5" />
+                                {proj.name}
+                              </Badge>
+                            ) : null
+                          })()}
                         </div>
                         {task.completedAt && (
                           <span className="text-xs shrink-0">
@@ -1285,7 +1298,8 @@ function TaskList({
   onTogglePriority,
   onSchedule,
   onComplete,
-  showCheckbox = false
+  showCheckbox = false,
+  projects = []
 }: { 
   tasks: Task[]
   onEdit: (task: Task) => void
@@ -1294,6 +1308,7 @@ function TaskList({
   onSchedule: (task: Task) => void
   onComplete?: (task: Task) => void
   showCheckbox?: boolean
+  projects?: Project[]
 }) {
   return (
     <div className="space-y-1">
@@ -1381,6 +1396,17 @@ function TaskList({
                 ))}
               </div>
             )}
+            {task.projectId && (() => {
+              const proj = projects.find(p => p.id === task.projectId)
+              return proj ? (
+                <div className="flex items-center gap-1 mt-1.5">
+                  <Badge variant="outline" className="text-xs px-2 py-0.5 border-violet-400/50 text-violet-600 dark:text-violet-400 bg-violet-500/5">
+                    <FolderSimple size={12} weight="fill" className="mr-1" />
+                    {proj.name}
+                  </Badge>
+                </div>
+              ) : null
+            })()}
           </div>
           <div className="flex gap-0.5 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
             <Button size="sm" variant="ghost" className="h-8 w-8 md:h-10 md:w-10 p-0 touch-target hover:bg-primary/10 hover:text-primary" onClick={() => onSchedule(task)} title="Programar na semana">
