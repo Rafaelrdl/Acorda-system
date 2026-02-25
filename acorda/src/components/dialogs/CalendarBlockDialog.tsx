@@ -62,8 +62,6 @@ export function CalendarBlockDialog({
   const [linkedHabitId, setLinkedHabitId] = useState<string>('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  const hours = Array.from({ length: 18 }, (_, i) => i + 6) // 6h até 23h
-
   useEffect(() => {
     if (block) {
       setTitle(block.title)
@@ -298,18 +296,15 @@ export function CalendarBlockDialog({
               Horário de início
             </Label>
             <div className="flex gap-2 items-center">
-              <Select value={startHour} onValueChange={setStartHour}>
-                <SelectTrigger className="w-20 h-12">
-                  <SelectValue placeholder="Hora" />
-                </SelectTrigger>
-                <SelectContent>
-                  {hours.map((h) => (
-                    <SelectItem key={h} value={h.toString()}>
-                      {h.toString().padStart(2, '0')}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                type="number"
+                min={0}
+                max={23}
+                value={startHour}
+                onChange={(e) => handleHourChange(e.target.value, setStartHour)}
+                className="w-20 h-12 text-center"
+                placeholder="08"
+              />
               <span className="text-muted-foreground">:</span>
               <Input
                 type="number"

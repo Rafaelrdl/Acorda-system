@@ -729,8 +729,8 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 | Data | Hoje |
 | Horário | `08:00 - 10:00` |
 
-- [ ] Bloco criado no calendário
-- [ ] Cor/ícone de foco aplicado
+- [x] Bloco criado no calendário
+- [x] Cor/ícone de foco aplicado
 
 ### 9.2 Bloco de Reunião
 
@@ -751,16 +751,16 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 | Horário | `12:00 - 13:00` |
 
 ### 9.4 Bloco vinculado a Tarefa
-- [ ] Crie um bloco e selecione "Vincular tarefa" → escolha tarefa existente
-- [ ] Bloco mostra título da tarefa vinculada
+- [x] Crie um bloco e selecione "Vincular tarefa" → escolha tarefa existente
+- [x] Bloco mostra título da tarefa vinculada
 
 ### 9.5 Bloco vinculado a Hábito
-- [ ] Crie um bloco e selecione "Vincular hábito" → escolha hábito existente
-- [ ] Bloco mostra o hábito vinculado
+- [x] Crie um bloco e selecione "Vincular hábito" → escolha hábito existente
+- [x] Bloco mostra o hábito vinculado
 
 ### 9.6 Navegar semanas
-- [ ] Use as setas para ir para semana anterior e próxima
-- [ ] Blocos aparecem nos dias corretos
+- [x] Use as setas para ir para semana anterior e próxima
+- [x] Blocos aparecem nos dias corretos
 
 ---
 
