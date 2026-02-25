@@ -14,7 +14,7 @@
 4. [Processar Inbox (GTD)](#4-processar-inbox-gtd)
 5. [Tarefas](#5-tarefas)
 6. [Projetos](#6-projetos)
-7. [Metas e Key Results](#7-metas-e-key-results)
+7. [Objetivos e Key Results](#7-objetivos-e-key-results)
 8. [Hábitos](#8-hábitos)
 9. [Calendário / Blocos](#9-calendário--blocos)
 10. [Pomodoro](#10-pomodoro)
@@ -98,8 +98,8 @@
 - [x] Tela informativa exibida
 - [x] Botão "Avançar" funciona
 
-### Etapa 2: Goal (Meta inicial)
-- [x] Permite definir uma meta inicial
+### Etapa 2: Goal (Objetivo inicial)
+- [x] Permite definir um objetivo inicial
 - **Sugestão:** Selecione qualquer opção pré-definida
 
 ### Etapa 3: Habits (Hábitos)
@@ -345,7 +345,7 @@ Enviar e-mail para fornecedor
 | Energia | `Média` (medium) |
 | Estimativa (min) | `30` |
 | Projeto | (selecione um se existir) |
-| Vincular a Meta | (selecione uma se existir) |
+| Vincular ao Objetivo | (selecione um se existir) |
 
 8. Clique em **"Criar tarefa"**
 
@@ -495,7 +495,7 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 
 - [x] Seta ► muda para ▼ ao expandir
 - [x] Tarefas pendentes listadas com ícone de checkbox
-- [ ] Tarefas com prioridade mostram estrela ★ amarela
+- [x] Tarefas com prioridade mostram estrela ★ amarela
 - [x] Cada tarefa tem botão de editar (lápis)
 - [x] Clicar novamente no card recolhe a lista
 
@@ -505,8 +505,8 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 2. Marque o checkbox de uma tarefa vinculada ao projeto "Lançamento App Mobile"
 3. Volte para **Planejar → Projetos**
 
-- [ ] Barra de progresso atualiza (ex: **1/3** = ~33%)
-- [ ] Ao expandir o projeto, a tarefa concluída aparece na seção "X concluída(s)" com ícone ✓ e texto riscado
+- [x] Barra de progresso atualiza (ex: **1/3** = ~33%)
+- [x] Ao expandir o projeto, a tarefa concluída aparece na seção "X concluída(s)" com ícone ✓ e texto riscado
 
 ### 6.8 Editar Projeto
 
@@ -521,7 +521,7 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 
 4. Clique em **"Salvar"**
 
-- [ ] Nome e descrição atualizados no card
+- [x] Nome e descrição atualizados no card
 
 ### 6.9 Concluir Projeto
 
@@ -529,10 +529,10 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 2. Altere o **Status** para **"Concluído"**
 3. Salve
 
-- [ ] Projeto some da lista de "Projetos Ativos"
-- [ ] Seção **"Concluídos / Arquivados (1)"** aparece na parte inferior
-- [ ] Clique na seta para expandir a seção
-- [ ] Projeto aparece com badge "Concluído"
+- [x] Projeto some da lista de "Projetos Ativos"
+- [x] Seção **"Concluídos / Arquivados (1)"** aparece na parte inferior
+- [x] Clique na seta para expandir a seção
+- [x] Projeto aparece com badge "Concluído"
 
 ### 6.10 Arquivar Projeto
 
@@ -540,9 +540,9 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 2. Altere o **Status** para **"Arquivado"**
 3. Salve
 
-- [ ] Projeto some da lista de ativos
-- [ ] Contador da seção "Concluídos / Arquivados" atualiza para **(2)**
-- [ ] Projeto aparece com badge "Arquivado"
+- [x] Projeto some da lista de ativos
+- [x] Contador da seção "Concluídos / Arquivados" atualiza para **(2)**
+- [x] Projeto aparece com badge "Arquivado"
 
 ### 6.11 Reativar Projeto
 
@@ -550,8 +550,8 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 2. Altere o **Status** de volta para **"Ativo"**
 3. Salve
 
-- [ ] Projeto volta para a lista de projetos ativos
-- [ ] Contador da seção "Concluídos / Arquivados" diminui
+- [x] Projeto volta para a lista de projetos ativos
+- [x] Contador da seção "Concluídos / Arquivados" diminui
 
 ### 6.12 Excluir Projeto
 
@@ -560,8 +560,8 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 3. Mensagem informa: *"As tarefas vinculadas não serão excluídas, apenas desvinculadas."*
 4. Clique em **"Excluir"**
 
-- [ ] Projeto removido da lista
-- [ ] Tarefas que estavam vinculadas continuam existindo (verifique em **Planejar → Tarefas**)
+- [x] Projeto removido da lista
+- [x] Tarefas que estavam vinculadas continuam existindo (verifique em **Planejar → Tarefas**)
 
 ### 6.13 Projeto no processamento do Inbox
 
@@ -573,18 +573,42 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 4. No passo "Detalhes", verifique o campo **Projeto**
 5. Selecione o projeto ativo
 
-- [ ] Campo "Projeto" aparece no passo Detalhes
-- [ ] Lista mostra apenas projetos ativos
-- [ ] Tarefa criada fica vinculada ao projeto selecionado
-- [ ] Ao visualizar o projeto na aba Projetos, a nova tarefa aparece na lista expandida
+- [x] Campo "Projeto" aparece no passo Detalhes
+- [x] Lista mostra apenas projetos ativos
+- [x] Tarefa criada fica vinculada ao projeto selecionado
+- [x] Ao visualizar o projeto na aba Projetos, a nova tarefa aparece na lista expandida
 
 ---
 
-## 7. Metas e Key Results
+## 7. Objetivos e Key Results
 
-> Na aba "Planejar", seção Metas, clique em "+" para criar.
+> Na aba "Planejar", seção Objetivos, clique em "Objetivo" para criar.
 
-### 7.1 Criar Meta
+### 7.1 Criar Objetivo com KRs tipo Checkpoint
+
+| Campo | Valor sugerido |
+|-------|---------------|
+| Objetivo | `Ler 12 livros este ano` |
+| Descrição | `1 livro por mês, alternando entre ficção e não-ficção` |
+| Prazo | Final do ano |
+
+**Key Results (adicione 2 como "Checkpoints"):**
+
+| KR # | Tipo | Valor sugerido |
+|-------|------|---------------|
+| KR 1 | Checkpoints | `Fazer anotações de cada livro` |
+| KR 2 | Checkpoints | `Criar resumo do livro` |
+
+**Checkpoints para KR 1:**
+- `Anotações livro Janeiro`
+- `Anotações livro Fevereiro`
+
+- [x] Objetivo criado com 2 KRs
+- [x] KRs exibem "X / Y checkpoints"
+- [x] Barra de progresso mostra 0%
+- [x] Marcar um checkpoint atualiza o progresso
+
+### 7.2 Criar Objetivo com KRs tipo Hábito
 
 | Campo | Valor sugerido |
 |-------|---------------|
@@ -592,36 +616,49 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 | Descrição | `Foco em saúde cardiovascular e força muscular para o próximo trimestre` |
 | Prazo | Daqui 90 dias |
 
-**Key Results (adicione 3):**
+**Key Results (adicione 3 como "Hábito"):**
 
-| KR # | Valor sugerido |
-|-------|---------------|
-| KR 1 | `Correr 3x por semana` |
-| KR 2 | `Treinar musculação 4x por semana` |
-| KR 3 | `Dormir pelo menos 7h por noite` |
+| KR # | Tipo | Descrição | Frequência | Vezes/semana | Dias |
+|-------|------|-----------|-----------|-------------|------|
+| KR 1 | Hábito | `Correr 3x por semana` | Semanal | 3 | Seg, Qua, Sex |
+| KR 2 | Hábito | `Treinar musculação 4x por semana` | Semanal | 4 | Seg, Ter, Qui, Sex |
+| KR 3 | Hábito | `Dormir pelo menos 7h por noite` | Diário | - | - |
 
-- [ ] Meta criada com 3 KRs
-- [ ] Barra de progresso mostra 0%
+- [x] Objetivo criado com 3 KRs tipo Hábito
+- [x] 3 hábitos foram criados automaticamente na aba Hábitos
+- [x] KRs exibem "X% consistência" em vez de checkpoints
+- [x] Progresso é calculado com base nos logs de hábito
 
-### 7.2 Segunda Meta
+### 7.3 Criar Objetivo Misto (Checkpoint + Hábito)
 
 | Campo | Valor sugerido |
 |-------|---------------|
-| Objetivo | `Ler 12 livros este ano` |
-| Descrição | `1 livro por mês, alternando entre ficção e não-ficção` |
-| Prazo | Final do ano |
-| KR 1 | `Ler pelo menos 20 páginas por dia` |
-| KR 2 | `Fazer anotações de cada livro` |
+| Objetivo | `Dominar programação funcional` |
+| Prazo | Daqui 6 meses |
 
-- [ ] Meta criada com sucesso
+| KR # | Tipo | Descrição |
+|-------|------|-----------|
+| KR 1 | Checkpoints | `Completar curso online` (checkpoints: Módulo 1, Módulo 2, Módulo 3) |
+| KR 2 | Hábito | `Praticar 30min por dia` (Diário) |
 
-### 7.3 Atualizar Progresso de um Key Result
-- [ ] Clique em um KR para atualizar o progresso (ex: 30%)
-- [ ] Barra de progresso da meta atualiza automaticamente
+- [x] Objetivo criado com 1 KR checkpoint + 1 KR hábito
+- [x] KR 1 mostra "0 / 3 checkpoints"
+- [x] KR 2 mostra "0% consistência" e hábito foi criado
 
-### 7.4 Marcar Meta como concluída
-- [ ] Mude status para `achieved`
-- [ ] Meta move para seção concluídas
+### 7.4 Editar Objetivo
+- [x] Clique no ícone de lápis de um objetivo existente
+- [x] Dialog "Editar Objetivo" abre com KRs pré-carregados
+- [x] Badge mostra tipo de cada KR (Checkpoints ou Hábito)
+- [x] Altere o tipo de um KR de Checkpoint → Hábito
+- [x] Adicione configuração de hábito (frequência, dias)
+- [x] Salve e verifique que novo hábito foi criado
+- [x] Verifique que checkpoints antigos foram removidos
+
+### 7.5 Excluir Objetivo
+- [x] Clique no ícone de lixeira
+- [x] Dialog de confirmação pergunta "Excluir objetivo?"
+- [x] Confirme a exclusão
+- [x] Objetivo e KRs são removidos da lista
 
 ---
 

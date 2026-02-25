@@ -115,11 +115,14 @@ export interface Goal {
   updatedAt: number
 }
 
+export type KRType = 'checkpoint' | 'habit'
+
 export interface KeyResult {
   id: string
   userId: UserId
   goalId: string
   description: string
+  krType?: KRType          // 'checkpoint' (default) | 'habit' — determina como o progresso é calculado
   currentValue: number
   targetValue: number
   unit?: string

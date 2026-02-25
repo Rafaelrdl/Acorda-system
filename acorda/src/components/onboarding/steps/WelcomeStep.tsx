@@ -33,7 +33,7 @@ export function WelcomeStep({ userName, onNext }: WelcomeStepProps) {
         {/* Brief description */}
         <p className="text-muted-foreground leading-relaxed">
           Vamos configurar o seu sistema em poucos minutos.
-          Você vai definir sua primeira meta, escolher hábitos
+          Você vai definir seu primeiro objetivo, escolher hábitos
           e aprender a usar as ferramentas do dia a dia.
         </p>
 

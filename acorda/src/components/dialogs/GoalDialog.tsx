@@ -86,7 +86,7 @@ export function GoalDialog({ open, onOpenChange, userId, onSave }: GoalDialogPro
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nova Meta (OKR)</DialogTitle>
+          <DialogTitle>Novo Objetivo (OKR)</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">

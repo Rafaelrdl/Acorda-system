@@ -632,13 +632,13 @@ export function ProcessInboxDialog({
               {/* Meta / Key Result */}
               {activeGoals.length > 0 && (
                 <div className="space-y-2">
-                  <Label className="text-sm">Vincular a Meta</Label>
+                  <Label className="text-sm">Vincular ao Objetivo</Label>
                   <Select value={keyResultId} onValueChange={setKeyResultId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Nenhuma meta" />
+                      <SelectValue placeholder="Nenhum objetivo" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Nenhuma meta</SelectItem>
+                      <SelectItem value="none">Nenhum objetivo</SelectItem>
                       {activeGoals.map(goal => {
                         const goalKRs = activeKeyResults.filter(kr => kr.goalId === goal.id)
                         return (

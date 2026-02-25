@@ -94,7 +94,7 @@ export function GoalStep({ userId, onComplete, onSkip, onBack }: GoalStepProps) 
           <div>
             <div className="flex items-center gap-2">
               <Target size={24} weight="duotone" className="text-primary" />
-              <h2 className="text-xl font-bold text-foreground">Sua primeira meta</h2>
+              <h2 className="text-xl font-bold text-foreground">Seu primeiro objetivo</h2>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
               {phase === 'objective'
@@ -148,7 +148,7 @@ export function GoalStep({ userId, onComplete, onSkip, onBack }: GoalStepProps) 
               </Label>
               <Textarea
                 id="onboarding-description"
-                placeholder="O que te motiva a atingir essa meta?"
+                placeholder="O que te motiva a atingir esse objetivo?"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
@@ -241,7 +241,7 @@ export function GoalStep({ userId, onComplete, onSkip, onBack }: GoalStepProps) 
                 disabled={!canFinish}
                 className="flex-1 h-12 text-sm sm:text-base"
               >
-                Criar Meta
+                Criar Objetivo
               </Button>
             </div>
           </div>

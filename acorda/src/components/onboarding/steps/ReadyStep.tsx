@@ -53,7 +53,7 @@ export function ReadyStep({ goalCount, habitCount, onFinish, onBack }: ReadyStep
                 <Target size={24} weight="duotone" className="text-primary shrink-0" />
                 <div className="text-left">
                   <p className="text-sm font-medium text-foreground">
-                    {goalCount} meta criada
+                    {goalCount} objetivo criado
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Acompanhe na aba Planejar → Metas

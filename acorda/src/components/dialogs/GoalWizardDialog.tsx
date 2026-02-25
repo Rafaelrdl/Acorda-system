@@ -7,9 +7,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
-import type { UserId, Goal, KeyResult, Project, Task } from '@/lib/types'
-import { createGoal, createKeyResult, createTask, generateId } from '@/lib/helpers'
-import { Plus, Trash, LightbulbFilament, Target } from '@phosphor-icons/react'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import type { UserId, Goal, KeyResult, Project, Task, Habit, KRType } from '@/lib/types'
+import { createGoal, createKeyResult, createTask, createHabit, generateId } from '@/lib/helpers'
+import { Plus, Trash, LightbulbFilament, Target, ListChecks, Repeat } from '@phosphor-icons/react'
 
 interface GoalWizardDialogProps {
   open: boolean
@@ -20,6 +22,7 @@ interface GoalWizardDialogProps {
     keyResults: KeyResult[]
     project?: Project
     tasks?: Task[]
+    habits?: Habit[]
   }) => void
 }
 
@@ -29,10 +32,38 @@ interface Checkpoint {
   completed: boolean
 }
 
+interface HabitConfig {
+  frequency: 'daily' | 'weekly'
+  timesPerWeek: number
+  targetDays: number[]
+  minimumVersion: string
+  preferredTime: 'morning' | 'afternoon' | 'evening' | 'anytime'
+}
+
 interface KRInput {
   description: string
+  krType: KRType
   checkpoints: Checkpoint[]
+  habitConfig: HabitConfig
 }
+
+const WEEKDAYS = [
+  { value: 0, label: 'Dom' },
+  { value: 1, label: 'Seg' },
+  { value: 2, label: 'Ter' },
+  { value: 3, label: 'Qua' },
+  { value: 4, label: 'Qui' },
+  { value: 5, label: 'Sex' },
+  { value: 6, label: 'Sáb' },
+]
+
+const defaultHabitConfig = (): HabitConfig => ({
+  frequency: 'weekly',
+  timesPerWeek: 3,
+  targetDays: [],
+  minimumVersion: '',
+  preferredTime: 'anytime',
+})
 
 export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWizardDialogProps) {
   const [step, setStep] = useState(1)
@@ -48,8 +79,8 @@ export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWiz
   
   // Step 4: Key Results
   const [keyResultInputs, setKeyResultInputs] = useState<KRInput[]>([
-    { description: '', checkpoints: [] },
-    { description: '', checkpoints: [] },
+    { description: '', krType: 'checkpoint', checkpoints: [], habitConfig: defaultHabitConfig() },
+    { description: '', krType: 'checkpoint', checkpoints: [], habitConfig: defaultHabitConfig() },
   ])
   
   // Estado para inputs de novos checkpoints por KR
@@ -61,15 +92,15 @@ export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWiz
     setDescription('')
     setDeadline('')
     setKeyResultInputs([
-      { description: '', checkpoints: [] },
-      { description: '', checkpoints: [] },
+      { description: '', krType: 'checkpoint', checkpoints: [], habitConfig: defaultHabitConfig() },
+      { description: '', krType: 'checkpoint', checkpoints: [], habitConfig: defaultHabitConfig() },
     ])
     setNewCheckpointTitles({})
   }
 
   const handleAddKR = () => {
     if (keyResultInputs.length >= 5) return
-    setKeyResultInputs([...keyResultInputs, { description: '', checkpoints: [] }])
+    setKeyResultInputs([...keyResultInputs, { description: '', krType: 'checkpoint', checkpoints: [], habitConfig: defaultHabitConfig() }])
   }
 
   const handleRemoveKR = (index: number) => {
@@ -155,6 +186,7 @@ export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWiz
 
     const keyResults: KeyResult[] = []
     const tasks: Task[] = []
+    const habits: Habit[] = []
 
     keyResultInputs
       .filter(kr => kr.description.trim())
@@ -162,25 +194,40 @@ export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWiz
         const kr = createKeyResult(
           userId,
           goal.id,
-          krInput.description.trim()
+          krInput.description.trim(),
+          { krType: krInput.krType }
         )
         keyResults.push(kr)
 
-        // Criar tasks para cada checkpoint do KR
-        krInput.checkpoints.forEach(checkpoint => {
-          const task = createTask(userId, checkpoint.title, {
-            keyResultId: kr.id,
-            status: checkpoint.completed ? 'done' : 'next',
-            notes: `Checkpoint de: ${krInput.description}`
+        if (krInput.krType === 'checkpoint') {
+          // Criar tasks para cada checkpoint do KR
+          krInput.checkpoints.forEach(checkpoint => {
+            const task = createTask(userId, checkpoint.title, {
+              keyResultId: kr.id,
+              status: checkpoint.completed ? 'done' : 'next',
+              notes: `Checkpoint de: ${krInput.description}`
+            })
+            tasks.push(task)
           })
-          tasks.push(task)
-        })
+        } else if (krInput.krType === 'habit') {
+          // Criar hábito vinculado ao KR
+          const hc = krInput.habitConfig
+          const habit = createHabit(userId, krInput.description.trim(), hc.frequency, {
+            minimumVersion: hc.minimumVersion || undefined,
+            timesPerWeek: hc.frequency === 'weekly' ? hc.timesPerWeek : undefined,
+            targetDays: hc.frequency === 'weekly' && hc.targetDays.length > 0 ? hc.targetDays : undefined,
+            keyResultId: kr.id,
+            preferredTime: hc.preferredTime !== 'anytime' ? hc.preferredTime : undefined,
+          })
+          habits.push(habit)
+        }
       })
 
     onSave({ 
       goal, 
       keyResults, 
-      tasks: tasks.length > 0 ? tasks : undefined 
+      tasks: tasks.length > 0 ? tasks : undefined,
+      habits: habits.length > 0 ? habits : undefined,
     })
     
     resetForm()
@@ -196,9 +243,9 @@ export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWiz
     }}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>Nova Meta</DialogTitle>
-            <Badge variant="secondary" className="text-xs">
+          <div className="flex items-center justify-between pr-6">
+            <DialogTitle>Novo Objetivo</DialogTitle>
+            <Badge variant="secondary" className="text-xs whitespace-nowrap">
               PASSO {step} DE 4
             </Badge>
           </div>
@@ -248,7 +295,7 @@ export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWiz
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Descreva por que essa meta é importante para você neste momento..."
+                  placeholder="Descreva por que esse objetivo é importante para você neste momento..."
                   rows={4}
                   autoFocus
                   className="text-base resize-none"
@@ -325,23 +372,69 @@ export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWiz
                           autoFocus={krIndex === 0}
                         />
 
-                        {/* Checkpoints do KR - sempre visível */}
-                        <div className="pt-2 space-y-2 border-t border-border/50">
-                          <div className="flex items-center justify-between pt-2">
-                            <Label className="text-xs text-muted-foreground">Checkpoints (o progresso é calculado por eles)</Label>
+                        {/* Seletor de tipo: Checkpoint ou Hábito */}
+                        <div className="pt-2 border-t border-border/50">
+                          <Label className="text-xs text-muted-foreground mb-2 block">Tipo de medição</Label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...keyResultInputs]
+                                updated[krIndex] = { ...updated[krIndex], krType: 'checkpoint' }
+                                setKeyResultInputs(updated)
+                              }}
+                              className={`flex items-center gap-2 p-3 rounded-lg border text-left text-sm transition-colors ${
+                                kr.krType === 'checkpoint' 
+                                  ? 'border-primary bg-primary/5 text-primary' 
+                                  : 'border-border hover:bg-muted'
+                              }`}
+                            >
+                              <ListChecks size={18} weight={kr.krType === 'checkpoint' ? 'fill' : 'regular'} />
+                              <div>
+                                <p className="font-medium text-xs">Checkpoints</p>
+                                <p className="text-[10px] text-muted-foreground">Tarefas pontuais</p>
+                              </div>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...keyResultInputs]
+                                updated[krIndex] = { ...updated[krIndex], krType: 'habit' }
+                                setKeyResultInputs(updated)
+                              }}
+                              className={`flex items-center gap-2 p-3 rounded-lg border text-left text-sm transition-colors ${
+                                kr.krType === 'habit' 
+                                  ? 'border-primary bg-primary/5 text-primary' 
+                                  : 'border-border hover:bg-muted'
+                              }`}
+                            >
+                              <Repeat size={18} weight={kr.krType === 'habit' ? 'fill' : 'regular'} />
+                              <div>
+                                <p className="font-medium text-xs">Hábito</p>
+                                <p className="text-[10px] text-muted-foreground">Ação recorrente</p>
+                              </div>
+                            </button>
                           </div>
-                          
-                          {/* Lista de checkpoints */}
-                          {kr.checkpoints.length > 0 && (
-                            <div className="space-y-1.5">
-                              {kr.checkpoints.map((checkpoint) => (
-                                <div key={checkpoint.id} className="flex items-center gap-2 group">
-                                  <input
-                                    type="checkbox"
-                                    checked={checkpoint.completed}
-                                    onChange={() => handleToggleCheckpoint(krIndex, checkpoint.id)}
-                                    className="h-4 w-4 rounded border-border"
-                                    aria-label={`Marcar checkpoint ${checkpoint.title}`}
+                        </div>
+
+                        {/* Conteúdo condicional por tipo */}
+                        {kr.krType === 'checkpoint' ? (
+                          /* Checkpoints do KR */
+                          <div className="space-y-2">
+                            <Label className="text-xs text-muted-foreground">
+                              Checkpoints (o progresso é calculado por eles)
+                            </Label>
+                            
+                            {kr.checkpoints.length > 0 && (
+                              <div className="space-y-1.5">
+                                {kr.checkpoints.map((checkpoint) => (
+                                  <div key={checkpoint.id} className="flex items-center gap-2 group">
+                                    <input
+                                      type="checkbox"
+                                      checked={checkpoint.completed}
+                                      onChange={() => handleToggleCheckpoint(krIndex, checkpoint.id)}
+                                      className="h-4 w-4 rounded border-border"
+                                      aria-label={`Marcar checkpoint ${checkpoint.title}`}
                                     />
                                     <span className={`text-sm flex-1 ${checkpoint.completed ? 'line-through text-muted-foreground' : ''}`}>
                                       {checkpoint.title}
@@ -361,19 +454,34 @@ export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWiz
                               </div>
                             )}
 
-                            {/* Input para novo checkpoint */}
-                          {/* Input para novo checkpoint com botão + */}
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Novo checkpoint..."
-                              value={newCheckpointTitles[krIndex] || ''}
-                              onChange={(e) => setNewCheckpointTitles({
-                                ...newCheckpointTitles,
-                                [krIndex]: e.target.value
-                              })}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault()
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="Novo checkpoint..."
+                                value={newCheckpointTitles[krIndex] || ''}
+                                onChange={(e) => setNewCheckpointTitles({
+                                  ...newCheckpointTitles,
+                                  [krIndex]: e.target.value
+                                })}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault()
+                                    const title = newCheckpointTitles[krIndex]
+                                    if (title?.trim()) {
+                                      handleAddCheckpoint(krIndex, title)
+                                      setNewCheckpointTitles({
+                                        ...newCheckpointTitles,
+                                        [krIndex]: ''
+                                      })
+                                    }
+                                  }
+                                }}
+                                className="text-sm"
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
                                   const title = newCheckpointTitles[krIndex]
                                   if (title?.trim()) {
                                     handleAddCheckpoint(krIndex, title)
@@ -382,32 +490,162 @@ export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWiz
                                       [krIndex]: ''
                                     })
                                   }
-                                }
-                              }}
-                              className="text-sm"
-                            />
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                const title = newCheckpointTitles[krIndex]
-                                if (title?.trim()) {
-                                  handleAddCheckpoint(krIndex, title)
-                                  setNewCheckpointTitles({
-                                    ...newCheckpointTitles,
-                                    [krIndex]: ''
-                                  })
-                                }
-                              }}
-                              disabled={!newCheckpointTitles[krIndex]?.trim()}
-                              className="px-3"
-                              aria-label="Adicionar checkpoint"
-                            >
-                              <Plus size={16} />
-                            </Button>
+                                }}
+                                disabled={!newCheckpointTitles[krIndex]?.trim()}
+                                className="px-3"
+                                aria-label="Adicionar checkpoint"
+                              >
+                                <Plus size={16} />
+                              </Button>
+                            </div>
                           </div>
-                        </div>
+                        ) : (
+                          /* Configuração do Hábito */
+                          <div className="space-y-3">
+                            <Label className="text-xs text-muted-foreground">
+                              Configuração do hábito (progresso = consistência)
+                            </Label>
+
+                            <div className="space-y-2">
+                              <Label className="text-xs">Frequência</Label>
+                              <RadioGroup 
+                                value={kr.habitConfig.frequency} 
+                                onValueChange={(v) => {
+                                  const updated = [...keyResultInputs]
+                                  updated[krIndex] = {
+                                    ...updated[krIndex],
+                                    habitConfig: { ...updated[krIndex].habitConfig, frequency: v as 'daily' | 'weekly' }
+                                  }
+                                  setKeyResultInputs(updated)
+                                }}
+                              >
+                                <div className="flex items-center space-x-4">
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="daily" id={`freq-daily-${krIndex}`} />
+                                    <Label htmlFor={`freq-daily-${krIndex}`} className="font-normal text-sm">Diário</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="weekly" id={`freq-weekly-${krIndex}`} />
+                                    <Label htmlFor={`freq-weekly-${krIndex}`} className="font-normal text-sm">Semanal</Label>
+                                  </div>
+                                </div>
+                              </RadioGroup>
+                            </div>
+
+                            {kr.habitConfig.frequency === 'weekly' && (
+                              <>
+                                <div className="space-y-2">
+                                  <Label className="text-xs">Vezes por semana</Label>
+                                  <div className="flex gap-1.5">
+                                    {[1, 2, 3, 4, 5, 6, 7].map(num => (
+                                      <button
+                                        key={num}
+                                        type="button"
+                                        onClick={() => {
+                                          const updated = [...keyResultInputs]
+                                          const currentDays = updated[krIndex].habitConfig.targetDays
+                                          const trimmedDays = currentDays.length > num ? currentDays.slice(0, num) : currentDays
+                                          updated[krIndex] = {
+                                            ...updated[krIndex],
+                                            habitConfig: { ...updated[krIndex].habitConfig, timesPerWeek: num, targetDays: trimmedDays }
+                                          }
+                                          setKeyResultInputs(updated)
+                                        }}
+                                        className={`w-8 h-8 text-xs rounded-md border ${
+                                          kr.habitConfig.timesPerWeek === num 
+                                            ? 'bg-primary text-primary-foreground' 
+                                            : 'bg-background hover:bg-muted'
+                                        }`}
+                                      >
+                                        {num}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label className="text-xs">Dias específicos (opcional — máx. {kr.habitConfig.timesPerWeek})</Label>
+                                  <div className="flex gap-1.5">
+                                    {WEEKDAYS.map(day => {
+                                      const isSelected = kr.habitConfig.targetDays.includes(day.value)
+                                      const isAtLimit = !isSelected && kr.habitConfig.targetDays.length >= kr.habitConfig.timesPerWeek
+                                      return (
+                                        <button
+                                          key={day.value}
+                                          type="button"
+                                          disabled={isAtLimit}
+                                          onClick={() => {
+                                            const updated = [...keyResultInputs]
+                                            const days = updated[krIndex].habitConfig.targetDays
+                                            const newDays = isSelected
+                                              ? days.filter(d => d !== day.value)
+                                              : [...days, day.value].sort()
+                                            updated[krIndex] = {
+                                              ...updated[krIndex],
+                                              habitConfig: { ...updated[krIndex].habitConfig, targetDays: newDays }
+                                            }
+                                            setKeyResultInputs(updated)
+                                          }}
+                                          className={`flex-1 py-1.5 text-[11px] rounded-md border ${
+                                            isSelected
+                                              ? 'bg-primary text-primary-foreground'
+                                              : isAtLimit
+                                                ? 'bg-muted/50 text-muted-foreground/40 cursor-not-allowed border-border/50'
+                                                : 'bg-background hover:bg-muted'
+                                          }`}
+                                        >
+                                          {day.label}
+                                        </button>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              </>
+                            )}
+
+                            <div className="space-y-2">
+                              <Label className="text-xs">Versão mínima (opcional)</Label>
+                              <Input
+                                placeholder="Ex: 5 minutos, 1km"
+                                value={kr.habitConfig.minimumVersion}
+                                onChange={(e) => {
+                                  const updated = [...keyResultInputs]
+                                  updated[krIndex] = {
+                                    ...updated[krIndex],
+                                    habitConfig: { ...updated[krIndex].habitConfig, minimumVersion: e.target.value }
+                                  }
+                                  setKeyResultInputs(updated)
+                                }}
+                                className="text-sm"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="text-xs">Horário preferido</Label>
+                              <Select 
+                                value={kr.habitConfig.preferredTime}
+                                onValueChange={(v) => {
+                                  const updated = [...keyResultInputs]
+                                  updated[krIndex] = {
+                                    ...updated[krIndex],
+                                    habitConfig: { ...updated[krIndex].habitConfig, preferredTime: v as HabitConfig['preferredTime'] }
+                                  }
+                                  setKeyResultInputs(updated)
+                                }}
+                              >
+                                <SelectTrigger className="h-9 text-sm">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="anytime">Qualquer horário</SelectItem>
+                                  <SelectItem value="morning">Manhã</SelectItem>
+                                  <SelectItem value="afternoon">Tarde</SelectItem>
+                                  <SelectItem value="evening">Noite</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       
                       {keyResultInputs.length > 2 && (
@@ -436,8 +674,8 @@ export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWiz
               <Alert>
                 <Target size={16} className="text-muted-foreground" />
                 <AlertDescription className="text-sm">
-                  Cada resultado-chave representa uma entrega mensurável. Mínimo 2, máximo 5.
-                  Adicione checkpoints para acompanhar o progresso - a cada checkbox marcado, a barra avança!
+                  Cada resultado-chave pode ser medido por <strong>checkpoints</strong> (tarefas pontuais) ou por <strong>hábito</strong> (ação recorrente com progresso automático).
+                  Mínimo 2, máximo 5 KRs.
                 </AlertDescription>
               </Alert>
             </div>
@@ -472,7 +710,7 @@ export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWiz
               disabled={!canGoNext()}
               className="h-12 touch-target"
             >
-              Criar meta
+              Criar objetivo
             </Button>
           )}
         </div>

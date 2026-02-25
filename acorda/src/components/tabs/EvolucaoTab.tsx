@@ -150,7 +150,7 @@ export function EvolucaoTab({
     return full - avgHabitConsistency
   }, [habits, habitLogs, userId, period, avgHabitConsistency])
 
-  const avgGoalProgress = useMemo(() => getAverageGoalProgress(goals, keyResults, tasks, userId), [goals, keyResults, tasks, userId])
+  const avgGoalProgress = useMemo(() => getAverageGoalProgress(goals, keyResults, tasks, userId, habits, habitLogs), [goals, keyResults, tasks, userId, habits, habitLogs])
   const activeGoals = useMemo(() => goals.filter(g => g.userId === userId && g.status === 'active'), [goals, userId])
   const activeHabits = useMemo(() => habits.filter(h => h.userId === userId && h.isActive), [habits, userId])
 
@@ -551,14 +551,17 @@ export function EvolucaoTab({
                         <p className="text-sm font-medium">{goal.objective}</p>
                         <div className="space-y-2">
                           {goalKRs.map(kr => {
-                            const progress = getKeyResultProgress(kr, tasks)
-                            const krCheckpoints = tasks.filter(t => t.keyResultId === kr.id)
+                            const progress = getKeyResultProgress(kr, tasks, habits, habitLogs)
+                            const isHabitKR = kr.krType === 'habit'
+                            const krCheckpoints = isHabitKR ? [] : tasks.filter(t => t.keyResultId === kr.id)
                             const completedCheckpoints = krCheckpoints.filter(t => t.status === 'done').length
                             return (
                               <div key={kr.id}>
                                 <div className="flex items-baseline justify-between mb-1">
                                   <span className="text-xs text-muted-foreground">{kr.description}</span>
-                                  <span className="text-xs font-mono">{completedCheckpoints}/{krCheckpoints.length}</span>
+                                  <span className="text-xs font-mono">
+                                    {isHabitKR ? `${progress}% consistência` : `${completedCheckpoints}/${krCheckpoints.length}`}
+                                  </span>
                                 </div>
                                 <div className="w-full bg-secondary rounded-full h-1.5">
                                   <div

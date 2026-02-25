@@ -14,8 +14,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import type { UserId } from '@/lib/types'
-import { InboxItem, Task, Goal, KeyResult, CalendarBlock, Project, Reference, Habit, GoogleCalendarEvent } from '@/lib/types'
-import { Trash, PencilSimple, Target, ListChecks, Plus, Star, Tray, CheckSquare, CalendarBlank, Play, NotePencil, Link, Lightning, Clock, Hourglass, CheckCircle, FolderSimple, CaretDown, CaretRight } from '@phosphor-icons/react'
+import { InboxItem, Task, Goal, KeyResult, CalendarBlock, Project, Reference, Habit, HabitLog, GoogleCalendarEvent } from '@/lib/types'
+import { Trash, PencilSimple, Target, ListChecks, Plus, Star, Tray, Square, CheckSquare, CalendarBlank, Play, NotePencil, Link, Lightning, Clock, Hourglass, CheckCircle, FolderSimple, CaretDown, CaretRight } from '@phosphor-icons/react'
 import { ProcessInboxDialog } from '../dialogs/ProcessInboxDialog'
 import { TaskDialog } from '../dialogs/TaskDialog'
 import { GoalWizardDialog } from '../dialogs/GoalWizardDialog'
@@ -33,6 +33,7 @@ interface PlanejarTabProps {
   goals: Goal[]
   keyResults: KeyResult[]
   habits: Habit[]
+  habitLogs: HabitLog[]
   projects: Project[]
   calendarBlocks: CalendarBlock[]
   references: Reference[]
@@ -45,7 +46,7 @@ interface PlanejarTabProps {
   onUpdateTask: (task: Task) => void
   onDeleteTask: (id: string) => void
   onToggleTaskPriority: (taskId: string) => void
-  onAddGoal: (payload: { goal: Goal; keyResults: KeyResult[]; project?: Project; tasks?: Task[] }) => void
+  onAddGoal: (payload: { goal: Goal; keyResults: KeyResult[]; project?: Project; tasks?: Task[]; habits?: Habit[] }) => void
   onUpdateGoal: (payload: {
     goal: Goal
     updatedKeyResults: KeyResult[]
@@ -53,6 +54,9 @@ interface PlanejarTabProps {
     updatedTasks: Task[]
     newTasks: Task[]
     deletedTaskIds: string[]
+    newHabits?: Habit[]
+    updatedHabits?: Habit[]
+    deletedHabitIds?: string[]
   }) => void
   onDeleteGoal: (id: string) => void
   onUpdateKeyResult: (kr: KeyResult) => void
@@ -76,6 +80,7 @@ export function PlanejarTab({
   goals,
   keyResults,
   habits,
+  habitLogs,
   projects,
   calendarBlocks,
   references,
@@ -201,7 +206,7 @@ export function PlanejarTab({
             className="gap-1 data-[state=active]:bg-secondary rounded-full px-2.5 py-1.5 text-xs sm:text-sm sm:px-3"
           >
             <Target size={16} weight="bold" className="shrink-0" />
-            <span className="truncate">Metas</span>
+            <span className="truncate">Objetivos</span>
           </TabsTrigger>
           <TabsTrigger 
             value="habitos" 
@@ -332,6 +337,15 @@ export function PlanejarTab({
                     onTogglePriority={onToggleTaskPriority}
                     onSchedule={setSchedulingTask}
                     projects={allProjects}
+                    showCheckbox={true}
+                    onComplete={(task) => {
+                      onUpdateTask({
+                        ...task,
+                        status: 'done',
+                        completedAt: Date.now(),
+                        updatedAt: Date.now(),
+                      })
+                    }}
                   />
                 </Card>
               )}
@@ -387,6 +401,15 @@ export function PlanejarTab({
                     onTogglePriority={onToggleTaskPriority}
                     onSchedule={setSchedulingTask}
                     projects={allProjects}
+                    showCheckbox={true}
+                    onComplete={(task) => {
+                      onUpdateTask({
+                        ...task,
+                        status: 'done',
+                        completedAt: Date.now(),
+                        updatedAt: Date.now(),
+                      })
+                    }}
                   />
                 </Card>
               )}
@@ -410,6 +433,15 @@ export function PlanejarTab({
                     onTogglePriority={onToggleTaskPriority}
                     onSchedule={setSchedulingTask}
                     projects={allProjects}
+                    showCheckbox={true}
+                    onComplete={(task) => {
+                      onUpdateTask({
+                        ...task,
+                        status: 'done',
+                        completedAt: Date.now(),
+                        updatedAt: Date.now(),
+                      })
+                    }}
                   />
                 </Card>
               )}
@@ -499,17 +531,17 @@ export function PlanejarTab({
         <TabsContent value="metas" className="space-y-4">
           <Card className="p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-sm">Metas Ativas</h3>
+              <h3 className="font-semibold text-sm">Objetivos Ativos</h3>
               <Button size="sm" onClick={() => setShowGoalDialog(true)}>
                 <Plus size={16} className="mr-1" />
-                Meta
+                Objetivo
               </Button>
             </div>
 
             {goals.filter(g => g.status === 'active').length === 0 ? (
               <div className="text-center py-8">
                 <Target size={32} className="mx-auto text-muted-foreground/50 mb-2" weight="light" />
-                <p className="text-sm text-muted-foreground">Nenhuma meta ativa</p>
+                <p className="text-sm text-muted-foreground">Nenhum objetivo ativo</p>
               </div>
             ) : (
               <div className="divide-y divide-border">
@@ -546,9 +578,50 @@ export function PlanejarTab({
                       
                       <div className="space-y-3 mt-3">
                         {goalKRs.map((kr) => {
-                          // Buscar tasks que são checkpoints deste KR (excluindo deletadas)
+                          const isHabitKR = kr.krType === 'habit'
+                          
+                          if (isHabitKR) {
+                            // Hábito: calcular consistência
+                            const linkedHabit = habits.find(h => h.keyResultId === kr.id)
+                            let progress = 0
+                            if (linkedHabit) {
+                              const startDate = new Date(kr.createdAt)
+                              const now = new Date()
+                              const daysSinceCreation = Math.max(1, Math.ceil((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)))
+                              const completedLogs = habitLogs.filter(log => 
+                                log.habitId === linkedHabit.id && log.completedAt
+                              ).length
+                              progress = Math.min(100, (completedLogs / daysSinceCreation) * 100)
+                            }
+                            
+                            return (
+                              <div key={kr.id} className="text-sm">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="flex-1 font-medium">{kr.description}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">Hábito</span>
+                                    <span className="text-xs text-muted-foreground font-mono">
+                                      {Math.round(progress)}% consistência
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="w-full bg-secondary rounded-full h-2">
+                                  <div 
+                                    className="bg-accent h-2 rounded-full transition-all"
+                                    style={{ width: `${Math.min(progress, 100)}%` }}
+                                  />
+                                </div>
+                                {linkedHabit && (
+                                  <p className="text-xs text-muted-foreground mt-1 ml-4">
+                                    Hábito vinculado: {linkedHabit.name}
+                                  </p>
+                                )}
+                              </div>
+                            )
+                          }
+                          
+                          // Checkpoint: lógica original
                           const krCheckpoints = activeTasks.filter(t => t.keyResultId === kr.id)
-                          // Calcular progresso baseado nos checkpoints
                           const completedCheckpoints = krCheckpoints.filter(t => t.status === 'done').length
                           const progress = krCheckpoints.length > 0 
                             ? (completedCheckpoints / krCheckpoints.length) * 100 
@@ -824,7 +897,7 @@ export function PlanejarTab({
               <div className="space-y-3">
                 {activeProjectsList.map((project) => {
                   const projectTasks = filterDeleted(tasks).filter(t => t.projectId === project.id)
-                  const completedCount = projectTasks.filter(t => t.status === 'completed').length
+                  const completedCount = projectTasks.filter(t => t.status === 'done').length
                   const totalCount = projectTasks.length
                   const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
                   const isExpanded = expandedProjects.has(project.id)
@@ -901,11 +974,11 @@ export function PlanejarTab({
                             <p className="text-xs text-muted-foreground py-3 text-center">Nenhuma tarefa vinculada</p>
                           ) : (
                             <div className="space-y-1 mt-2">
-                              {projectTasks.filter(t => t.status !== 'completed').map((task) => (
+                              {projectTasks.filter(t => t.status !== 'done').map((task) => (
                                 <div key={task.id} className="flex items-center gap-2 p-2 rounded bg-background/50 text-sm">
-                                  <CheckSquare size={14} className="text-muted-foreground shrink-0" />
+                                  <Square size={14} className="text-muted-foreground/50 shrink-0" />
+                                  {task.isTopPriority && <Star size={12} weight="fill" className="text-yellow-500 shrink-0" />}
                                   <span className="flex-1 truncate">{task.title}</span>
-                                  {task.priority && <Star size={12} weight="fill" className="text-yellow-500 shrink-0" />}
                                   <Button
                                     size="sm"
                                     variant="ghost"
@@ -916,16 +989,16 @@ export function PlanejarTab({
                                   </Button>
                                 </div>
                               ))}
-                              {projectTasks.filter(t => t.status === 'completed').length > 0 && (
+                              {projectTasks.filter(t => t.status === 'done').length > 0 && (
                                 <div className="mt-2">
                                   <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                                     <CheckCircle size={12} />
-                                    {projectTasks.filter(t => t.status === 'completed').length} concluída(s)
+                                    {projectTasks.filter(t => t.status === 'done').length} concluída(s)
                                   </p>
-                                  {projectTasks.filter(t => t.status === 'completed').map((task) => (
-                                    <div key={task.id} className="flex items-center gap-2 p-2 rounded text-sm text-muted-foreground line-through">
-                                      <CheckCircle size={14} className="shrink-0" />
-                                      <span className="flex-1 truncate">{task.title}</span>
+                                  {projectTasks.filter(t => t.status === 'done').map((task) => (
+                                    <div key={task.id} className="flex items-center gap-2 p-2 rounded text-sm text-muted-foreground">
+                                      <CheckCircle size={14} weight="fill" className="text-accent/50 shrink-0" />
+                                      <span className="flex-1 truncate line-through">{task.title}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -1004,7 +1077,7 @@ export function PlanejarTab({
         onCreateReference={onAddReference}
         onMarkProcessed={onMarkInboxProcessed}
         onAddCalendarBlock={onAddCalendarBlock}
-        projects={projects}
+        projects={allProjects}
         goals={goals}
         keyResults={keyResults}
         batchCurrent={batchProcessing ? batchIndex + 1 : undefined}
@@ -1048,7 +1121,7 @@ export function PlanejarTab({
         userId={userId}
         goals={goals}
         keyResults={keyResults}
-        projects={projects}
+        projects={allProjects}
         onSave={(task) => {
           if (editingTask) {
             onUpdateTask(task)
@@ -1073,6 +1146,7 @@ export function PlanejarTab({
         goal={editingGoal}
         keyResults={keyResults}
         tasks={tasks}
+        habits={habits}
         userId={userId}
         onSave={onUpdateGoal}
       />
@@ -1149,9 +1223,9 @@ export function PlanejarTab({
       <AlertDialog open={!!goalToDelete} onOpenChange={(open) => !open && setGoalToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-              <AlertDialogTitle>Excluir meta?</AlertDialogTitle>
+              <AlertDialogTitle>Excluir objetivo?</AlertDialogTitle>
               <AlertDialogDescription>
-                Tem certeza que deseja excluir esta meta? Esta ação irá remover a meta e todos os seus resultados-chave. Esta ação não pode ser desfeita.
+                Tem certeza que deseja excluir este objetivo? Esta ação irá remover o objetivo e todos os seus resultados-chave. Esta ação não pode ser desfeita.
               </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1318,34 +1392,33 @@ function TaskList({
           className="flex items-start gap-3 p-3 rounded-lg bg-background/50 hover:bg-secondary/50 border border-transparent hover:border-border transition-all group"
         >
           {/* Checkbox para marcar como concluída (apenas se showCheckbox=true) */}
-          {showCheckbox && onComplete ? (
+          {showCheckbox && onComplete && (
             <button
               onClick={() => onComplete(task)}
               className="mt-0.5 p-1 rounded-md hover:bg-accent/20 transition-colors shrink-0"
               aria-label="Marcar como concluída"
               title="Marcar como concluída"
             >
-              <CheckSquare 
+              <Square 
                 size={18} 
                 weight="regular"
                 className="text-muted-foreground/50 hover:text-accent"
               />
             </button>
-          ) : (
-            /* Botão de estrela para Top 3 - não checkbox */
-            <button
-              onClick={() => onTogglePriority(task.id)}
-              className="mt-0.5 p-1 rounded-md hover:bg-amber-500/20 transition-colors shrink-0"
-              aria-label={task.isTopPriority ? 'Remover do Top 3' : 'Adicionar ao Top 3'}
-              title={task.isTopPriority ? 'Remover do Top 3' : 'Fixar no Top 3'}
-            >
-              <Star 
-                size={18} 
-                weight={task.isTopPriority ? 'fill' : 'regular'} 
-                className={task.isTopPriority ? 'text-amber-500' : 'text-muted-foreground/40 hover:text-amber-400'}
-              />
-            </button>
           )}
+          {/* Botão de estrela para Top 3 */}
+          <button
+            onClick={() => onTogglePriority(task.id)}
+            className="mt-0.5 p-1 rounded-md hover:bg-amber-500/20 transition-colors shrink-0"
+            aria-label={task.isTopPriority ? 'Remover do Top 3' : 'Adicionar ao Top 3'}
+            title={task.isTopPriority ? 'Remover do Top 3' : 'Fixar no Top 3'}
+          >
+            <Star 
+              size={18} 
+              weight={task.isTopPriority ? 'fill' : 'regular'} 
+              className={task.isTopPriority ? 'text-amber-500' : 'text-muted-foreground/40 hover:text-amber-400'}
+            />
+          </button>
           <div className="flex-1 min-w-0">
             <p className={`text-sm font-medium ${task.isTopPriority ? 'text-amber-600 dark:text-amber-400' : ''}`}>
               {task.title}

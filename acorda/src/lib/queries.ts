@@ -163,7 +163,41 @@ export function getHabitStreak(habitLogs: HabitLog[], userId: UserId, habitId: s
   return streak
 }
 
-export function getKeyResultProgress(kr: KeyResult, tasks?: Task[]): number {
+export function getKeyResultProgress(kr: KeyResult, tasks?: Task[], habits?: Habit[], habitLogs?: HabitLog[]): number {
+  // KR tipo hábito: progresso baseado na consistência do hábito vinculado
+  if (kr.krType === 'habit' && habits && habitLogs) {
+    const linkedHabit = habits.find(h => h.keyResultId === kr.id && !('deleted_at' in h && (h as any).deleted_at))
+    if (!linkedHabit) return 0
+    
+    const now = new Date()
+    const startDate = new Date(kr.createdAt)
+    
+    // Calcular total de dias desde criação até hoje
+    const totalDays = Math.max(1, Math.ceil((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)))
+    
+    // Para hábitos semanais, contar apenas os dias-alvo
+    let expectedDays = totalDays
+    if (linkedHabit.frequency === 'weekly' && linkedHabit.targetDays && linkedHabit.targetDays.length > 0) {
+      expectedDays = 0
+      const current = new Date(startDate)
+      while (current <= now) {
+        if (linkedHabit.targetDays.includes(current.getDay())) {
+          expectedDays++
+        }
+        current.setDate(current.getDate() + 1)
+      }
+    }
+    
+    if (expectedDays === 0) return 0
+    
+    // Contar logs do hábito no período
+    const userId = kr.userId
+    const completedDays = getHabitCompletionForPeriod(habitLogs, userId, linkedHabit.id, startDate, now)
+    
+    return Math.min(100, Math.round((completedDays / expectedDays) * 100))
+  }
+  
+  // KR tipo checkpoint (padrão): progresso baseado em tasks/checkpoints
   if (!tasks) return 0
   const checkpoints = tasks.filter(t => t.keyResultId === kr.id && !t.deleted_at)
   if (checkpoints.length === 0) return 0
@@ -171,8 +205,8 @@ export function getKeyResultProgress(kr: KeyResult, tasks?: Task[]): number {
   return Math.round((completed / checkpoints.length) * 100)
 }
 
-export function getKeyResultStatus(kr: KeyResult, tasks: Task[], goal?: Goal): 'no-ritmo' | 'atencao' | 'fora-do-ritmo' {
-  const progress = getKeyResultProgress(kr, tasks)
+export function getKeyResultStatus(kr: KeyResult, tasks: Task[], goal?: Goal, habits?: Habit[], habitLogs?: HabitLog[]): 'no-ritmo' | 'atencao' | 'fora-do-ritmo' {
+  const progress = getKeyResultProgress(kr, tasks, habits, habitLogs)
   
   if (!goal?.deadline) {
     if (progress >= 70) return 'no-ritmo'
@@ -190,11 +224,11 @@ export function getKeyResultStatus(kr: KeyResult, tasks: Task[], goal?: Goal): '
   return 'fora-do-ritmo'
 }
 
-export function getGoalProgress(goal: Goal, keyResults: KeyResult[], tasks: Task[], userId: UserId): number {
+export function getGoalProgress(goal: Goal, keyResults: KeyResult[], tasks: Task[], userId: UserId, habits?: Habit[], habitLogs?: HabitLog[]): number {
   const goalKRs = filterDeleted(keyResults).filter(kr => kr.userId === userId && kr.goalId === goal.id)
   if (goalKRs.length === 0) return 0
   
-  const totalProgress = goalKRs.reduce((sum, kr) => sum + getKeyResultProgress(kr, tasks), 0)
+  const totalProgress = goalKRs.reduce((sum, kr) => sum + getKeyResultProgress(kr, tasks, habits, habitLogs), 0)
   return Math.round(totalProgress / goalKRs.length)
 }
 
@@ -393,7 +427,9 @@ export function getAverageGoalProgress(
   goals: Goal[], 
   keyResults: KeyResult[], 
   tasks: Task[],
-  userId: UserId
+  userId: UserId,
+  habits?: Habit[],
+  habitLogs?: HabitLog[]
 ): number {
   const activeGoals = goals.filter(g => g.userId === userId && g.status === 'active')
   if (activeGoals.length === 0) return 0
@@ -402,7 +438,7 @@ export function getAverageGoalProgress(
     const goalKRs = keyResults.filter(kr => kr.userId === userId && kr.goalId === goal.id)
     if (goalKRs.length === 0) return sum
     
-    const goalProgress = goalKRs.reduce((krSum, kr) => krSum + getKeyResultProgress(kr, tasks), 0) / goalKRs.length
+    const goalProgress = goalKRs.reduce((krSum, kr) => krSum + getKeyResultProgress(kr, tasks, habits, habitLogs), 0) / goalKRs.length
     return sum + goalProgress
   }, 0)
   

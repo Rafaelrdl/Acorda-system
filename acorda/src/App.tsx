@@ -282,6 +282,7 @@ function MainApp({ user }: { user: User }) {
     keyResults: KeyResult[]
     project?: Project
     tasks?: Task[]
+    habits?: Habit[]
   }) => {
     setGoals(current => [...(current || []), payload.goal])
     setKeyResults(current => [...(current || []), ...payload.keyResults])
@@ -290,12 +291,16 @@ function MainApp({ user }: { user: User }) {
       setProjects(current => [...(current || []), payload.project!])
     }
     
+    if (payload.habits && payload.habits.length > 0) {
+      setHabits(current => [...(current || []), ...payload.habits!])
+    }
+    
+    const hasPlan = (payload.tasks && payload.tasks.length > 0) || (payload.habits && payload.habits.length > 0)
     if (payload.tasks && payload.tasks.length > 0) {
       setTasks(current => [...(current || []), ...payload.tasks!])
-      toast.success('Meta e plano criados')
-    } else {
-      toast.success('Meta criada')
     }
+    
+    toast.success(hasPlan ? 'Objetivo e plano criados' : 'Objetivo criado')
   }
 
   const handleUpdateKeyResult = (kr: KeyResult) => {
@@ -309,8 +314,11 @@ function MainApp({ user }: { user: User }) {
     updatedTasks: Task[]
     newTasks: Task[]
     deletedTaskIds: string[]
+    newHabits?: Habit[]
+    updatedHabits?: Habit[]
+    deletedHabitIds?: string[]
   }) => {
-    // Atualizar a meta
+    // Atualizar o objetivo
     setGoals(current => (current || []).map(g => 
       g.id === payload.goal.id ? payload.goal : g
     ))
@@ -357,23 +365,59 @@ function MainApp({ user }: { user: User }) {
       return updated
     })
 
-    toast.success('Meta atualizada')
+    // Habits - criar novos
+    if (payload.newHabits && payload.newHabits.length > 0) {
+      setHabits(current => [...(current || []), ...payload.newHabits!])
+    }
+    
+    // Habits - atualizar existentes
+    if (payload.updatedHabits && payload.updatedHabits.length > 0) {
+      setHabits(current => {
+        let updated = current || []
+        payload.updatedHabits!.forEach(habit => {
+          updated = updated.map(h => h.id === habit.id ? habit : h)
+        })
+        return updated
+      })
+    }
+    
+    // Habits - soft delete removidos
+    if (payload.deletedHabitIds && payload.deletedHabitIds.length > 0) {
+      setHabits(current => {
+        let updated = current || []
+        payload.deletedHabitIds!.forEach(habitId => {
+          updated = updated.map(h => h.id === habitId ? softDelete(h) : h)
+        })
+        return updated
+      })
+    }
+
+    toast.success('Objetivo atualizado')
   }
 
   const handleDeleteGoal = (id: string) => {
-    // Soft delete da meta
+    // Soft delete do objetivo
     setGoals(current => 
       (current || []).map(g => 
         g.id === id ? softDelete({ ...g, status: 'abandoned' as const }) : g
       )
     )
     // Soft delete dos key results associados
+    const goalKRIds = (keyResults || []).filter(kr => kr.goalId === id).map(kr => kr.id)
     setKeyResults(current => 
       (current || []).map(kr => 
         kr.goalId === id ? softDelete(kr) : kr
       )
     )
-    toast.success('Meta removida')
+    // Soft delete dos hábitos vinculados aos KRs deste objetivo
+    if (goalKRIds.length > 0) {
+      setHabits(current => 
+        (current || []).map(h => 
+          h.keyResultId && goalKRIds.includes(h.keyResultId) ? softDelete({ ...h, isActive: false }) : h
+        )
+      )
+    }
+    toast.success('Objetivo removido')
   }
 
   const handleToggleHabit = (habitId: string) => {
@@ -697,7 +741,7 @@ function MainApp({ user }: { user: User }) {
   }
 
   const handleOnboardingComplete = (data: OnboardingResult) => {
-    // Salvar meta + KRs
+    // Salvar objetivo + KRs
     if (data.goal) {
       setGoals(current => [...(current || []), data.goal!])
     }
@@ -836,6 +880,7 @@ function MainApp({ user }: { user: User }) {
           goals={goals || []}
           keyResults={keyResults || []}
           habits={habits || []}
+          habitLogs={habitLogs || []}
           projects={projects || []}
           calendarBlocks={calendarBlocks || []}
           references={references || []}

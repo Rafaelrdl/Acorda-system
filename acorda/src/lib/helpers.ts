@@ -295,6 +295,7 @@ export function createKeyResult(
     currentValue?: number
     targetValue?: number
     unit?: string
+    krType?: 'checkpoint' | 'habit'
   } = {}
 ): KeyResult {
   const now = Date.now()
@@ -303,6 +304,7 @@ export function createKeyResult(
     userId,
     goalId,
     description,
+    krType: options.krType ?? 'checkpoint',
     currentValue: options.currentValue ?? 0,
     targetValue: options.targetValue ?? 1,
     unit: options.unit,
