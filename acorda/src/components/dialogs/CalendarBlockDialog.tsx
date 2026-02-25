@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Calendar } from '@/components/ui/calendar'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   AlertDialog,
@@ -21,7 +20,6 @@ import type { UserId } from '@/lib/types'
 import { CalendarBlock, Task, CalendarBlockType, Habit } from '@/lib/types'
 import { createCalendarBlock, updateTimestamp, getDateKey } from '@/lib/helpers'
 import { Warning, Trash, Clock } from '@phosphor-icons/react'
-import { ptBR } from 'date-fns/locale'
 
 interface CalendarBlockDialogProps {
   open: boolean
@@ -55,7 +53,7 @@ export function CalendarBlockDialog({
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [type, setType] = useState<CalendarBlockType>('personal')
-  const [calendarDate, setCalendarDate] = useState<Date | undefined>(undefined)
+  const [dateStr, setDateStr] = useState('')
   const [startHour, setStartHour] = useState('')
   const [startMin, setStartMin] = useState('')
   const [durationHours, setDurationHours] = useState('1')
@@ -71,8 +69,7 @@ export function CalendarBlockDialog({
       setTitle(block.title)
       setDescription(block.description || '')
       setType(block.type)
-      const [year, month, day] = block.date.split('-').map(Number)
-      setCalendarDate(new Date(year, month - 1, day))
+      setDateStr(block.date)
       const startH = Math.floor(block.startTime / 60)
       const startM = block.startTime % 60
       setStartHour(startH.toString())
@@ -86,7 +83,7 @@ export function CalendarBlockDialog({
       setTitle('')
       setDescription('')
       setType('personal')
-      setCalendarDate(selectedDate)
+      setDateStr(getDateKey(selectedDate))
       const startH = Math.floor(selectedTime / 60)
       const startM = selectedTime % 60
       setStartHour(startH.toString())
@@ -115,9 +112,9 @@ export function CalendarBlockDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!title.trim() || !calendarDate || !startHour) return
+    if (!title.trim() || !dateStr || !startHour) return
 
-    const dateKey = getDateKey(calendarDate)
+    const dateKey = dateStr
     const startTime = parseInt(startHour) * 60 + (parseInt(startMin) || 0)
     const totalDuration = parseInt(durationHours || '0') * 60 + parseInt(durationMins || '0')
     if (totalDuration <= 0) return
@@ -282,18 +279,16 @@ export function CalendarBlockDialog({
             </Select>
           </div>
 
-          {/* Calendário */}
+          {/* Data */}
           <div className="space-y-2">
-            <Label>Data</Label>
-            <div className="flex justify-center">
-              <Calendar
-                mode="single"
-                selected={calendarDate}
-                onSelect={setCalendarDate}
-                locale={ptBR}
-                className="rounded-md border"
-              />
-            </div>
+            <Label htmlFor="block-date">Data</Label>
+            <Input
+              id="block-date"
+              type="date"
+              value={dateStr}
+              onChange={(e) => setDateStr(e.target.value)}
+              className="h-12"
+            />
           </div>
 
           {/* Horário de início */}
@@ -383,7 +378,7 @@ export function CalendarBlockDialog({
               >
                 Cancelar
               </Button>
-              <Button type="submit" className="flex-1 h-12 touch-target" disabled={!title.trim() || totalDurationMins <= 0}>
+              <Button type="submit" className="flex-1 h-12 touch-target" disabled={!title.trim() || !dateStr || totalDurationMins <= 0}>
                 {block ? 'Salvar' : 'Criar'}
               </Button>
             </div>

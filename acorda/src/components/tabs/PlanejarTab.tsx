@@ -199,7 +199,7 @@ export function PlanejarTab({
             className="gap-1 data-[state=active]:bg-secondary rounded-full px-2.5 py-1.5 text-xs sm:text-sm sm:px-3"
           >
             <CalendarBlank size={16} weight="bold" className="shrink-0" />
-            <span className="truncate">Semana</span>
+            <span className="truncate">Calendário</span>
           </TabsTrigger>
           <TabsTrigger 
             value="metas" 
