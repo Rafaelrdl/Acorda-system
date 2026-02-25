@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button'
 import type { UserId } from '@/lib/types'
 import { CalendarBlock, Task, Habit, GoogleCalendarEvent } from '@/lib/types'
 import { getWeekDates, getDateKey } from '@/lib/helpers'
-import { CaretLeft, CaretRight, Warning } from '@phosphor-icons/react'
+import { CaretLeft, CaretRight, Warning, Clock, Tag, TextAlignLeft, CalendarBlank } from '@phosphor-icons/react'
 import { CalendarBlockDialog } from './dialogs/CalendarBlockDialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 
 interface WeeklyCalendarProps {
   userId: UserId
@@ -19,13 +20,13 @@ interface WeeklyCalendarProps {
   onUpdateTask?: (task: Task) => void
 }
 
-// Color mapping by block type
-const blockTypeColors: Record<string, { bg: string; border: string; text: string }> = {
-  task: { bg: 'bg-blue-100/70 dark:bg-blue-900/30', border: 'border-blue-300 dark:border-blue-700', text: 'text-blue-900 dark:text-blue-100' },
-  habit: { bg: 'bg-green-100/70 dark:bg-green-900/30', border: 'border-green-300 dark:border-green-700', text: 'text-green-900 dark:text-green-100' },
-  focus: { bg: 'bg-purple-100/70 dark:bg-purple-900/30', border: 'border-purple-300 dark:border-purple-700', text: 'text-purple-900 dark:text-purple-100' },
-  meeting: { bg: 'bg-amber-100/70 dark:bg-amber-900/30', border: 'border-amber-300 dark:border-amber-700', text: 'text-amber-900 dark:text-amber-100' },
-  personal: { bg: 'bg-accent/20', border: 'border-accent', text: '' },
+// Color mapping by block type — solid backgrounds for better readability
+const blockTypeColors: Record<string, { bg: string; border: string; text: string; accent: string }> = {
+  task: { bg: 'bg-blue-600 dark:bg-blue-700', border: 'border-blue-700 dark:border-blue-500', text: 'text-white', accent: 'bg-blue-400' },
+  habit: { bg: 'bg-emerald-600 dark:bg-emerald-700', border: 'border-emerald-700 dark:border-emerald-500', text: 'text-white', accent: 'bg-emerald-400' },
+  focus: { bg: 'bg-purple-600 dark:bg-purple-700', border: 'border-purple-700 dark:border-purple-500', text: 'text-white', accent: 'bg-purple-400' },
+  meeting: { bg: 'bg-amber-500 dark:bg-amber-600', border: 'border-amber-600 dark:border-amber-400', text: 'text-white', accent: 'bg-amber-300' },
+  personal: { bg: 'bg-slate-600 dark:bg-slate-700', border: 'border-slate-700 dark:border-slate-500', text: 'text-white', accent: 'bg-slate-400' },
 }
 
 const blockTypeLabels: Record<string, string> = {
@@ -57,6 +58,7 @@ export function WeeklyCalendar({
   const [selectedTime, setSelectedTime] = useState<number | null>(null)
   const [editingBlock, setEditingBlock] = useState<CalendarBlock | null>(null)
   const [showDialog, setShowDialog] = useState(false)
+  const [detailBlock, setDetailBlock] = useState<CalendarBlock | null>(null)
 
   const weekDates = getWeekDates(currentWeekStart)
 
@@ -84,7 +86,12 @@ export function WeeklyCalendar({
     setShowDialog(true)
   }
 
+  const handleViewBlock = (block: CalendarBlock) => {
+    setDetailBlock(block)
+  }
+
   const handleEditBlock = (block: CalendarBlock) => {
+    setDetailBlock(null)
     setEditingBlock(block)
     setShowDialog(true)
   }
@@ -312,65 +319,66 @@ export function WeeklyCalendar({
                       return (
                         <div
                           key={block.id}
-                          className={`absolute left-1 right-1 rounded text-xs cursor-pointer z-10 overflow-hidden flex flex-col ${
-                            isLarge ? 'p-2.5 justify-between' : 'p-1.5 justify-start'
-                          } ${
+                          className={`absolute left-1 right-1 rounded-sm text-xs cursor-pointer z-10 overflow-hidden flex shadow-sm hover:shadow-md transition-shadow ${
                             completed
-                              ? 'bg-muted/50 border border-muted-foreground/30 opacity-60'
+                              ? 'bg-muted/80 border border-muted-foreground/30 opacity-60'
                               : conflict
-                                ? 'bg-destructive/20 border border-destructive'
-                                : `${colors.bg} border ${colors.border} ${colors.text}`
+                                ? 'bg-destructive/90 border border-destructive'
+                                : `${colors.bg} ${colors.text}`
                           }`}
-                          style={{ top: `${topPx}px`, height: `${Math.max(heightPx, 24)}px` }}
+                          style={{ top: `${topPx}px`, height: `${Math.max(heightPx, 28)}px` }}
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleEditBlock(block)
+                            handleViewBlock(block)
                           }}
                         >
-                          {/* Top section: type label */}
-                          <div>
-                            {!completed && (
-                              <div className="flex items-center gap-1 mb-0.5">
-                                <span className={`uppercase tracking-wide opacity-70 ${isLarge ? 'text-[10px]' : 'text-[9px]'}`}>
+                          {/* Left accent strip */}
+                          {!completed && !conflict && (
+                            <div className={`w-1 shrink-0 ${colors.accent}`} />
+                          )}
+
+                          {/* Content */}
+                          <div className={`flex flex-col flex-1 min-w-0 ${
+                            isLarge ? 'p-2' : 'px-1.5 py-1'
+                          } ${isLarge ? 'justify-between' : 'justify-center'}`}>
+                            {/* Type label */}
+                            <div>
+                              {!completed && (
+                                <span className={`uppercase tracking-wider font-medium opacity-80 ${isLarge ? 'text-[10px]' : 'text-[8px]'}`}>
                                   {blockTypeLabels[block.type] || block.type}
+                                </span>
+                              )}
+                              {/* Title — wraps to show full text */}
+                              <div className={`font-bold leading-tight mt-0.5 ${isLarge ? 'text-[13px]' : 'text-[11px]'} ${isMedium ? 'line-clamp-3' : 'line-clamp-2'} ${completed ? 'line-through opacity-70' : ''}`}>
+                                {block.title}
+                              </div>
+                            </div>
+
+                            {/* Time for medium+ blocks */}
+                            {isMedium && (
+                              <div className={`flex items-center gap-1 ${isLarge ? 'mt-auto pt-1' : 'mt-0.5'}`}>
+                                <Clock size={10} className="opacity-60 shrink-0" />
+                                <span className="text-[11px] opacity-80">
+                                  {Math.floor(block.startTime / 60).toString().padStart(2, '0')}:
+                                  {(block.startTime % 60).toString().padStart(2, '0')} – 
+                                  {Math.floor(block.endTime / 60).toString().padStart(2, '0')}:
+                                  {(block.endTime % 60).toString().padStart(2, '0')}
+                                  {isLarge && (
+                                    <span className="ml-1 opacity-60">
+                                      ({durationMin >= 60 ? `${Math.floor(durationMin / 60)}h` : ''}{durationMin % 60 > 0 ? `${durationMin % 60}min` : ''})
+                                    </span>
+                                  )}
                                 </span>
                               </div>
                             )}
-                            {/* Title */}
-                            <div className={`font-semibold ${isLarge ? 'text-sm' : 'text-xs'} ${isLarge ? 'line-clamp-2' : 'truncate'} ${completed ? 'line-through text-muted-foreground' : ''}`}>
-                              {block.title}
-                            </div>
-                            {/* Description for large blocks */}
-                            {isLarge && block.description && (
-                              <div className="text-[11px] opacity-70 mt-1 line-clamp-2">
-                                {block.description}
+
+                            {conflict && !completed && (
+                              <div className="flex items-center gap-1 mt-1 text-white/90">
+                                <Warning size={12} weight="bold" />
+                                <span className="text-[10px] font-medium">Conflito</span>
                               </div>
                             )}
                           </div>
-
-                          {/* Bottom section: time + duration */}
-                          {isMedium && (
-                            <div className={`flex items-center justify-between ${isLarge ? 'mt-auto pt-1' : 'mt-0.5'}`}>
-                              <span className="text-xs opacity-70">
-                                {Math.floor(block.startTime / 60).toString().padStart(2, '0')}:
-                                {(block.startTime % 60).toString().padStart(2, '0')} – 
-                                {Math.floor(block.endTime / 60).toString().padStart(2, '0')}:
-                                {(block.endTime % 60).toString().padStart(2, '0')}
-                              </span>
-                              {isLarge && (
-                                <span className="text-[10px] opacity-50">
-                                  {durationMin >= 60 ? `${Math.floor(durationMin / 60)}h` : ''}{durationMin % 60 > 0 ? `${durationMin % 60}min` : ''}
-                                </span>
-                              )}
-                            </div>
-                          )}
-
-                          {conflict && !completed && (
-                            <div className="flex items-center gap-1 text-destructive mt-1">
-                              <Warning size={12} />
-                              <span className="text-xs">Conflito</span>
-                            </div>
-                          )}
                         </div>
                       )
                     })}
@@ -381,6 +389,87 @@ export function WeeklyCalendar({
           </div>
         </div>
       </div>
+
+      {/* Block detail dialog */}
+      {detailBlock && (() => {
+        const dColors = blockTypeColors[detailBlock.type] || blockTypeColors.personal
+        const durationMin = detailBlock.endTime - detailBlock.startTime
+        const durationLabel = `${durationMin >= 60 ? `${Math.floor(durationMin / 60)}h ` : ''}${durationMin % 60 > 0 ? `${durationMin % 60}min` : ''}`
+        const linkedTask = detailBlock.taskId ? tasks.find(t => t.id === detailBlock.taskId) : null
+        const linkedHabit = detailBlock.habitId ? habits.find(h => h.id === detailBlock.habitId) : null
+        const [year, month, day] = detailBlock.date.split('-').map(Number)
+        const dateObj = new Date(year, month - 1, day)
+        const dateStr = dateObj.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+
+        return (
+          <Dialog open={!!detailBlock} onOpenChange={() => setDetailBlock(null)}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${dColors.bg}`} />
+                  <span className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
+                    {blockTypeLabels[detailBlock.type] || detailBlock.type}
+                  </span>
+                </div>
+                <DialogTitle className="text-lg mt-1">{detailBlock.title}</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-3 text-sm">
+                {/* Date */}
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <CalendarBlank size={16} className="shrink-0" />
+                  <span className="capitalize">{dateStr}</span>
+                </div>
+
+                {/* Time + Duration */}
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Clock size={16} className="shrink-0" />
+                  <span>
+                    {Math.floor(detailBlock.startTime / 60).toString().padStart(2, '0')}:
+                    {(detailBlock.startTime % 60).toString().padStart(2, '0')} – 
+                    {Math.floor(detailBlock.endTime / 60).toString().padStart(2, '0')}:
+                    {(detailBlock.endTime % 60).toString().padStart(2, '0')}
+                    <span className="ml-1.5 text-xs opacity-70">({durationLabel})</span>
+                  </span>
+                </div>
+
+                {/* Description */}
+                {detailBlock.description && (
+                  <div className="flex items-start gap-2 text-muted-foreground">
+                    <TextAlignLeft size={16} className="shrink-0 mt-0.5" />
+                    <span className="text-foreground">{detailBlock.description}</span>
+                  </div>
+                )}
+
+                {/* Linked task */}
+                {linkedTask && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Tag size={16} className="shrink-0" />
+                    <span>Tarefa: <span className="text-foreground font-medium">{linkedTask.title}</span></span>
+                  </div>
+                )}
+
+                {/* Linked habit */}
+                {linkedHabit && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Tag size={16} className="shrink-0" />
+                    <span>Hábito: <span className="text-foreground font-medium">{linkedHabit.name}</span></span>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter className="flex-row gap-2 mt-2">
+                <Button variant="outline" className="flex-1" onClick={() => setDetailBlock(null)}>
+                  Fechar
+                </Button>
+                <Button className="flex-1 gap-2" onClick={() => handleEditBlock(detailBlock)}>
+                  Editar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )
+      })()}
 
       <CalendarBlockDialog
         open={showDialog}
