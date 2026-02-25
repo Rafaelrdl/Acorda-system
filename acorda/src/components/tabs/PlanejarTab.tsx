@@ -723,12 +723,28 @@ export function PlanejarTab({
                         <div className="flex-1 min-w-0">
                           <h4 className="font-semibold mb-1">{habit.name}</h4>
                           
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-2">
                             <Badge variant="outline" className="text-xs">
                               {habit.frequency === 'daily' 
                                 ? 'Diário' 
                                 : `${habit.timesPerWeek}x por semana`}
                             </Badge>
+                            {habit.frequency === 'weekly' && habit.targetDays && habit.targetDays.length > 0 && (
+                              <div className="flex gap-1">
+                                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((label, idx) => (
+                                  <span
+                                    key={idx}
+                                    className={`w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-medium ${
+                                      habit.targetDays!.includes(idx)
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'bg-muted/50 text-muted-foreground/40'
+                                    }`}
+                                  >
+                                    {label.charAt(0)}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                             {linkedKR && linkedGoal && (
                               <span className="text-xs text-accent">
                                 → {linkedGoal.objective}

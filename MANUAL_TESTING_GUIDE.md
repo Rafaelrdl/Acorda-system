@@ -675,8 +675,8 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 | Versão Mínima | `5 minutos` |
 | Frequência | `Diária` |
 
-- [ ] Hábito criado
-- [ ] Aparece no tracker diário
+- [x] Hábito criado
+- [x] Aparece no tracker diário
 
 ### 8.2 Criar Hábito Semanal
 
@@ -688,8 +688,8 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 | Frequência | `Semanal` |
 | Dias | Marque: **Seg**, **Qua**, **Sex** |
 
-- [ ] Hábito criado com dias específicos
-- [ ] Aparece apenas nos dias selecionados
+- [x] Hábito criado com dias específicos
+- [x] Aparece apenas nos dias selecionados
 
 ### 8.3 Mais Hábitos (copie rapidamente)
 
@@ -700,18 +700,18 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 | `Estudar inglês` | `10 minutos no Duolingo` | Diária |
 
 ### 8.4 Marcar Hábito como feito
-- [ ] Na aba "Hoje", clique no hábito "Meditar" para marcar como feito
-- [ ] Check visual aparece
-- [ ] Streak incrementa
+- [x] Na aba "Hoje", clique no hábito "Meditar" para marcar como feito
+- [x] Check visual aparece
+- [x] Streak incrementa
 
 ### 8.5 Desmarcar Hábito
-- [ ] Clique novamente para desmarcar
-- [ ] Check some, streak ajusta
+- [x] Clique novamente para desmarcar
+- [x] Check some, streak ajusta
 
 ### 8.6 Verificar Sugestões de Hábitos
-- [ ] No dialog de criar hábito, verifique se botão de sugestões existe
-- [ ] Clique e veja categorias de hábitos sugeridos
-- [ ] Selecione uma sugestão e verifique se os campos são preenchidos
+- [x] No dialog de criar hábito, verifique se botão de sugestões existe
+- [x] Clique e veja categorias de hábitos sugeridos
+- [x] Selecione uma sugestão e verifique se os campos são preenchidos
 
 ---
 
