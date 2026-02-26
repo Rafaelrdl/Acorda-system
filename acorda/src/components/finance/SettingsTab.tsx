@@ -5,12 +5,13 @@ import { Input } from '@/components/ui/input'
 import { CurrencyInput } from '@/components/ui/currency-input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 import type { UserId } from '@/lib/types'
 import { FinanceCategory, FinanceAccount, Transaction } from '@/lib/types'
 import { createFinanceCategory, createFinanceAccount, formatCurrency } from '@/lib/helpers'
-import { Plus, Trash } from '@phosphor-icons/react'
+import { Plus, Trash, Wallet, Tag } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
 interface SettingsTabProps {
@@ -88,210 +89,233 @@ export function SettingsTab({
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Categorias</CardTitle>
-            <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nova
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Nova Categoria</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="category-name">Nome</Label>
-                    <Input
-                      id="category-name"
-                      value={categoryName}
-                      onChange={(e) => setCategoryName(e.target.value)}
-                      placeholder="Ex: Alimentação"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="category-type">Tipo</Label>
-                    <Select value={categoryType} onValueChange={(v) => setCategoryType(v as 'income' | 'expense')}>
-                      <SelectTrigger id="category-type">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="expense">Despesa</SelectItem>
-                        <SelectItem value="income">Receita</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button onClick={handleAddCategory} className="w-full">
-                    Criar Categoria
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {expenseCategories.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase">Despesas</p>
-                <div className="space-y-1">
-                  {expenseCategories.map(category => (
-                    <div
-                      key={category.id}
-                      className="flex items-center justify-between p-2 rounded border border-border"
-                    >
-                      <span className="text-sm">{category.name}</span>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-10 w-10"
-                        onClick={() => setDeleteCategoryId(category.id)}
-                        aria-label="Excluir categoria"
-                      >
-                        <Trash className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
+      <Tabs defaultValue="accounts" className="w-full">
+        <TabsList className="w-full grid grid-cols-2">
+          <TabsTrigger value="accounts" className="gap-1.5">
+            <Wallet size={14} />
+            Contas
+            {accounts.length > 0 && (
+              <span className="ml-1 text-[10px] bg-muted px-1.5 py-0.5 rounded-full">{accounts.length}</span>
             )}
-
-            {incomeCategories.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase">Receitas</p>
-                <div className="space-y-1">
-                  {incomeCategories.map(category => (
-                    <div
-                      key={category.id}
-                      className="flex items-center justify-between p-2 rounded border border-border"
-                    >
-                      <span className="text-sm">{category.name}</span>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-10 w-10"
-                        onClick={() => setDeleteCategoryId(category.id)}
-                        aria-label="Excluir categoria"
-                      >
-                        <Trash className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
+          </TabsTrigger>
+          <TabsTrigger value="categories" className="gap-1.5">
+            <Tag size={14} />
+            Categorias
+            {categories.length > 0 && (
+              <span className="ml-1 text-[10px] bg-muted px-1.5 py-0.5 rounded-full">{categories.length}</span>
             )}
+          </TabsTrigger>
+        </TabsList>
 
-            {categories.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                Nenhuma categoria criada
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Contas</CardTitle>
-            <Dialog open={showAccountDialog} onOpenChange={setShowAccountDialog}>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nova
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Nova Conta</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="account-name">Nome</Label>
-                    <Input
-                      id="account-name"
-                      value={accountName}
-                      onChange={(e) => setAccountName(e.target.value)}
-                      placeholder="Ex: Nubank"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="account-type">Tipo</Label>
-                    <Select value={accountType} onValueChange={(v) => setAccountType(v as FinanceAccount['type'])}>
-                      <SelectTrigger id="account-type">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="checking">Conta Corrente</SelectItem>
-                        <SelectItem value="cash">Dinheiro</SelectItem>
-                        <SelectItem value="credit">Cartão de Crédito</SelectItem>
-                        <SelectItem value="savings">Poupança</SelectItem>
-                        <SelectItem value="investment">Investimento</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="account-balance">Saldo Inicial</Label>
-                    <CurrencyInput
-                      id="account-balance"
-                      value={accountBalance}
-                      onChange={setAccountBalance}
-                    />
-                  </div>
-                  <Button onClick={handleAddAccount} className="w-full">
-                    Criar Conta
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {accounts.length > 0 ? (
-            <div className="space-y-2">
-              {accounts.map(account => (
-                <div
-                  key={account.id}
-                  className="flex items-center justify-between p-3 rounded border border-border"
-                >
-                  <div>
-                    <p className="font-medium text-sm">{account.name}</p>
-                    <p className="text-xs text-muted-foreground capitalize">
-                      {account.type === 'checking' && 'Conta Corrente'}
-                      {account.type === 'cash' && 'Dinheiro'}
-                      {account.type === 'credit' && 'Cartão de Crédito'}
-                      {account.type === 'savings' && 'Poupança'}
-                      {account.type === 'investment' && 'Investimento'}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-sm">
-                      {formatCurrency(account.balance)}
-                    </p>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-10 w-10"
-                      onClick={() => setDeleteAccountId(account.id)}
-                      aria-label="Excluir conta"
-                    >
-                      <Trash className="w-4 h-4 text-destructive" />
+        <TabsContent value="accounts" className="mt-3">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Contas</CardTitle>
+                <Dialog open={showAccountDialog} onOpenChange={setShowAccountDialog}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Nova
                     </Button>
-                  </div>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Nova Conta</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="account-name">Nome</Label>
+                        <Input
+                          id="account-name"
+                          value={accountName}
+                          onChange={(e) => setAccountName(e.target.value)}
+                          placeholder="Ex: Nubank"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="account-type">Tipo</Label>
+                        <Select value={accountType} onValueChange={(v) => setAccountType(v as FinanceAccount['type'])}>
+                          <SelectTrigger id="account-type">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="checking">Conta Corrente</SelectItem>
+                            <SelectItem value="cash">Dinheiro</SelectItem>
+                            <SelectItem value="credit">Cartão de Crédito</SelectItem>
+                            <SelectItem value="savings">Poupança</SelectItem>
+                            <SelectItem value="investment">Investimento</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="account-balance">Saldo Inicial</Label>
+                        <CurrencyInput
+                          id="account-balance"
+                          value={accountBalance}
+                          onChange={setAccountBalance}
+                        />
+                      </div>
+                      <Button onClick={handleAddAccount} className="w-full">
+                        Criar Conta
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {accounts.length > 0 ? (
+                <div className="space-y-2">
+                  {accounts.map(account => (
+                    <div
+                      key={account.id}
+                      className="flex items-center justify-between p-3 rounded border border-border"
+                    >
+                      <div>
+                        <p className="font-medium text-sm">{account.name}</p>
+                        <p className="text-xs text-muted-foreground capitalize">
+                          {account.type === 'checking' && 'Conta Corrente'}
+                          {account.type === 'cash' && 'Dinheiro'}
+                          {account.type === 'credit' && 'Cartão de Crédito'}
+                          {account.type === 'savings' && 'Poupança'}
+                          {account.type === 'investment' && 'Investimento'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm">
+                          {formatCurrency(account.balance)}
+                        </p>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-10 w-10"
+                          onClick={() => setDeleteAccountId(account.id)}
+                          aria-label="Excluir conta"
+                        >
+                          <Trash className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Nenhuma conta criada
-            </p>
-          )}
-        </CardContent>
-      </Card>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Nenhuma conta criada
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="categories" className="mt-3">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Categorias</CardTitle>
+                <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Nova
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Nova Categoria</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="category-name">Nome</Label>
+                        <Input
+                          id="category-name"
+                          value={categoryName}
+                          onChange={(e) => setCategoryName(e.target.value)}
+                          placeholder="Ex: Alimentação"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="category-type">Tipo</Label>
+                        <Select value={categoryType} onValueChange={(v) => setCategoryType(v as 'income' | 'expense')}>
+                          <SelectTrigger id="category-type">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="expense">Despesa</SelectItem>
+                            <SelectItem value="income">Receita</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button onClick={handleAddCategory} className="w-full">
+                        Criar Categoria
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {expenseCategories.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase">Despesas ({expenseCategories.length})</p>
+                    <div className="space-y-1">
+                      {expenseCategories.map(category => (
+                        <div
+                          key={category.id}
+                          className="flex items-center justify-between p-2 rounded border border-border"
+                        >
+                          <span className="text-sm">{category.name}</span>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            onClick={() => setDeleteCategoryId(category.id)}
+                            aria-label="Excluir categoria"
+                          >
+                            <Trash className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {incomeCategories.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase">Receitas ({incomeCategories.length})</p>
+                    <div className="space-y-1">
+                      {incomeCategories.map(category => (
+                        <div
+                          key={category.id}
+                          className="flex items-center justify-between p-2 rounded border border-border"
+                        >
+                          <span className="text-sm">{category.name}</span>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            onClick={() => setDeleteCategoryId(category.id)}
+                            aria-label="Excluir categoria"
+                          >
+                            <Trash className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {categories.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Nenhuma categoria criada
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <AlertDialog open={!!deleteCategoryId} onOpenChange={(open) => !open && setDeleteCategoryId(null)}>
         <AlertDialogContent>

@@ -936,7 +936,7 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 | `Salário` | Receita |
 | `Freelance` | Receita |
 
-- [ ] 7 categorias criadas (5 despesa + 2 receita)
+- [x] 7 categorias criadas (5 despesa + 2 receita)
 
 ### 12.3 Registrar Receita (aba Transações)
 
@@ -948,8 +948,8 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 | Conta | `Nubank` |
 | Categoria | `Salário` |
 
-- [ ] Receita registrada
-- [ ] Saldo da conta Nubank atualiza → R$ 13.500
+- [x] Receita registrada
+- [x] Saldo da conta Nubank atualiza → R$ 13.500
 
 ### 12.4 Registrar Despesas (aba Transações)
 
@@ -983,8 +983,8 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 | Conta | `Carteira` |
 | Categoria | `Alimentação` |
 
-- [ ] 3 despesas registradas
-- [ ] Saldos de cada conta atualizados corretamente
+- [x] 3 despesas registradas
+- [x] Saldos de cada conta atualizados corretamente
 
 ### 12.5 Rendas Fixas (aba Receitas/Despesas)
 
@@ -997,18 +997,14 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 | Dia do mês | `5` |
 | Auto-confirmar | ✅ Ligado |
 
-- [ ] Renda fixa criada
-- [ ] Aparece na lista de recorrências
+- [x] Renda fixa criada
+- [x] Aparece na lista de recorrências
 
 ### 12.6 Verificar Overview (aba Visão Geral)
 - [ ] Gráficos de receita vs despesa aparecem
 - [ ] Resumo de saldos por conta correto
 - [ ] Total geral correto (somatório de todas as contas)
 
-### 12.7 Chat financeiro (se disponível)
-- [ ] Abra o chat de finanças
-- [ ] Digite: `Qual meu saldo total?`
-- [ ] Verifique se resposta faz sentido
 
 ---
 

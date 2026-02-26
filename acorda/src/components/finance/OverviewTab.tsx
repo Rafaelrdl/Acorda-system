@@ -1,10 +1,40 @@
 import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import type { ChartConfig } from '@/components/ui/chart'
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from 'recharts'
 import type { UserId } from '@/lib/types'
 import { Transaction, FinanceCategory, FinanceAccount } from '@/lib/types'
 import { formatCurrency, getMonthKey, parseMonthKey } from '@/lib/helpers'
-import { CaretLeft, CaretRight, TrendUp, TrendDown } from '@phosphor-icons/react'
+import { CaretLeft, CaretRight, TrendUp, TrendDown, Wallet, Bank, CreditCard, PiggyBank, CurrencyDollar, ChartBar } from '@phosphor-icons/react'
+
+const ACCOUNT_TYPE_LABELS: Record<string, string> = {
+  cash: 'Dinheiro',
+  checking: 'Conta Corrente',
+  credit: 'Crédito',
+  savings: 'Poupança',
+  investment: 'Investimento',
+}
+
+const ACCOUNT_TYPE_ICONS: Record<string, React.ElementType> = {
+  cash: CurrencyDollar,
+  checking: Bank,
+  credit: CreditCard,
+  savings: PiggyBank,
+  investment: ChartBar,
+}
+
+const chartConfig = {
+  receitas: {
+    label: 'Receitas',
+    color: 'hsl(var(--chart-2))',
+  },
+  despesas: {
+    label: 'Despesas',
+    color: 'hsl(var(--chart-1))',
+  },
+} satisfies ChartConfig
 
 interface OverviewTabProps {
   userId: UserId
@@ -68,23 +98,50 @@ export function OverviewTab({
     }
   }, [transactions, selectedMonth, categories])
 
-  // Calcula o saldo total considerando saldo inicial das contas + transações
-  const totalBalance = useMemo(() => {
-    // Saldo inicial das contas
-    const accountsBalance = accounts.reduce((sum, a) => sum + Number(a.balance || 0), 0)
-    
-    // Total de receitas (todas as transações, não apenas do mês)
-    const allIncome = transactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + Number(t.amount), 0)
-    
-    // Total de despesas (todas as transações, não apenas do mês)
-    const allExpenses = transactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + Number(t.amount), 0)
-    
-    return accountsBalance + allIncome - allExpenses
+  // Dados para o gráfico dos últimos 6 meses
+  const chartData = useMemo(() => {
+    const months: { month: string; label: string; receitas: number; despesas: number }[] = []
+    const current = parseMonthKey(selectedMonth)
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(current.getFullYear(), current.getMonth() - i, 1)
+      const key = getMonthKey(d)
+      const label = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
+
+      const monthTx = transactions.filter(t => t.date.substring(0, 7) === key)
+      const receitas = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
+      const despesas = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
+
+      months.push({ month: key, label, receitas, despesas })
+    }
+
+    return months
+  }, [transactions, selectedMonth])
+
+  // Saldo por conta (saldo inicial + receitas - despesas por conta)
+  const accountBalances = useMemo(() => {
+    return accounts.map(account => {
+      const initialBalance = Number(account.balance || 0)
+
+      const accountIncome = transactions
+        .filter(t => t.accountId === account.id && t.type === 'income')
+        .reduce((sum, t) => sum + Number(t.amount), 0)
+
+      const accountExpenses = transactions
+        .filter(t => t.accountId === account.id && t.type === 'expense')
+        .reduce((sum, t) => sum + Number(t.amount), 0)
+
+      return {
+        ...account,
+        computedBalance: initialBalance + accountIncome - accountExpenses,
+      }
+    })
   }, [accounts, transactions])
+
+  // Total geral = soma de todos os saldos computados
+  const totalBalance = useMemo(() => {
+    return accountBalances.reduce((sum, a) => sum + a.computedBalance, 0)
+  }, [accountBalances])
 
   const handlePreviousMonth = () => {
     const date = parseMonthKey(selectedMonth)
@@ -109,6 +166,7 @@ export function OverviewTab({
 
   return (
     <div className="space-y-4">
+      {/* Seletor de mês */}
       <div className="flex items-center justify-between">
         <Button onClick={handlePreviousMonth} variant="ghost" size="icon" aria-label="Mês anterior">
           <CaretLeft className="w-5 h-5" />
@@ -126,21 +184,11 @@ export function OverviewTab({
         </Button>
       </div>
 
+      {/* Resumo do mês: Receitas, Despesas, Balanço */}
       <div className="grid grid-cols-1 gap-3">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-muted-foreground font-normal">
-              Saldo Total
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">{formatCurrency(totalBalance)}</p>
-          </CardContent>
-        </Card>
-
         <div className="grid grid-cols-2 gap-3">
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2">
               <CardTitle className="text-sm text-muted-foreground font-normal flex items-center gap-1">
                 <TrendUp className="w-4 h-4 text-accent" />
                 Receitas
@@ -154,7 +202,7 @@ export function OverviewTab({
           </Card>
 
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2">
               <CardTitle className="text-sm text-muted-foreground font-normal flex items-center gap-1">
                 <TrendDown className="w-4 h-4 text-destructive" />
                 Despesas
@@ -169,7 +217,7 @@ export function OverviewTab({
         </div>
 
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground font-normal">
               Balanço do Mês
             </CardTitle>
@@ -184,6 +232,118 @@ export function OverviewTab({
         </Card>
       </div>
 
+      {/* Gráfico Receita vs Despesa (últimos 6 meses) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Receita vs Despesa</CardTitle>
+          <p className="text-xs text-muted-foreground">Últimos 6 meses</p>
+        </CardHeader>
+        <CardContent>
+          {chartData.some(d => d.receitas > 0 || d.despesas > 0) ? (
+            <ChartContainer config={chartConfig} className="h-[220px] w-full">
+              <BarChart data={chartData} accessibilityLayer>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="label"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  className="text-xs"
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={4}
+                  width={60}
+                  tickFormatter={(v: number) =>
+                    v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)
+                  }
+                  className="text-xs"
+                />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value) => formatCurrency(Number(value))}
+                    />
+                  }
+                />
+                <Bar
+                  dataKey="receitas"
+                  fill="var(--color-receitas)"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="despesas"
+                  fill="var(--color-despesas)"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ChartContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[180px] text-muted-foreground text-sm">
+              Nenhuma transação registrada nos últimos 6 meses
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Resumo de Saldos por Conta */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Wallet className="w-5 h-5" />
+            Saldos por Conta
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {accountBalances.length > 0 ? (
+            <div className="space-y-3">
+              {accountBalances.map(account => {
+                const Icon = ACCOUNT_TYPE_ICONS[account.type] || Wallet
+                return (
+                  <div
+                    key={account.id}
+                    className="flex items-center justify-between py-2 border-b last:border-b-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                        <Icon className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{account.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {ACCOUNT_TYPE_LABELS[account.type] || account.type}
+                        </p>
+                      </div>
+                    </div>
+                    <p className={`text-sm font-semibold ${
+                      account.computedBalance >= 0 ? 'text-foreground' : 'text-destructive'
+                    }`}>
+                      {formatCurrency(account.computedBalance)}
+                    </p>
+                  </div>
+                )
+              })}
+
+              {/* Total Geral */}
+              <div className="flex items-center justify-between pt-3 border-t-2">
+                <p className="text-sm font-semibold">Total Geral</p>
+                <p className={`text-lg font-bold ${
+                  totalBalance >= 0 ? 'text-accent' : 'text-destructive'
+                }`}>
+                  {formatCurrency(totalBalance)}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              Nenhuma conta cadastrada. Adicione contas na aba Configurações.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Gastos por Categoria */}
       {monthData.categoriesArray.length > 0 && (
         <Card>
           <CardHeader>
