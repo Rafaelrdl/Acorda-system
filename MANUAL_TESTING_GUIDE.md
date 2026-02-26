@@ -766,7 +766,20 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 
 ## 10. Pomodoro
 
-### 10.1 Criar Preset Personalizado
+> Abra o **Modo Foco** clicando no ícone de timer/play na barra superior. O modal abre com os presets pré-configurados (25/5 Clássico, 50/10 Profundo, 15/3 Rápido). Presets personalizados podem ser criados diretamente dentro do modal.
+
+### 10.1 Verificar Presets Padrão
+
+1. Abra o modal **Modo Foco**
+2. Clique no seletor de **Preset**
+
+- [ ] 3 presets padrão disponíveis: `25/5 (Clássico)`, `50/10 (Profundo)`, `15/3 (Rápido)`
+- [ ] Ao trocar de preset, o timer atualiza automaticamente
+
+### 10.2 Criar Preset Personalizado
+
+1. No modal **Modo Foco**, clique no botão **"+"** ao lado do seletor de Preset
+2. Formulário inline abre com os campos:
 
 | Campo | Valor sugerido |
 |-------|---------------|
@@ -776,27 +789,70 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 | Pausa Longa (min) | `30` |
 | Ciclos até pausa longa | `4` |
 
-- [ ] Preset criado na lista de presets
+3. Clique em **"Criar Preset"**
 
-### 10.2 Iniciar Sessão Pomodoro
-- [ ] Selecione o preset "Estudo Intenso" (ou o padrão 25/5)
-- [ ] Clique em "Iniciar"
-- [ ] Timer começa a contar
+- [ ] Preset criado e selecionado automaticamente
+- [ ] Preset aparece no seletor junto aos padrões
+- [ ] Timer ajusta para 50:00
+
+### 10.3 Editar Preset Personalizado
+
+1. Selecione o preset `Estudo Intenso` no seletor
+2. Clique no ícone de **lápis** (✏️) que aparece ao lado (só para presets customizados)
+3. Altere o nome para `Estudo Intenso Pro` e o Foco para `55`
+4. Clique em **"Salvar"**
+
+- [ ] Preset atualizado no seletor
+- [ ] Timer ajusta para 55:00
+- [ ] Ícones de editar/excluir NÃO aparecem para os presets padrão
+
+### 10.4 Excluir Preset Personalizado
+
+1. Selecione o preset customizado
+2. Clique no ícone de **lixeira** (🗑)
+3. Confirme a exclusão
+
+- [ ] Preset removido do seletor
+- [ ] Seletor volta para o primeiro preset padrão
+
+### 10.5 Iniciar Sessão Pomodoro
+- [ ] Selecione um preset (ou crie um personalizado)
+- [ ] Clique em **"Iniciar"**
+- [ ] Timer começa a contar regressivamente
+- [ ] Indicador visual de progresso (anel circular) preenche conforme o tempo passa
 - [ ] Pausa automática ao fim do ciclo de foco
-- [ ] Som/notificação ao fim do ciclo
+- [ ] Toast "Sessão de foco concluída! 🎉" aparece
 
-### 10.3 Pausar e Retomar
-- [ ] Clique em "Pausar" durante o timer
-- [ ] Timer para
-- [ ] Clique em "Retomar"
-- [ ] Timer continua de onde parou
+### 10.6 Pausar e Retomar
+- [ ] Clique em **"Pausar"** durante o timer → timer para
+- [ ] Clique em **"Retomar"** → timer continua de onde parou
 
-### 10.4 Pular para próxima fase
-- [ ] Clique em "Pular" para ir para pausa ou próximo ciclo
+### 10.7 Pular para próxima fase
+- [ ] Durante a pausa, clique em **"Pular"** para ir direto ao próximo ciclo de foco
 
-### 10.5 Cancelar sessão
-- [ ] Clique em "Cancelar"
-- [ ] Timer reseta
+### 10.8 Cancelar sessão
+- [ ] Clique no **"X"** durante uma sessão ativa
+- [ ] Timer reseta e sessão é salva como abortada
+
+### 10.9 Vincular tarefa ao foco
+
+1. Crie uma tarefa com status "Próxima Ação" (se não existir)
+2. Abra o Modo Foco
+3. No campo **"Tarefa (opcional)"**, selecione a tarefa
+
+- [ ] Campo "Tarefa" mostra tarefas ativas (next/scheduled)
+- [ ] Inicie a sessão com tarefa vinculada
+
+### 10.10 Registrar Interrupção
+- [ ] Durante uma sessão ativa, clique em **"Registrar Interrupção"**
+- [ ] Toast "Interrupção registrada na Inbox" aparece
+- [ ] Contador de interrupções incrementa no timer
+- [ ] Item aparece no Inbox com texto descritivo
+
+### 10.11 Notas pós-sessão
+- [ ] Após completar uma sessão, tela de notas aparece
+- [ ] Digite uma nota e clique em **"Salvar"**
+- [ ] Ou clique em **"Pular"** para ignorar
 
 ---
 

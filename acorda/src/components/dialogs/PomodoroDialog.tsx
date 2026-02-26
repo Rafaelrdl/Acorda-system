@@ -7,7 +7,9 @@ import type { UserId } from '@/lib/types'
 import { PomodoroPreset, PomodoroSession, Task, InboxItem } from '@/lib/types'
 import { formatPomodoroTime, createPomodoroPreset, createPomodoroSession, createInboxItem } from '@/lib/helpers'
 import { getElapsedMs, getElapsedMinutes } from '@/lib/pomodoro'
-import { Play, Pause, X, SkipForward, Lightning } from '@phosphor-icons/react'
+import { Play, Pause, X, SkipForward, Lightning, Plus, PencilSimple, Trash } from '@phosphor-icons/react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 
 interface PomodoroDialogProps {
@@ -18,6 +20,8 @@ interface PomodoroDialogProps {
   tasks: Task[]
   onSessionComplete: (session: PomodoroSession) => void
   onInterruptionCapture?: (item: InboxItem) => void
+  onSavePreset?: (preset: PomodoroPreset) => void
+  onDeletePreset?: (id: string) => void
   selectedTaskId?: string
 }
 
@@ -37,6 +41,8 @@ export function PomodoroDialog({
   tasks,
   onSessionComplete,
   onInterruptionCapture,
+  onSavePreset,
+  onDeletePreset,
   selectedTaskId
 }: PomodoroDialogProps) {
   const [selectedPreset, setSelectedPreset] = useState<PomodoroPreset | null>(null)
@@ -50,6 +56,15 @@ export function PomodoroDialog({
   const [completedCycles, setCompletedCycles] = useState(0)
   const [showNotesInput, setShowNotesInput] = useState(false)
   const [sessionNotes, setSessionNotes] = useState('')
+
+  // Preset form state
+  const [showPresetForm, setShowPresetForm] = useState(false)
+  const [editingPreset, setEditingPreset] = useState<PomodoroPreset | null>(null)
+  const [presetName, setPresetName] = useState('')
+  const [presetFocus, setPresetFocus] = useState(25)
+  const [presetBreak, setPresetBreak] = useState(5)
+  const [presetLongBreak, setPresetLongBreak] = useState(15)
+  const [presetCycles, setPresetCycles] = useState(4)
   
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
   const allPresets = useMemo(() => [...DEFAULT_PRESETS, ...presets], [presets])
@@ -242,6 +257,65 @@ export function PomodoroDialog({
     }
   }
 
+  const openPresetForm = (preset?: PomodoroPreset) => {
+    if (preset) {
+      setEditingPreset(preset)
+      setPresetName(preset.name)
+      setPresetFocus(preset.focusDuration)
+      setPresetBreak(preset.breakDuration)
+      setPresetLongBreak(preset.longBreakDuration)
+      setPresetCycles(preset.sessionsBeforeLongBreak)
+    } else {
+      setEditingPreset(null)
+      setPresetName('')
+      setPresetFocus(25)
+      setPresetBreak(5)
+      setPresetLongBreak(15)
+      setPresetCycles(4)
+    }
+    setShowPresetForm(true)
+  }
+
+  const handleSavePresetForm = () => {
+    if (!presetName.trim()) {
+      toast.error('Nome é obrigatório')
+      return
+    }
+    if (presetFocus < 1 || presetBreak < 1 || presetLongBreak < 1 || presetCycles < 1) {
+      toast.error('Todos os valores devem ser maiores que 0')
+      return
+    }
+
+    const newPreset = editingPreset
+      ? { ...editingPreset, name: presetName, focusDuration: presetFocus, breakDuration: presetBreak, longBreakDuration: presetLongBreak, sessionsBeforeLongBreak: presetCycles, updatedAt: Date.now() }
+      : createPomodoroPreset(userId, presetName, presetFocus, presetBreak, presetLongBreak, presetCycles)
+
+    if (onSavePreset) {
+      onSavePreset(newPreset)
+    }
+
+    setShowPresetForm(false)
+    // Select the new/edited preset after a tick so allPresets is updated
+    setTimeout(() => {
+      setSelectedPreset(newPreset)
+      setTimeLeft(newPreset.focusDuration * 60)
+    }, 50)
+  }
+
+  const handleDeletePreset = (preset: PomodoroPreset) => {
+    if (onDeletePreset) {
+      onDeletePreset(preset.id)
+      // If deleted preset was selected, switch to first default
+      if (selectedPreset?.id === preset.id) {
+        const fallback = DEFAULT_PRESETS[0]
+        setSelectedPreset(fallback)
+        setTimeLeft(fallback.focusDuration * 60)
+      }
+    }
+  }
+
+  const isCustomPreset = (preset: PomodoroPreset) => !preset.id.startsWith('preset-')
+
   if (!selectedPreset) return null
 
   const totalTime = phase === 'focus' 
@@ -272,7 +346,79 @@ export function PomodoroDialog({
           <DialogTitle>Modo Foco</DialogTitle>
         </DialogHeader>
 
-        {showNotesInput ? (
+        {showPresetForm ? (
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              {editingPreset ? 'Editar Preset' : 'Novo Preset'}
+            </h3>
+
+            <div className="space-y-2">
+              <Label htmlFor="preset-name">Nome</Label>
+              <Input
+                id="preset-name"
+                value={presetName}
+                onChange={(e) => setPresetName(e.target.value)}
+                placeholder="Meu preset personalizado"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="preset-focus" className="text-xs">Foco (min)</Label>
+                <Input
+                  id="preset-focus"
+                  type="number"
+                  min="1"
+                  max="120"
+                  value={presetFocus}
+                  onChange={(e) => setPresetFocus(parseInt(e.target.value) || 1)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="preset-break" className="text-xs">Pausa (min)</Label>
+                <Input
+                  id="preset-break"
+                  type="number"
+                  min="1"
+                  max="60"
+                  value={presetBreak}
+                  onChange={(e) => setPresetBreak(parseInt(e.target.value) || 1)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="preset-long-break" className="text-xs">Pausa longa (min)</Label>
+                <Input
+                  id="preset-long-break"
+                  type="number"
+                  min="1"
+                  max="60"
+                  value={presetLongBreak}
+                  onChange={(e) => setPresetLongBreak(parseInt(e.target.value) || 1)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="preset-cycles" className="text-xs">Ciclos até pausa longa</Label>
+                <Input
+                  id="preset-cycles"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={presetCycles}
+                  onChange={(e) => setPresetCycles(parseInt(e.target.value) || 1)}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <Button variant="outline" onClick={() => setShowPresetForm(false)} className="flex-1">
+                Cancelar
+              </Button>
+              <Button onClick={handleSavePresetForm} className="flex-1">
+                {editingPreset ? 'Salvar' : 'Criar Preset'}
+              </Button>
+            </div>
+          </div>
+        ) : showNotesInput ? (
           <div className="space-y-4">
             <div className="text-center">
               <div className="text-5xl mb-2">🎉</div>
@@ -313,18 +459,58 @@ export function PomodoroDialog({
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Preset</label>
-                  <Select value={selectedPreset.id} onValueChange={handlePresetChange}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allPresets.map(preset => (
-                        <SelectItem key={preset.id} value={preset.id}>
-                          {preset.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2">
+                    <Select value={selectedPreset.id} onValueChange={handlePresetChange}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allPresets.map(preset => (
+                          <SelectItem key={preset.id} value={preset.id}>
+                            {preset.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {onSavePreset && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => openPresetForm()}
+                        title="Criar preset personalizado"
+                      >
+                        <Plus size={18} />
+                      </Button>
+                    )}
+                    {isCustomPreset(selectedPreset) && (
+                      <>
+                        {onSavePreset && (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => openPresetForm(selectedPreset)}
+                            title="Editar preset"
+                          >
+                            <PencilSimple size={18} />
+                          </Button>
+                        )}
+                        {onDeletePreset && (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => {
+                              if (window.confirm(`Excluir preset "${selectedPreset.name}"?`)) {
+                                handleDeletePreset(selectedPreset)
+                              }
+                            }}
+                            title="Excluir preset"
+                          >
+                            <Trash size={18} />
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {activeTasks.length > 0 && (

@@ -516,20 +516,16 @@ function MainApp({ user }: { user: User }) {
     toast.success('Anotação removida')
   }
 
-  // TODO: wire these handlers to preset management UI
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleAddPomodoroPreset = (preset: PomodoroPreset) => {
     setPomodoroPresets(current => [...(current || []), preset])
     toast.success('Preset criado')
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleUpdatePomodoroPreset = (preset: PomodoroPreset) => {
     setPomodoroPresets(current => (current || []).map(p => p.id === preset.id ? preset : p))
     toast.success('Preset atualizado')
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDeletePomodoroPreset = (id: string) => {
     setPomodoroPresets(current => 
       (current || []).map(p => 
@@ -953,6 +949,15 @@ function MainApp({ user }: { user: User }) {
         tasks={tasks || []}
         onSessionComplete={handlePomodoroComplete}
         onInterruptionCapture={handleCapture}
+        onSavePreset={(preset) => {
+          const exists = (pomodoroPresets || []).some(p => p.id === preset.id)
+          if (exists) {
+            handleUpdatePomodoroPreset(preset)
+          } else {
+            handleAddPomodoroPreset(preset)
+          }
+        }}
+        onDeletePreset={handleDeletePomodoroPreset}
       />
 
       <ProfileDialog
