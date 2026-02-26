@@ -44,7 +44,6 @@ import type { UserId, Reference } from '@/lib/types'
 import { updateTimestamp } from '@/lib/helpers'
 import { v4 as uuidv4 } from 'uuid'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
 
 interface NoteEditorProps {
   open: boolean
@@ -80,7 +79,6 @@ export function NoteEditor({
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
   const [sourceUrl, setSourceUrl] = useState('')
-  const [showMetadata, setShowMetadata] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [wordCount, setWordCount] = useState(0)
   const [charCount, setCharCount] = useState(0)
@@ -127,7 +125,7 @@ export function NoteEditor({
     }
   }, [title, content, tags, sourceUrl, note])
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback((isAutoSave = false) => {
     const parsedTags = tags
       .split(',')
       .map(t => t.trim())
@@ -158,7 +156,9 @@ export function NoteEditor({
     }
 
     setHasUnsavedChanges(false)
-    toast.success(note ? 'Anotação salva' : 'Anotação criada')
+    if (!isAutoSave) {
+      toast.success(note ? 'Anotação atualizada' : 'Anotação criada')
+    }
   }, [title, content, tags, sourceUrl, note, userId, onSave])
 
   // Auto-save com debounce de 3s
@@ -166,8 +166,7 @@ export function NoteEditor({
     if (!hasUnsavedChanges || !note) return
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
     autoSaveTimerRef.current = setTimeout(() => {
-      handleSave()
-      toast.success('Auto-salvo')
+      handleSave(true)
     }, 3000)
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
@@ -476,7 +475,7 @@ export function NoteEditor({
             </Button>
           )}
           <Button 
-            onClick={handleSave}
+            onClick={() => handleSave()}
             size="sm"
             className="gap-1.5 h-9 rounded-lg px-4 font-medium shadow-sm"
           >
@@ -516,37 +515,12 @@ export function NoteEditor({
             </div>
           ))}
           
-          <Separator orientation="vertical" className="h-5 mx-1.5" />
-          
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowMetadata(!showMetadata)}
-                className={cn(
-                  "h-10 px-2.5 gap-1.5 shrink-0 rounded-md text-muted-foreground",
-                  showMetadata && "bg-muted text-foreground"
-                )}
-              >
-                <Tag size={14} />
-                <span className="text-xs font-medium hidden sm:inline">Metadados</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs sm:hidden">
-              Metadados
-            </TooltipContent>
-          </Tooltip>
+
         </div>
       </TooltipProvider>
 
-      {/* Área de metadados expansível - animated */}
-      <div
-        className={cn(
-          "overflow-hidden transition-all duration-200 ease-out border-b border-border/40",
-          showMetadata ? "max-h-40 opacity-100" : "max-h-0 opacity-0 border-b-0"
-        )}
-      >
+      {/* Área de metadados - always visible */}
+      <div className="border-b border-border/40">
         <div className="px-4 sm:px-6 py-3 bg-muted/15 space-y-3">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 space-y-1.5">
@@ -559,7 +533,7 @@ export function NoteEditor({
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
                 placeholder="trabalho, ideias, pesquisa..."
-                className="h-8 text-sm bg-background/60 border-border/50 focus-visible:border-accent"
+                className="h-8 text-sm rounded-none bg-background/60 border-border/50 focus-visible:border-accent"
               />
             </div>
             <div className="flex-1 space-y-1.5">
@@ -573,7 +547,7 @@ export function NoteEditor({
                 value={sourceUrl}
                 onChange={(e) => setSourceUrl(e.target.value)}
                 placeholder="https://..."
-                className="h-8 text-sm bg-background/60 border-border/50 focus-visible:border-accent"
+                className="h-8 text-sm rounded-none bg-background/60 border-border/50 focus-visible:border-accent"
               />
             </div>
           </div>
@@ -589,7 +563,7 @@ export function NoteEditor({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Título da anotação"
-              className="border-0 text-2xl sm:text-3xl font-bold p-0 h-auto focus-visible:ring-0 placeholder:text-muted-foreground/30 tracking-tight mb-1"
+              className="border-0 rounded-none text-2xl sm:text-3xl font-bold px-3 py-2 h-auto focus-visible:ring-0 placeholder:text-muted-foreground/30 tracking-tight mb-1"
             />
             
             {/* Separador sutil */}

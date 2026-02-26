@@ -499,12 +499,10 @@ function MainApp({ user }: { user: User }) {
 
   const handleAddReference = (reference: Reference) => {
     setReferences(current => [...(current || []), reference])
-    toast.success('Anotação salva')
   }
 
   const handleUpdateReference = (reference: Reference) => {
     setReferences(current => (current || []).map(r => r.id === reference.id ? reference : r))
-    toast.success('Anotação atualizada')
   }
 
   const handleDeleteReference = (id: string) => {

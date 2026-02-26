@@ -55,6 +55,7 @@ export function PomodoroDialog({
   const [elapsedMs, setElapsedMs] = useState(0)
   const [segmentStartedAt, setSegmentStartedAt] = useState<number | null>(null)
   const [completedCycles, setCompletedCycles] = useState(0)
+  const [interruptionsCount, setInterruptionsCount] = useState(0)
   const [showNotesInput, setShowNotesInput] = useState(false)
   const [sessionNotes, setSessionNotes] = useState('')
 
@@ -67,6 +68,7 @@ export function PomodoroDialog({
   const [presetLongBreak, setPresetLongBreak] = useState(15)
   const [presetCycles, setPresetCycles] = useState(4)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false)
   
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
   const allPresets = useMemo(() => [...DEFAULT_PRESETS, ...presets], [presets])
@@ -89,17 +91,15 @@ export function PomodoroDialog({
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
       intervalRef.current = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            handleTimerComplete()
-            return 0
-          }
-          return prev - 1
-        })
+        setTimeLeft(prev => prev - 1)
       }, 1000)
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
+      }
+      // Timer hit zero while running — trigger completion
+      if (isRunning && timeLeft <= 0) {
+        handleTimerComplete()
       }
     }
 
@@ -156,6 +156,7 @@ export function PomodoroDialog({
         taskId: selectedTask,
       })
       setCurrentSession(newSession)
+      setInterruptionsCount(0)
       setElapsedMs(0)
       setSegmentStartedAt(now)
     } else if (phase === 'focus' && !segmentStartedAt) {
@@ -202,6 +203,35 @@ export function PomodoroDialog({
     setIsRunning(false)
   }
 
+  const handleSkipToBreak = () => {
+    if (!selectedPreset) return
+    
+    // If in focus with active session, complete it as aborted
+    if (currentSession && phase === 'focus') {
+      const now = Date.now()
+      const totalElapsedMs = getElapsedMs(now, segmentStartedAt, elapsedMs)
+      const skippedSession: PomodoroSession = {
+        ...currentSession,
+        endedAt: now,
+        actualMinutes: getElapsedMinutes(totalElapsedMs),
+        completed: false,
+        aborted: true,
+        updatedAt: Date.now()
+      }
+      onSessionComplete(skippedSession)
+      setElapsedMs(0)
+      setSegmentStartedAt(null)
+      setCurrentSession(null)
+    }
+
+    const newCycleCount = completedCycles + 1
+    setCompletedCycles(newCycleCount)
+    const shouldLongBreak = newCycleCount % selectedPreset.sessionsBeforeLongBreak === 0
+    setPhase(shouldLongBreak ? 'longBreak' : 'break')
+    setTimeLeft(shouldLongBreak ? selectedPreset.longBreakDuration * 60 : selectedPreset.breakDuration * 60)
+    setIsRunning(false)
+  }
+
   const handleInterruption = () => {
     if (!currentSession) return
     
@@ -215,15 +245,19 @@ export function PomodoroDialog({
     
     const interruptionItem = createInboxItem(userId, content)
     
-    if (onInterruptionCapture) {
-      onInterruptionCapture(interruptionItem)
-    }
+    // Update local counter first (independent state for reliable UI)
+    setInterruptionsCount(prev => prev + 1)
     
+    // Update session data for tracking
     setCurrentSession(prev => prev ? {
       ...prev,
       interruptionsCount: prev.interruptionsCount + 1,
       updatedAt: Date.now()
     } : null)
+    
+    if (onInterruptionCapture) {
+      onInterruptionCapture(interruptionItem)
+    }
     
     toast.success('Interrupção registrada na Inbox')
   }
@@ -242,6 +276,7 @@ export function PomodoroDialog({
     setPhase('focus')
     setTimeLeft(selectedPreset.focusDuration * 60)
     setCurrentSession(null)
+    setInterruptionsCount(0)
     setElapsedMs(0)
     setSegmentStartedAt(null)
     setCompletedCycles(0)
@@ -338,9 +373,8 @@ export function PomodoroDialog({
     <>
     <Dialog open={open} onOpenChange={(open) => {
       if (!open && currentSession && isRunning) {
-        const confirmClose = window.confirm('Você tem uma sessão ativa. Deseja realmente sair?')
-        if (!confirmClose) return
-        handleStop()
+        setShowCloseConfirm(true)
+        return
       }
       onOpenChange(open)
     }}>
@@ -535,26 +569,29 @@ export function PomodoroDialog({
 
             <div className="relative">
               <svg className="w-full h-64" viewBox="0 0 200 200">
+                {/* Background track */}
                 <circle
                   cx="100"
                   cy="100"
                   r="90"
                   fill="none"
-                  stroke="hsl(var(--secondary))"
-                  strokeWidth="8"
+                  stroke="hsl(var(--muted))"
+                  strokeWidth="10"
+                  opacity="0.4"
                 />
+                {/* Progress arc */}
                 <circle
                   cx="100"
                   cy="100"
                   r="90"
                   fill="none"
-                  stroke={phase === 'focus' ? "hsl(var(--primary))" : "hsl(var(--accent))"}
-                  strokeWidth="8"
+                  stroke="#22c55e"
+                  strokeWidth="10"
                   strokeLinecap="round"
                   strokeDasharray={`${2 * Math.PI * 90}`}
                   strokeDashoffset={`${2 * Math.PI * 90 * (1 - progress / 100)}`}
                   transform="rotate(-90 100 100)"
-                  className="transition-all duration-300"
+                  className="transition-all duration-1000 ease-linear"
                 />
               </svg>
               
@@ -569,9 +606,9 @@ export function PomodoroDialog({
                   <div className="text-5xl font-bold font-mono">
                     {formatPomodoroTime(timeLeft)}
                   </div>
-                  {currentSession && currentSession.interruptionsCount > 0 && (
+                  {currentSession && interruptionsCount > 0 && (
                     <div className="text-xs text-muted-foreground mt-2">
-                      {currentSession.interruptionsCount} interrupç{currentSession.interruptionsCount === 1 ? 'ão' : 'ões'}
+                      {interruptionsCount} interrupç{interruptionsCount === 1 ? 'ão' : 'ões'}
                     </div>
                   )}
                 </div>
@@ -592,17 +629,20 @@ export function PomodoroDialog({
                   </Button>
                 )}
                 
-                {currentSession && (
+                {currentSession && phase === 'focus' && (
                   <Button onClick={handleStop} variant="outline" size="lg">
                     <X size={20} />
                   </Button>
                 )}
 
-                {phase !== 'focus' && (
-                  <Button onClick={handleSkipBreak} variant="outline" size="lg">
-                    <SkipForward size={20} />
-                  </Button>
-                )}
+                <Button 
+                  onClick={phase === 'focus' ? handleSkipToBreak : handleSkipBreak} 
+                  variant="outline" 
+                  size="lg"
+                  title={phase === 'focus' ? 'Pular para pausa' : 'Pular para foco'}
+                >
+                  <SkipForward size={20} />
+                </Button>
               </div>
 
               {currentSession && phase === 'focus' && onInterruptionCapture && (
@@ -627,6 +667,30 @@ export function PomodoroDialog({
         )}
       </DialogContent>
     </Dialog>
+
+    {/* Confirmação de saída com sessão ativa */}
+    <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Sessão em andamento</AlertDialogTitle>
+          <AlertDialogDescription>
+            Você está no meio de uma sessão de foco. Se sair agora, o progresso desta sessão será perdido. Deseja realmente encerrar?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Continuar focando</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={() => {
+              handleStop()
+              onOpenChange(false)
+            }}
+          >
+            Encerrar sessão
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
 
     {/* Confirmação de exclusão de preset */}
     <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>

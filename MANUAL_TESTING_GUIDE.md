@@ -816,23 +816,23 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 - [x] Seletor volta para o primeiro preset padrão
 
 ### 10.5 Iniciar Sessão Pomodoro
-- [ ] Selecione um preset (ou crie um personalizado)
-- [ ] Clique em **"Iniciar"**
-- [ ] Timer começa a contar regressivamente
-- [ ] Indicador visual de progresso (anel circular) preenche conforme o tempo passa
-- [ ] Pausa automática ao fim do ciclo de foco
-- [ ] Toast "Sessão de foco concluída! 🎉" aparece
+- [x] Selecione um preset (ou crie um personalizado)
+- [x] Clique em **"Iniciar"**
+- [x] Timer começa a contar regressivamente
+- [x] Indicador visual de progresso (anel circular) preenche conforme o tempo passa
+- [x] Pausa automática ao fim do ciclo de foco
+- [x] Toast "Sessão de foco concluída! 🎉" aparece
 
 ### 10.6 Pausar e Retomar
-- [ ] Clique em **"Pausar"** durante o timer → timer para
-- [ ] Clique em **"Retomar"** → timer continua de onde parou
+- [x] Clique em **"Pausar"** durante o timer → timer para
+- [x] Clique em **"Retomar"** → timer continua de onde parou
 
 ### 10.7 Pular para próxima fase
-- [ ] Durante a pausa, clique em **"Pular"** para ir direto ao próximo ciclo de foco
+- [x] Durante a pausa, clique em **"Pular"** para ir direto ao próximo ciclo de foco
 
 ### 10.8 Cancelar sessão
-- [ ] Clique no **"X"** durante uma sessão ativa
-- [ ] Timer reseta e sessão é salva como abortada
+- [x] Clique no **"X"** durante uma sessão ativa
+- [x] Timer reseta e sessão é salva como abortada
 
 ### 10.9 Vincular tarefa ao foco
 
@@ -840,19 +840,19 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 2. Abra o Modo Foco
 3. No campo **"Tarefa (opcional)"**, selecione a tarefa
 
-- [ ] Campo "Tarefa" mostra tarefas ativas (next/scheduled)
-- [ ] Inicie a sessão com tarefa vinculada
+- [x] Campo "Tarefa" mostra tarefas ativas (next/scheduled)
+- [x] Inicie a sessão com tarefa vinculada
 
 ### 10.10 Registrar Interrupção
-- [ ] Durante uma sessão ativa, clique em **"Registrar Interrupção"**
-- [ ] Toast "Interrupção registrada na Inbox" aparece
-- [ ] Contador de interrupções incrementa no timer
-- [ ] Item aparece no Inbox com texto descritivo
+- [x] Durante uma sessão ativa, clique em **"Registrar Interrupção"**
+- [x] Toast "Interrupção registrada na Inbox" aparece
+- [x] Contador de interrupções incrementa no timer
+- [x] Item aparece no Inbox com texto descritivo
 
 ### 10.11 Notas pós-sessão
-- [ ] Após completar uma sessão, tela de notas aparece
-- [ ] Digite uma nota e clique em **"Salvar"**
-- [ ] Ou clique em **"Pular"** para ignorar
+- [x] Após completar uma sessão, tela de notas aparece
+- [x] Digite uma nota e clique em **"Salvar"**
+- [x] Ou clique em **"Pular"** para ignorar
 
 ---
 
@@ -869,18 +869,18 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 | Tags | `trabalho, ideias, pesquisa` |
 | URL de origem | `https://example.com/artigo-produtividade` |
 
-- [ ] Nota criada com sucesso
-- [ ] Tags exibidas como badges
-- [ ] URL clicável
+- [x] Nota criada com sucesso
+- [x] Tags exibidas como badges
+- [x] URL clicável
 
 ### 11.2 Editar Nota
-- [ ] Clique na nota existente
-- [ ] Altere o conteúdo adicionando `- Notificações push`
-- [ ] Salve e verifique se o conteúdo atualizou
+- [x] Clique na nota existente
+- [x] Altere o conteúdo adicionando `- Notificações push`
+- [x] Salve e verifique se o conteúdo atualizou
 
 ### 11.3 Deletar Nota
-- [ ] Delete a nota de teste
-- [ ] Nota some da lista
+- [x] Delete a nota de teste
+- [x] Nota some da lista
 
 ---
 
