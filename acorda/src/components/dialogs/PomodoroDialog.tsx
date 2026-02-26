@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -65,6 +66,7 @@ export function PomodoroDialog({
   const [presetBreak, setPresetBreak] = useState(5)
   const [presetLongBreak, setPresetLongBreak] = useState(15)
   const [presetCycles, setPresetCycles] = useState(4)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
   const allPresets = useMemo(() => [...DEFAULT_PRESETS, ...presets], [presets])
@@ -333,6 +335,7 @@ export function PomodoroDialog({
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(open) => {
       if (!open && currentSession && isRunning) {
         const confirmClose = window.confirm('Você tem uma sessão ativa. Deseja realmente sair?')
@@ -498,11 +501,7 @@ export function PomodoroDialog({
                           <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => {
-                              if (window.confirm(`Excluir preset "${selectedPreset.name}"?`)) {
-                                handleDeletePreset(selectedPreset)
-                              }
-                            }}
+                            onClick={() => setShowDeleteConfirm(true)}
                             title="Excluir preset"
                           >
                             <Trash size={18} />
@@ -628,5 +627,27 @@ export function PomodoroDialog({
         )}
       </DialogContent>
     </Dialog>
+
+    {/* Confirmação de exclusão de preset */}
+    <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir preset</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir o preset <strong>"{selectedPreset.name}"</strong>? Esta ação não pode ser desfeita.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={() => handleDeletePreset(selectedPreset)}
+          >
+            Excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   )
 }

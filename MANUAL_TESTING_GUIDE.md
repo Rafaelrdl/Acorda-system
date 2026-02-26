@@ -773,8 +773,8 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 1. Abra o modal **Modo Foco**
 2. Clique no seletor de **Preset**
 
-- [ ] 3 presets padrão disponíveis: `25/5 (Clássico)`, `50/10 (Profundo)`, `15/3 (Rápido)`
-- [ ] Ao trocar de preset, o timer atualiza automaticamente
+- [x] 3 presets padrão disponíveis: `25/5 (Clássico)`, `50/10 (Profundo)`, `15/3 (Rápido)`
+- [x] Ao trocar de preset, o timer atualiza automaticamente
 
 ### 10.2 Criar Preset Personalizado
 
@@ -791,9 +791,9 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 
 3. Clique em **"Criar Preset"**
 
-- [ ] Preset criado e selecionado automaticamente
-- [ ] Preset aparece no seletor junto aos padrões
-- [ ] Timer ajusta para 50:00
+- [x] Preset criado e selecionado automaticamente
+- [x] Preset aparece no seletor junto aos padrões
+- [x] Timer ajusta para 50:00
 
 ### 10.3 Editar Preset Personalizado
 
@@ -802,9 +802,9 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 3. Altere o nome para `Estudo Intenso Pro` e o Foco para `55`
 4. Clique em **"Salvar"**
 
-- [ ] Preset atualizado no seletor
-- [ ] Timer ajusta para 55:00
-- [ ] Ícones de editar/excluir NÃO aparecem para os presets padrão
+- [x] Preset atualizado no seletor
+- [x] Timer ajusta para 55:00
+- [x] Ícones de editar/excluir NÃO aparecem para os presets padrão
 
 ### 10.4 Excluir Preset Personalizado
 
@@ -812,8 +812,8 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 2. Clique no ícone de **lixeira** (🗑)
 3. Confirme a exclusão
 
-- [ ] Preset removido do seletor
-- [ ] Seletor volta para o primeiro preset padrão
+- [x] Preset removido do seletor
+- [x] Seletor volta para o primeiro preset padrão
 
 ### 10.5 Iniciar Sessão Pomodoro
 - [ ] Selecione um preset (ou crie um personalizado)

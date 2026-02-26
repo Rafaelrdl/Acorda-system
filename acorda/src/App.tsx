@@ -945,7 +945,7 @@ function MainApp({ user }: { user: User }) {
         open={showPomodoro}
         onOpenChange={setShowPomodoro}
         userId={userId}
-        presets={pomodoroPresets || []}
+        presets={(pomodoroPresets || []).filter(p => !p.deleted_at)}
         tasks={tasks || []}
         onSessionComplete={handlePomodoroComplete}
         onInterruptionCapture={handleCapture}
