@@ -1116,10 +1116,10 @@ Ao terminar a sessão (ou adiantar), a tela de confirmação aparece:
 
 3. Clique em **"Salvar"**
 
-- [ ] Tela de confirmação mostra resumo da sessão (assunto + tempo)
-- [ ] Campo "Notas finais" está visível e editável
-- [ ] Sessão salva com duração e notas
-- [ ] Revisão espaçada agendada (se ativado)
+- [x] Tela de confirmação mostra resumo da sessão (assunto + tempo)
+- [x] Campo "Notas finais" está visível e editável
+- [x] Sessão salva com duração e notas
+- [x] Revisão espaçada agendada (se ativado)
 
 ### 14.4 Auto-Teste (Perguntas pós-sessão)
 
@@ -1135,11 +1135,11 @@ Após salvar a sessão, o dialog de **auto-teste** abre automaticamente:
 
 2. Clique em **"Salvar Perguntas"** (ou **"Pular"** para ignorar)
 
-- [ ] Dialog de auto-teste abre automaticamente após salvar sessão
-- [ ] Campos para 3 perguntas aparecem por padrão
-- [ ] Botão "+" permite adicionar até 5 perguntas
-- [ ] Botão "Pular" permite ignorar sem criar perguntas
-- [ ] Toast confirma salvamento das perguntas
+- [x] Dialog de auto-teste abre automaticamente após salvar sessão
+- [x] Campos para 3 perguntas aparecem por padrão
+- [x] Botão "+" permite adicionar até 5 perguntas
+- [x] Botão "Pular" permite ignorar sem criar perguntas
+- [x] Toast confirma salvamento das perguntas
 
 ### 14.5 Revisar Perguntas (via card de revisão)
 
@@ -1149,17 +1149,17 @@ Após salvar a sessão, o dialog de **auto-teste** abre automaticamente:
    - Notas finais (se preenchidas ao finalizar)
    - Perguntas do auto-teste
 
-- [ ] Notas rápidas e notas finais aparecem separadamente
-- [ ] Perguntas do auto-teste listadas para revisão
-- [ ] Botão "Concluir" marca a revisão como feita
+- [n] Notas rápidas e notas finais aparecem separadamente
+- [x] Perguntas do auto-teste listadas para revisão
+- [x] Botão "Concluir" marca a revisão como feita
 
 ### 14.6 Verificar Histórico de Sessões
 
 1. Clique em um **assunto** para ver todas as sessões
 
-- [ ] Lista de sessões concluídas com duração
-- [ ] Duração total acumulada por assunto
-- [ ] Cronograma de revisões futuras visível na tela principal
+- [x] Lista de sessões concluídas com duração
+- [x] Duração total acumulada por assunto
+- [x] Cronograma de revisões futuras visível na tela principal
 
 ---
 
@@ -1176,14 +1176,14 @@ Após salvar a sessão, o dialog de **auto-teste** abre automaticamente:
 | Humor | `Alto` (high) |
 | Notas | `Dia produtivo, consegui focar bem pela manhã.` |
 
-- [ ] Check-in salvo
-- [ ] Aparece no histórico
+- [x] Check-in salvo
+- [x] Aparece no histórico
 
 ### 15.2 Segundo Check-in (editar)
-- [ ] Edite o check-in de hoje
-- [ ] Mude horas de sono para `8`
-- [ ] Mude energia para `Alto`
-- [ ] Salve e verifique se atualizou
+- [x] Edite o check-in de hoje
+- [x] Mude horas de sono para `8`
+- [x] Mude energia para `Alto`
+- [x] Salve e verifique se atualizou
 
 ### 15.3 Criar Programa de Bem-estar
 
@@ -1192,8 +1192,8 @@ Após salvar a sessão, o dialog de **auto-teste** abre automaticamente:
 | Tipo | `sleep` (Sono) |
 | Duração | `7 dias` |
 
-- [ ] Programa criado
-- [ ] Ações diárias aparecem para serem concluídas
+- [x] Programa criado
+- [x] Ações diárias aparecem para serem concluídas
 
 ### 15.4 Criar segundo programa
 
@@ -1202,11 +1202,11 @@ Após salvar a sessão, o dialog de **auto-teste** abre automaticamente:
 | Tipo | `focus` (Foco) |
 | Duração | `14 dias` |
 
-- [ ] Programa criado com 14 dias de ações
+- [x] Programa criado com 14 dias de ações
 
 ### 15.5 Completar ação do programa
-- [ ] Marque uma ação do dia como concluída
-- [ ] Progresso do programa atualiza
+- [x] Marque uma ação do dia como concluída
+- [x] Progresso do programa atualiza
 
 ### 15.6 Verificar Insights
 - [ ] Clique em "Ver Insights" (se disponível)

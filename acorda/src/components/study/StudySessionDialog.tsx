@@ -267,21 +267,35 @@ export function StudySessionDialog({
 
                 {/* Duração manual (só no modo manual) */}
                 {mode === 'manual' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="duration">Duração (minutos) *</Label>
-                    <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                      <Input
-                        id="duration"
-                        type="number"
-                        min="1"
-                        className="pl-10"
-                        value={manualDuration}
-                        onChange={(e) => setManualDuration(e.target.value)}
-                        placeholder="ex: 45"
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="duration">Duração (minutos) *</Label>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                        <Input
+                          id="duration"
+                          type="number"
+                          min="1"
+                          className="pl-10"
+                          value={manualDuration}
+                          onChange={(e) => setManualDuration(e.target.value)}
+                          placeholder="ex: 45"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Notas finais (modo manual — não passa pela tela de confirmação) */}
+                    <div className="space-y-2">
+                      <Label htmlFor="manual-final-notes">Notas finais (opcional)</Label>
+                      <Textarea
+                        id="manual-final-notes"
+                        value={finalNotes}
+                        onChange={(e) => setFinalNotes(e.target.value)}
+                        placeholder="O que você aprendeu? O que precisa revisar?"
+                        rows={2}
                       />
                     </div>
-                  </div>
+                  </>
                 )}
 
                 {/* Toggle de revisões */}
