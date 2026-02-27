@@ -6,11 +6,12 @@ import { KpiTile } from '@/components/ui/kpi-tile'
 import { WellnessProgramDialog } from './WellnessProgramDialog'
 import { CheckInDialog } from './CheckInDialog'
 import { CheckInInsightDialog } from './CheckInInsightDialog'
+import { WellnessInsightsDialog } from './WellnessInsightsDialog'
 import type { UserId } from '@/lib/types'
 import { WellnessProgram, WellnessCheckIn, WellnessDayAction } from '@/lib/types'
 import { getSyncKey, getDateKey, getWellnessProgramActions, daysBetweenDateKeys, updateTimestamp } from '@/lib/helpers'
 import { getCheckInInsight, type CheckInInsight } from '@/lib/wellness/checkInInsights'
-import { Heart, Plus, CheckCircle, Circle, Calendar, ArrowRight, Fire, Confetti } from '@phosphor-icons/react'
+import { Heart, Plus, CheckCircle, Circle, Calendar, ArrowRight, Fire, Confetti, ChartLine } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { Progress } from '@/components/ui/progress'
 import { getProgramTitle, getProgramIcon } from '@/constants/wellness'
@@ -26,6 +27,7 @@ export function WellnessCentral({ userId }: WellnessCentralProps) {
   
   const [showProgramDialog, setShowProgramDialog] = useState(false)
   const [showCheckInDialog, setShowCheckInDialog] = useState(false)
+  const [showInsightsDialog, setShowInsightsDialog] = useState(false)
   
   // Estado para insight dialog após check-in
   const [insightOpen, setInsightOpen] = useState(false)
@@ -251,7 +253,7 @@ export function WellnessCentral({ userId }: WellnessCentralProps) {
       </div>
 
       {/* Ações rápidas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Button onClick={() => setShowProgramDialog(true)} className="w-full min-h-[48px]">
           <Plus className="mr-2" size={18} />
           Novo Programa
@@ -263,6 +265,14 @@ export function WellnessCentral({ userId }: WellnessCentralProps) {
         >
           <Calendar className="mr-2" size={18} />
           {todayCheckIn ? 'Editar Check-in' : 'Check-in Diário'}
+        </Button>
+        <Button
+          onClick={() => setShowInsightsDialog(true)}
+          variant="outline"
+          className="w-full min-h-[48px]"
+        >
+          <ChartLine className="mr-2" size={18} />
+          Ver Insights
         </Button>
       </div>
 
@@ -455,6 +465,12 @@ export function WellnessCentral({ userId }: WellnessCentralProps) {
         insight={lastInsight}
         checkIn={lastSavedCheckIn}
         onEdit={handleEditFromInsight}
+      />
+
+      <WellnessInsightsDialog
+        open={showInsightsDialog}
+        onOpenChange={setShowInsightsDialog}
+        checkIns={checkIns || []}
       />
     </div>
   )

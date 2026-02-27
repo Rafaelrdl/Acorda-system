@@ -1209,8 +1209,26 @@ Após salvar a sessão, o dialog de **auto-teste** abre automaticamente:
 - [x] Progresso do programa atualiza
 
 ### 15.6 Verificar Insights
-- [ ] Clique em "Ver Insights" (se disponível)
-- [ ] Gráficos/tendências de sono, energia e humor aparecem
+
+1. Clique em **"Ver Insights"** na seção de ações rápidas
+2. O dialog de Insights abre com seletor de período (7, 14, 30 dias)
+3. Verifique:
+
+| Seção | O que verificar |
+|-------|----------------|
+| Resumo | Cards com média de sono, energia e humor + indicadores de tendência |
+| Gráfico Sono | Gráfico de área com horas de sono por dia |
+| Gráfico Energia | Gráfico de barras com nível de energia (Baixo/Médio/Alto) |
+| Gráfico Humor | Gráfico de barras com nível de humor (Baixo/Médio/Alto) |
+| Consistência | Texto com quantidade de check-ins e percentual |
+
+4. Troque o período para **7 dias** e depois para **30 dias**
+
+- [x] Botão "Ver Insights" visível na tela principal
+- [x] Dialog abre com gráficos de sono, energia e humor
+- [x] Seletor de período (7/14/30 dias) funciona
+- [x] Cards de resumo mostram médias e tendências (Subindo/Caindo/Estável)
+- [x] Gráficos respondem corretamente ao período selecionado
 
 ---
 
