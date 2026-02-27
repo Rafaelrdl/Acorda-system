@@ -375,6 +375,7 @@ export interface StudySession {
   endTime?: number
   durationMinutes: number
   quickNotes?: string
+  finalNotes?: string
   selfTestQuestions?: string[]
   createdAt: number
   updatedAt: number

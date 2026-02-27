@@ -3,6 +3,9 @@ import { useKV } from '@/lib/sync-storage'
 import { Button } from '@/components/ui/button'
 import { SectionCard, EmptyState } from '@/components/ui/section-card'
 import { KpiTile } from '@/components/ui/kpi-tile'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { StudyMethodsTips } from './StudyMethodsTips'
 import { StudySessionDialog } from './StudySessionDialog'
 import { SelfTestDialog } from './SelfTestDialog'
@@ -22,7 +25,7 @@ import {
   softDelete,
   updateTimestamp 
 } from '@/lib/helpers'
-import { Plus, BookOpen, GraduationCap, Clock, ArrowRight, CalendarCheck, CheckCircle, Warning, Question } from '@phosphor-icons/react'
+import { Plus, BookOpen, GraduationCap, Clock, ArrowRight, CalendarCheck, CheckCircle, Warning, Question, Trash } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
 interface StudyCentralProps {
@@ -62,6 +65,11 @@ export function StudyCentral({ userId }: StudyCentralProps) {
     setNewSubjectName('')
     setShowAddSubject(false)
     toast.success('Assunto criado')
+  }
+
+  const handleDeleteSubject = (subjectId: string) => {
+    setSubjects((current) => (current || []).map(s => s.id === subjectId ? softDelete(s) : s))
+    toast.success('Assunto excluído')
   }
 
   const handleSaveSession = (session: StudySession, scheduleReviews: boolean) => {
@@ -386,8 +394,21 @@ export function StudyCentral({ userId }: StudyCentralProps) {
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-muted-foreground shrink-0">
-                    {subjectSessions.length} sessões · {formatTime(totalTime)}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-muted-foreground">
+                      {subjectSessions.length} sessões · {formatTime(totalTime)}
+                    </span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteSubject(subject.id)
+                      }}
+                    >
+                      <Trash className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               )
@@ -396,21 +417,30 @@ export function StudyCentral({ userId }: StudyCentralProps) {
         )}
       </SectionCard>
 
-      {showAddSubject && (
-        <SectionCard title="Novo Assunto" icon={<Plus size={18} weight="duotone" />}>
-          <div className="space-y-3">
-            <input
-              type="text"
-              className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              placeholder="Nome do assunto"
-              value={newSubjectName}
-              onChange={(e) => setNewSubjectName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddSubject()}
-              autoFocus
-            />
+      <Dialog open={showAddSubject} onOpenChange={(open) => {
+        setShowAddSubject(open)
+        if (!open) setNewSubjectName('')
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Novo Assunto</DialogTitle>
+            <DialogDescription>Adicione um assunto para organizar seus estudos.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label htmlFor="subjectName">Nome do assunto</Label>
+              <Input
+                id="subjectName"
+                placeholder="Ex: JavaScript Avançado"
+                value={newSubjectName}
+                onChange={(e) => setNewSubjectName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddSubject()}
+                autoFocus
+              />
+            </div>
             <div className="flex gap-2">
               <Button onClick={handleAddSubject} className="flex-1 min-h-[44px]">
-                Criar
+                Criar Assunto
               </Button>
               <Button
                 variant="outline"
@@ -424,8 +454,8 @@ export function StudyCentral({ userId }: StudyCentralProps) {
               </Button>
             </div>
           </div>
-        </SectionCard>
-      )}
+        </DialogContent>
+      </Dialog>
 
       <StudyMethodsTips />
 

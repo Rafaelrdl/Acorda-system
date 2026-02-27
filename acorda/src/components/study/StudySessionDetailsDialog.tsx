@@ -71,9 +71,19 @@ export function StudySessionDetailsDialog({
           {/* Notas */}
           {session.quickNotes && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium">Notas</h4>
+              <h4 className="text-sm font-medium">Notas rápidas</h4>
               <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">
                 {session.quickNotes}
+              </p>
+            </div>
+          )}
+
+          {/* Notas finais */}
+          {session.finalNotes && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Notas finais</h4>
+              <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">
+                {session.finalNotes}
               </p>
             </div>
           )}

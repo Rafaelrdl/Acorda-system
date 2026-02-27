@@ -805,6 +805,7 @@ export function createStudySession(
   options: {
     endTime?: number
     quickNotes?: string
+    finalNotes?: string
     selfTestQuestions?: string[]
   } = {}
 ): StudySession {
@@ -818,6 +819,7 @@ export function createStudySession(
     endTime: options.endTime,
     durationMinutes,
     quickNotes: options.quickNotes,
+    finalNotes: options.finalNotes,
     selfTestQuestions: options.selfTestQuestions,
     createdAt: now,
     updatedAt: now,

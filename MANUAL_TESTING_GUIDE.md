@@ -1087,7 +1087,7 @@ Clique em "+" para adicionar assunto:
 | 2 | `Sistemas Distribuídos` |
 | 3 | `Inglês B2` |
 
-- [ ] 3 assuntos criados e listados
+- [x] 3 assuntos criados e listados
 
 ### 14.2 Iniciar Sessão de Estudo
 
@@ -1100,29 +1100,66 @@ Clique em "Estudar" ou "Nova sessão":
 | Duração (min) | `45` |
 | Agendar revisão | ✅ Ativado |
 
-- [ ] Timer de sessão inicia
-- [ ] Ao finalizar, sessão é registrada
+- [x] Timer de sessão inicia
+- [x] Ao finalizar, sessão é registrada
 
 ### 14.3 Finalizar Sessão
 
-Ao terminar a sessão (ou adiantar):
+Ao terminar a sessão (ou adiantar), a tela de confirmação aparece:
+
+1. Verifique o resumo (assunto e duração)
+2. Preencha o campo **Notas finais**:
 
 | Campo | Valor sugerido |
 |-------|---------------|
 | Notas finais | `Entendi closures e lexical scope. Rever Promises rejeitadas.` |
 
+3. Clique em **"Salvar"**
+
+- [ ] Tela de confirmação mostra resumo da sessão (assunto + tempo)
+- [ ] Campo "Notas finais" está visível e editável
 - [ ] Sessão salva com duração e notas
 - [ ] Revisão espaçada agendada (se ativado)
 
-### 14.4 Auto-Teste (Self Test)
-- [ ] Acesse um assunto estudado
-- [ ] Inicie o auto-teste
-- [ ] Responda perguntas e avalie seu nível de retenção
+### 14.4 Auto-Teste (Perguntas pós-sessão)
 
-### 14.5 Verificar Histórico de Sessões
-- [ ] Veja lista de sessões concluídas
+Após salvar a sessão, o dialog de **auto-teste** abre automaticamente:
+
+1. Preencha **3 a 5 perguntas** para testar seu conhecimento:
+
+| Pergunta # | Valor sugerido |
+|------------|---------------|
+| 1 | `O que é uma closure em JavaScript?` |
+| 2 | `Qual a diferença entre Promise.all e Promise.allSettled?` |
+| 3 | `Explique as fases do Event Loop.` |
+
+2. Clique em **"Salvar Perguntas"** (ou **"Pular"** para ignorar)
+
+- [ ] Dialog de auto-teste abre automaticamente após salvar sessão
+- [ ] Campos para 3 perguntas aparecem por padrão
+- [ ] Botão "+" permite adicionar até 5 perguntas
+- [ ] Botão "Pular" permite ignorar sem criar perguntas
+- [ ] Toast confirma salvamento das perguntas
+
+### 14.5 Revisar Perguntas (via card de revisão)
+
+1. Na seção **"Revisões de hoje"**, clique em uma revisão pendente
+2. O dialog de detalhes da sessão abre mostrando:
+   - Notas rápidas (se preenchidas na criação)
+   - Notas finais (se preenchidas ao finalizar)
+   - Perguntas do auto-teste
+
+- [ ] Notas rápidas e notas finais aparecem separadamente
+- [ ] Perguntas do auto-teste listadas para revisão
+- [ ] Botão "Concluir" marca a revisão como feita
+
+### 14.6 Verificar Histórico de Sessões
+
+1. Clique em um **assunto** para ver todas as sessões
+
+- [ ] Lista de sessões concluídas com duração
 - [ ] Duração total acumulada por assunto
-- [ ] Cronograma de revisões futuras
+- [ ] Cronograma de revisões futuras visível na tela principal
 
 ---
 

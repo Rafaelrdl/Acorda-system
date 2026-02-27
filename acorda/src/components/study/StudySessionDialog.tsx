@@ -43,6 +43,9 @@ export function StudySessionDialog({
   // Campos do modo manual
   const [manualDuration, setManualDuration] = useState('')
   
+  // Notas finais (preenchidas na confirmação)
+  const [finalNotes, setFinalNotes] = useState('')
+  
   // Estado do cronômetro
   const [timerState, setTimerState] = useState<TimerState>('idle')
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
@@ -121,6 +124,7 @@ export function StudySessionDialog({
     setDialogState('setup')
     setSubjectId('')
     setQuickNotes('')
+    setFinalNotes('')
     setScheduleReviews(true)
     setManualDuration('')
     setTimerState('idle')
@@ -144,6 +148,7 @@ export function StudySessionDialog({
       durationMinutes,
       { 
         quickNotes: quickNotes || undefined,
+        finalNotes: finalNotes || undefined,
         endTime: Date.now()
       }
     )
@@ -163,7 +168,7 @@ export function StudySessionDialog({
       getDateKey(new Date()),
       Date.now(),
       parseInt(manualDuration),
-      { quickNotes: quickNotes || undefined }
+      { quickNotes: quickNotes || undefined, finalNotes: finalNotes || undefined }
     )
 
     onSave(session, scheduleReviews)
@@ -438,21 +443,19 @@ export function StudySessionDialog({
                   </p>
                 </div>
 
-                {/* Notas (última chance de adicionar) */}
-                {!quickNotes && (
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-notes" className="text-sm">
-                      Adicionar notas? (opcional)
-                    </Label>
-                    <Textarea
-                      id="confirm-notes"
-                      value={quickNotes}
-                      onChange={(e) => setQuickNotes(e.target.value)}
-                      placeholder="Principais conceitos estudados..."
-                      rows={2}
-                    />
-                  </div>
-                )}
+                {/* Notas finais */}
+                <div className="space-y-2">
+                  <Label htmlFor="final-notes" className="text-sm font-medium">
+                    Notas finais
+                  </Label>
+                  <Textarea
+                    id="final-notes"
+                    value={finalNotes}
+                    onChange={(e) => setFinalNotes(e.target.value)}
+                    placeholder="O que você aprendeu? O que precisa revisar?"
+                    rows={3}
+                  />
+                </div>
 
                 {/* Info de revisões */}
                 {scheduleReviews && (
