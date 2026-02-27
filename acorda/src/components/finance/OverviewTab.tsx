@@ -28,11 +28,11 @@ const ACCOUNT_TYPE_ICONS: Record<string, React.ElementType> = {
 const chartConfig = {
   receitas: {
     label: 'Receitas',
-    color: 'hsl(var(--chart-2))',
+    color: 'var(--accent)',
   },
   despesas: {
     label: 'Despesas',
-    color: 'hsl(var(--chart-1))',
+    color: 'var(--destructive)',
   },
 } satisfies ChartConfig
 

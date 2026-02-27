@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Calendar } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,9 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import type { UserId } from '@/lib/types'
 import { Book } from '@/lib/types'
 import { createBook, getDateKey } from '@/lib/helpers'
-import { Trash, CalendarBlank } from '@phosphor-icons/react'
-import { format, parseISO } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { Trash } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
 interface BookDialogProps {
@@ -52,7 +48,7 @@ export function BookDialog({
       setTitle('')
       setAuthor('')
       setTotalPages('')
-      setStartDate(getDateKey(new Date()))
+      setStartDate('')
       setTargetEndDate('')
       setNotes('')
     }
@@ -63,11 +59,8 @@ export function BookDialog({
     if (!author.trim()) { toast.error('Digite o autor do livro'); return }
     if (!totalPages || parseInt(totalPages) < 0) { toast.error('Informe o total de páginas (valor positivo)'); return }
     if (parseInt(totalPages) > 99999) { toast.error('Total de páginas não pode exceder 99.999'); return }
-    if (!startDate) { toast.error('Selecione a data de início'); return }
-    if (!targetEndDate) { toast.error('Selecione a meta de conclusão'); return }
-
     const bookData = book
-      ? { ...book, title, author, totalPages: parseInt(totalPages), startDate, targetEndDate, notes, updatedAt: Date.now() }
+      ? { ...book, title, author, totalPages: parseInt(totalPages), startDate, targetEndDate, notes, updatedAt: Date.now(), status: book.status === 'completed' ? 'completed' as const : (startDate && targetEndDate ? 'reading' as const : 'to-read' as const) }
       : createBook(userId, title, author, parseInt(totalPages), startDate, targetEndDate, { notes })
 
     onSave(bookData)
@@ -118,43 +111,23 @@ export function BookDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-2">
-              <Label>Data de Início</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    <CalendarBlank className="mr-2 h-4 w-4" />
-                    {startDate ? format(parseISO(startDate), "dd/MM/yyyy", { locale: ptBR }) : "Selecione"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={startDate ? parseISO(startDate) : undefined}
-                    onSelect={(date) => date && setStartDate(getDateKey(date))}
-                    locale={ptBR}
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label htmlFor="startDate">Data de Início <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label>Meta de Conclusão</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    <CalendarBlank className="mr-2 h-4 w-4" />
-                    {targetEndDate ? format(parseISO(targetEndDate), "dd/MM/yyyy", { locale: ptBR }) : "Selecione"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={targetEndDate ? parseISO(targetEndDate) : undefined}
-                    onSelect={(date) => date && setTargetEndDate(getDateKey(date))}
-                    locale={ptBR}
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label htmlFor="targetEndDate">Meta de Conclusão <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+              <Input
+                id="targetEndDate"
+                type="date"
+                value={targetEndDate}
+                onChange={(e) => setTargetEndDate(e.target.value)}
+              />
             </div>
           </div>
 

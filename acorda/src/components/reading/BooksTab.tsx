@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, BookOpen, TrendUp, Calendar, MagnifyingGlass } from '@phosphor-icons/react'
+import { Plus, BookOpen, TrendUp, Calendar, MagnifyingGlass, Trash, PencilSimple } from '@phosphor-icons/react'
 import { BookDialog } from './BookDialog'
 import { UpdateProgressDialog } from './UpdateProgressDialog'
 import { calculateDailyPages, getDateKey } from '@/lib/helpers'
@@ -55,12 +55,28 @@ export function BooksTab({
     }
   })
 
+  const toReadBooks = sortedBooks.filter(b => b.status === 'to-read')
   const activeBooks = sortedBooks.filter(b => b.status === 'reading')
   const completedBooks = sortedBooks.filter(b => b.status === 'completed')
 
   const handleUpdateProgress = (book: Book) => {
     setSelectedBook(book)
     setShowProgressDialog(true)
+  }
+
+  const handleStartReading = (book: Book) => {
+    const updatedBook: Book = {
+      ...book,
+      startDate: book.startDate || getDateKey(new Date()),
+      status: 'reading',
+      updatedAt: Date.now(),
+    }
+    onUpdateBook(updatedBook)
+  }
+
+  const handleEditBook = (book: Book) => {
+    setSelectedBook(book)
+    setShowBookDialog(true)
   }
 
   const today = getDateKey(new Date())
@@ -132,8 +148,10 @@ export function BooksTab({
       <div className="flex flex-col gap-3">
         {activeBooks.map(book => {
           const progress = (book.currentPage / book.totalPages) * 100
-          const dailyPages = calculateDailyPages(book.totalPages, book.currentPage, book.targetEndDate)
-          const todayLog = readingLogs.find(log => log.bookId === book.id && log.date === today)
+          const dailyPages = book.targetEndDate ? calculateDailyPages(book.totalPages, book.currentPage, book.targetEndDate) : null
+          const todayPagesRead = readingLogs
+            .filter(log => log.bookId === book.id && log.date === today)
+            .reduce((sum, log) => sum + log.pagesRead, 0)
 
           return (
             <Card key={book.id} className="p-4">
@@ -143,15 +161,33 @@ export function BooksTab({
                     <h3 className="font-medium">{book.title}</h3>
                     <p className="text-sm text-muted-foreground">{book.author}</p>
                   </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    className="min-h-[44px]"
-                    onClick={() => handleUpdateProgress(book)}
-                  >
-                    <TrendUp className="mr-2" />
-                    Atualizar
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      className="min-h-[44px]"
+                      onClick={() => handleUpdateProgress(book)}
+                    >
+                      <TrendUp className="mr-2" />
+                      Atualizar
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-muted-foreground"
+                      onClick={() => handleEditBook(book)}
+                    >
+                      <PencilSimple className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-destructive"
+                      onClick={() => onDeleteBook(book.id)}
+                    >
+                      <Trash className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -166,18 +202,20 @@ export function BooksTab({
                 </div>
 
                 <div className="flex items-center gap-4 pt-2 border-t border-border">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-muted-foreground">Meta diária</p>
-                      <p className="font-mono font-medium">{dailyPages} pág/dia</p>
+                  {dailyPages !== null && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-muted-foreground">Meta diária</p>
+                        <p className="font-mono font-medium">{dailyPages} pág/dia</p>
+                      </div>
                     </div>
-                  </div>
-                  {todayLog && (
+                  )}
+                  {todayPagesRead > 0 && (
                     <div className="flex items-center gap-2 text-sm text-accent">
                       <div>
                         <p className="text-muted-foreground">Hoje</p>
-                        <p className="font-mono font-medium text-accent">{todayLog.pagesRead} páginas ✓</p>
+                        <p className="font-mono font-medium text-accent">{todayPagesRead} páginas ✓</p>
                       </div>
                     </div>
                   )}
@@ -187,6 +225,56 @@ export function BooksTab({
           )
         })}
       </div>
+
+      {toReadBooks.length > 0 && (
+        <>
+          <div className="mt-4">
+            <h2 className="text-lg font-semibold">Pendentes</h2>
+            <p className="text-sm text-muted-foreground">{toReadBooks.length} {toReadBooks.length === 1 ? 'livro' : 'livros'}</p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {toReadBooks.map(book => (
+              <Card key={book.id} className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-medium">{book.title}</h3>
+                    <p className="text-sm text-muted-foreground">{book.author}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{book.totalPages} páginas</p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      className="min-h-[44px]"
+                      onClick={() => handleStartReading(book)}
+                    >
+                      <BookOpen className="mr-2" />
+                      Iniciar Leitura
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-muted-foreground"
+                      onClick={() => handleEditBook(book)}
+                    >
+                      <PencilSimple className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-destructive"
+                      onClick={() => onDeleteBook(book.id)}
+                    >
+                      <Trash className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
 
       {completedBooks.length > 0 && (
         <>
@@ -202,10 +290,25 @@ export function BooksTab({
                   <div className="flex-1">
                     <h3 className="font-medium">{book.title}</h3>
                     <p className="text-sm text-muted-foreground">{book.author}</p>
-                    <p className="text-xs text-accent mt-1">✓ Concluído</p>
+                    <p className="text-xs text-accent mt-1">✓ Concluído • {book.totalPages} páginas</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-mono">{book.totalPages} páginas</p>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-muted-foreground"
+                      onClick={() => handleEditBook(book)}
+                    >
+                      <PencilSimple className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-destructive"
+                      onClick={() => onDeleteBook(book.id)}
+                    >
+                      <Trash className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               </Card>

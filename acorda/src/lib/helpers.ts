@@ -679,7 +679,7 @@ export function createBook(
     currentPage: options.currentPage || 0,
     startDate,
     targetEndDate,
-    status: 'reading',
+    status: startDate && targetEndDate ? 'reading' : 'to-read',
     notes: options.notes,
     createdAt: now,
     updatedAt: now,

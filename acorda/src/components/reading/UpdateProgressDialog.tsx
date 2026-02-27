@@ -48,8 +48,9 @@ export function UpdateProgressDialog({
 
     let log: ReadingLog | undefined
 
-    if (newPage > book.currentPage) {
-      const pagesRead = newPage - book.currentPage
+    // Cria um log incremental com as páginas lidas nesta atualização
+    if (newPage !== book.currentPage) {
+      const pagesRead = Math.abs(newPage - book.currentPage)
       log = createReadingLog(
         book.userId,
         book.id,

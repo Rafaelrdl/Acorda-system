@@ -307,7 +307,7 @@ export interface Book {
   currentPage: number
   startDate: string
   targetEndDate: string
-  status: 'reading' | 'completed' | 'paused'
+  status: 'to-read' | 'reading' | 'completed' | 'paused'
   notes?: string
   createdAt: number
   updatedAt: number

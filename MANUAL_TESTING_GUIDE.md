@@ -1001,9 +1001,9 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 - [x] Aparece na lista de recorrências
 
 ### 12.6 Verificar Overview (aba Visão Geral)
-- [ ] Gráficos de receita vs despesa aparecem
-- [ ] Resumo de saldos por conta correto
-- [ ] Total geral correto (somatório de todas as contas)
+- [x] Gráficos de receita vs despesa aparecem
+- [x] Resumo de saldos por conta correto
+- [x] Total geral correto (somatório de todas as contas)
 
 
 ---
@@ -1035,9 +1035,9 @@ Repita o passo 6.4 para vincular pelo menos **2 tarefas** ao projeto "Lançament
 | Data de Início | Hoje |
 | Notas | `Referência clássica de engenharia de software.` |
 
-- [ ] 2 livros adicionados
-- [ ] Ambos com status "Lendo"
-- [ ] Progresso mostra 0%
+- [x] 2 livros adicionados
+- [n] Ambos com status "Lendo"
+- [x] Progresso mostra 0%
 
 ### 13.2 Atualizar Progresso
 
@@ -1047,8 +1047,8 @@ Selecione "O Poder do Hábito" e clique em atualizar progresso:
 |-------|---------------|
 | Página Atual | `85` |
 
-- [ ] Progresso atualiza (85/408 = ~21%)
-- [ ] Log de leitura criado automaticamente
+- [x] Progresso atualiza (85/408 = ~21%)
+- [x] Log de leitura criado automaticamente
 
 ### 13.3 Atualizar Progresso novamente
 
@@ -1056,20 +1056,20 @@ Selecione "O Poder do Hábito" e clique em atualizar progresso:
 |-------|---------------|
 | Página Atual | `142` |
 
-- [ ] Progresso muda para ~35%
-- [ ] Novo log criado (57 páginas lidas)
+- [x] Progresso muda para ~35%
+- [x] Novo log criado (57 páginas lidas)
 
 ### 13.4 Upload de PDF (aba PDFs)
-- [ ] Clique em "Carregar PDF"
-- [ ] Selecione um arquivo PDF qualquer
-- [ ] PDF aparece na lista
-- [ ] Clique para abrir no leitor de PDF
+- [x] Clique em "Carregar PDF"
+- [x] Selecione um arquivo PDF qualquer
+- [x] PDF aparece na lista
+- [x] Clique para abrir no leitor de PDF
 
 ### 13.5 Leitor de PDF
-- [ ] PDF renderiza corretamente
-- [ ] Navegação de páginas funciona
-- [ ] Zoom funciona
-- [ ] Highlight/marcação funciona (selecione texto e marque)
+- [x] PDF renderiza corretamente
+- [x] Navegação de páginas funciona
+- [x] Zoom funciona
+- [x] Highlight/marcação funciona (selecione texto e marque)
 
 ---
 
