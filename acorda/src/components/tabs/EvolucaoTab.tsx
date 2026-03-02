@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
-import { SectionCard } from '@/components/ui/section-card'
-import { KpiTile } from '@/components/ui/kpi-tile'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import type { ChartConfig } from '@/components/ui/chart'
+import { Area, AreaChart, Bar, BarChart, XAxis, YAxis, CartesianGrid } from 'recharts'
 import type { UserId } from '@/lib/types'
 import {
   Goal, KeyResult, Habit, HabitLog, PomodoroSession, CalendarBlock, Task,
@@ -9,9 +11,10 @@ import {
   WellnessCheckIn, WellnessProgram, WellnessDayAction,
 } from '@/lib/types'
 import {
-  Target, Fire, Timer, CheckCircle, TrendUp, CalendarBlank, ChartLineUp,
-  Barbell, ForkKnife, BookOpen, GraduationCap, CurrencyDollar, Heart,
-  Moon, Smiley, CaretDown, Brain, Wallet, BookBookmark, Lightning,
+  Target, Fire, Timer, CheckCircle, TrendUp, TrendDown, Equals,
+  CalendarBlank, ChartLineUp, Barbell, ForkKnife, BookOpen,
+  GraduationCap, CurrencyDollar, Heart, Moon, Smiley,
+  Brain, Wallet, BookBookmark, Lightning,
 } from '@phosphor-icons/react'
 import { getDateKey, getSyncKey } from '@/lib/helpers'
 import { useKV } from '@/lib/sync-storage'
@@ -45,10 +48,8 @@ import {
   getWellnessStats,
   getWellnessProgramProgress,
 } from '@/lib/queries'
-import { Sparkline } from '@/components/charts/Sparkline'
-import { MiniBarChart } from '@/components/charts/MiniBarChart'
-import { TrendIndicator } from '@/components/charts/TrendIndicator'
 import { PeriodToggle, PeriodOption } from '@/components/charts/PeriodToggle'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 // ─── Helpers ─────────────────────────────────────────────
 
@@ -73,6 +74,95 @@ const programLabels: Record<string, string> = {
   screen_time: 'Telas',
   morning_routine: 'Rotina Matinal',
   focus: 'Foco',
+}
+
+function formatDayLabel(dateKey: string): string {
+  const parts = dateKey.split('-')
+  return `${parts[2]}/${parts[1]}`
+}
+
+function computeTrend(values: number[]): 'up' | 'down' | 'neutral' {
+  if (values.length < 2) return 'neutral'
+  const mid = Math.floor(values.length / 2)
+  const firstHalf = values.slice(0, mid)
+  const secondHalf = values.slice(mid)
+  const avgFirst = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length
+  const avgSecond = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length
+  const maxAvg = Math.max(avgFirst, avgSecond, 1)
+  const relDiff = (avgSecond - avgFirst) / maxAvg
+  if (Math.abs(relDiff) < 0.1) return 'neutral'
+  return relDiff > 0 ? 'up' : 'down'
+}
+
+function moodLabel(avg: number): string {
+  if (avg >= 2.5) return 'Alto'
+  if (avg >= 1.5) return 'Médio'
+  return 'Baixo'
+}
+
+function avgPositive(arr: number[]): number {
+  const pos = arr.filter(v => v > 0)
+  return pos.length > 0 ? pos.reduce((a, b) => a + b, 0) / pos.length : 0
+}
+
+// ─── Chart Configs ───────────────────────────────────────
+
+const focusChartCfg = { focus: { label: 'Minutos de foco', color: 'hsl(var(--primary))' } } satisfies ChartConfig
+const tasksChartCfg = { tasks: { label: 'Tarefas', color: 'hsl(142.1 76.2% 36.3%)' } } satisfies ChartConfig
+const habitsChartCfg = { habits: { label: 'Consistência %', color: 'hsl(280 70% 55%)' } } satisfies ChartConfig
+const trainingChartCfg = { count: { label: 'Treinos', color: 'hsl(24.6 95% 53.1%)' } } satisfies ChartConfig
+const tonnageChartCfg = { tonnage: { label: 'Tonelagem (kg)', color: 'hsl(24.6 95% 53.1%)' } } satisfies ChartConfig
+const dietChartCfg = { adherence: { label: 'Aderência %', color: 'hsl(83 80% 44%)' } } satisfies ChartConfig
+const studyChartCfg = { study: { label: 'Minutos', color: 'hsl(262.1 83.3% 57.8%)' } } satisfies ChartConfig
+const readingChartCfg = { pages: { label: 'Páginas', color: 'hsl(172 66% 50.2%)' } } satisfies ChartConfig
+const expenseChartCfg = { expense: { label: 'Gastos', color: 'hsl(0 84.2% 60.2%)' } } satisfies ChartConfig
+const sleepChartCfg = { sleep: { label: 'Horas de sono', color: 'hsl(226 70% 55%)' } } satisfies ChartConfig
+const energyChartCfg = { energy: { label: 'Energia', color: 'hsl(40 90% 50%)' } } satisfies ChartConfig
+const moodChartCfg = { mood: { label: 'Humor', color: 'hsl(150 60% 45%)' } } satisfies ChartConfig
+
+// ─── Sub-components ──────────────────────────────────────
+
+function TrendBadge({ trend, positive = true }: { trend: 'up' | 'down' | 'neutral'; positive?: boolean }) {
+  if (trend === 'neutral') {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded-full">
+        <Equals size={10} weight="bold" />
+        Estável
+      </span>
+    )
+  }
+  const isGood = positive ? trend === 'up' : trend === 'down'
+  return (
+    <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full ${
+      isGood ? 'text-emerald-600 bg-emerald-500/10' : 'text-rose-600 bg-rose-500/10'
+    }`}>
+      {trend === 'up' ? <TrendUp size={10} weight="bold" /> : <TrendDown size={10} weight="bold" />}
+      {trend === 'up' ? 'Subindo' : 'Caindo'}
+    </span>
+  )
+}
+
+function SummaryCard({ icon, value, label, trend, trendPositive = true }: {
+  icon: React.ReactNode
+  value: string | number
+  label: string
+  trend?: 'up' | 'down' | 'neutral'
+  trendPositive?: boolean
+}) {
+  return (
+    <Card className="p-0">
+      <CardContent className="p-3 text-center">
+        <div className="mx-auto mb-1 w-fit">{icon}</div>
+        <p className="text-lg font-semibold leading-none">{value}</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5">{label}</p>
+        {trend && (
+          <div className="mt-1">
+            <TrendBadge trend={trend} positive={trendPositive} />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
 }
 
 // ─── Props ───────────────────────────────────────────────
@@ -110,15 +200,6 @@ export function EvolucaoTab({
 }: EvolucaoTabProps) {
   const [period, setPeriod] = useState<PeriodOption>(7)
 
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    produtividade: true,
-    saude: true,
-    desenvolvimento: true,
-    financas: true,
-  })
-  const toggleSection = (key: string) =>
-    setOpenSections(prev => ({ ...prev, [key]: !prev[key] }))
-
   // ─── Carregar dados de módulos adicionais via useKV ──────
   const [studySessions] = useKV<StudySession[]>(getSyncKey(userId, 'studySessions'), [])
   const [subjects] = useKV<Subject[]>(getSyncKey(userId, 'subjects'), [])
@@ -129,27 +210,17 @@ export function EvolucaoTab({
   const [wellnessPrograms] = useKV<WellnessProgram[]>(getSyncKey(userId, 'wellnessPrograms'), [])
   const [wellnessDayActions] = useKV<WellnessDayAction[]>(getSyncKey(userId, 'wellnessDayActions'), [])
 
-  // ─── Dados base existentes ─────────────────────────────
+  // ─── Dados base ────────────────────────────────────────
   const today = useMemo(() => getDateKey(new Date()), [])
 
   const focusSeries = useMemo(() => getDailyFocusMinutesSeries(pomodoroSessions, userId, period), [pomodoroSessions, userId, period])
   const tasksSeries = useMemo(() => getDailyCompletedTasksSeries(tasks, userId, period), [tasks, userId, period])
   const habitsSeries = useMemo(() => getDailyHabitCompletionSeries(habits, habitLogs, userId, period, 'percentage'), [habits, habitLogs, userId, period])
 
-  const prevFocusSeries = useMemo(() => getDailyFocusMinutesSeries(pomodoroSessions, userId, period * 2).slice(0, period), [pomodoroSessions, userId, period])
-  const prevTasksSeries = useMemo(() => getDailyCompletedTasksSeries(tasks, userId, period * 2).slice(0, period), [tasks, userId, period])
-
   const totalFocusMinutes = useMemo(() => sumSeries(focusSeries), [focusSeries])
-  const prevTotalFocusMinutes = useMemo(() => sumSeries(prevFocusSeries), [prevFocusSeries])
   const totalTasksCompleted = useMemo(() => sumSeries(tasksSeries), [tasksSeries])
-  const prevTotalTasksCompleted = useMemo(() => sumSeries(prevTasksSeries), [prevTasksSeries])
 
   const avgHabitConsistency = useMemo(() => getHabitConsistencyForPeriod(habits, habitLogs, userId, period), [habits, habitLogs, userId, period])
-  const prevAvgHabitConsistency = useMemo(() => {
-    const full = getHabitConsistencyForPeriod(habits, habitLogs, userId, period * 2)
-    return full - avgHabitConsistency
-  }, [habits, habitLogs, userId, period, avgHabitConsistency])
-
   const avgGoalProgress = useMemo(() => getAverageGoalProgress(goals, keyResults, tasks, userId, habits, habitLogs), [goals, keyResults, tasks, userId, habits, habitLogs])
   const activeGoals = useMemo(() => goals.filter(g => g.userId === userId && g.status === 'active'), [goals, userId])
   const activeHabits = useMemo(() => habits.filter(h => h.userId === userId && h.isActive), [habits, userId])
@@ -176,7 +247,6 @@ export function EvolucaoTab({
   // ─── Dieta ─────────────────────────────────────────────
   const hasDietData = dietMeals.length > 0 || dietTemplates.length > 0
   const dietAdherence = useMemo(() => getDietAdherenceForPeriod(dietMeals, dietTemplates, userId, period), [dietMeals, dietTemplates, userId, period])
-  const prevDietAdherence = useMemo(() => getDietAdherenceForPeriod(dietMeals, dietTemplates, userId, period * 2) - dietAdherence, [dietMeals, dietTemplates, userId, period, dietAdherence])
   const dietSeries = useMemo(() => getDailyDietAdherenceSeries(dietMeals, dietTemplates, userId, period), [dietMeals, dietTemplates, userId, period])
   const dietStreak = useMemo(() => getDietStreak(dietMeals, dietTemplates, userId), [dietMeals, dietTemplates, userId])
   const dietValues = useMemo(() => dietSeries.map(d => d.value), [dietSeries])
@@ -201,7 +271,6 @@ export function EvolucaoTab({
   const financeBalance = useMemo(() => getFinanceBalanceForPeriod(transactions, userId, period), [transactions, userId, period])
   const expenseSeries = useMemo(() => getDailyExpenseSeries(transactions, userId, period), [transactions, userId, period])
   const savingsRate = useMemo(() => getSavingsRate(transactions, userId, period), [transactions, userId, period])
-  const expenseValues = useMemo(() => expenseSeries.map(d => d.value), [expenseSeries])
 
   // ─── Bem-estar ─────────────────────────────────────────
   const hasWellnessData = wellnessCheckIns.length > 0
@@ -212,13 +281,41 @@ export function EvolucaoTab({
   const moodValues = useMemo(() => wellnessSeries.moodSeries.map(d => d.value), [wellnessSeries])
   const energyValues = useMemo(() => wellnessSeries.energySeries.map(d => d.value), [wellnessSeries])
 
-  // ─── Flags compostas ──────────────────────────────────
-  const hasHealthData = hasTrainingData || hasDietData || hasWellnessData
-  const hasDevelopmentData = hasStudyData || hasReadingData
-
   // ─── Dieta hoje ────────────────────────────────────────
   const todayDietMeals = useMemo(() => dietMeals.filter(m => m.date === today), [dietMeals, today])
   const todayDietCompleted = useMemo(() => todayDietMeals.filter(m => m.isCompleted).length, [todayDietMeals])
+
+  // ─── Trends ────────────────────────────────────────────
+  const focusTrend = useMemo(() => computeTrend(focusValues), [focusValues])
+  const tasksTrend = useMemo(() => computeTrend(tasksValues), [tasksValues])
+  const habitsTrend = useMemo(() => computeTrend(habitsValues), [habitsValues])
+  const trainingTrend = useMemo(() => computeTrend(trainingValues), [trainingValues])
+  const tonnageTrend = useMemo(() => computeTrend(tonnageValues), [tonnageValues])
+  const dietTrend = useMemo(() => computeTrend(dietValues), [dietValues])
+  const studyTrend = useMemo(() => computeTrend(studyValues), [studyValues])
+  const readingTrend = useMemo(() => computeTrend(readingValues), [readingValues])
+  const sleepTrend = useMemo(() => computeTrend(sleepValues), [sleepValues])
+  const energyTrend = useMemo(() => computeTrend(energyValues), [energyValues])
+  const moodTrend = useMemo(() => computeTrend(moodValues), [moodValues])
+
+  // ─── Chart Data ────────────────────────────────────────
+  const focusChartData = useMemo(() => focusSeries.map(d => ({ label: formatDayLabel(d.date), focus: d.value })), [focusSeries])
+  const tasksChartData = useMemo(() => tasksSeries.map(d => ({ label: formatDayLabel(d.date), tasks: d.value })), [tasksSeries])
+  const habitsChartData = useMemo(() => habitsSeries.map(d => ({ label: formatDayLabel(d.date), habits: d.value })), [habitsSeries])
+  const trainingChartData = useMemo(() => trainingsByDay.map(d => ({ label: formatDayLabel(d.date), count: d.count })), [trainingsByDay])
+  const tonnageChartData = useMemo(() => tonnageByDay.map(d => ({ label: formatDayLabel(d.date), tonnage: d.tonnage })), [tonnageByDay])
+  const dietChartData = useMemo(() => dietSeries.map(d => ({ label: formatDayLabel(d.date), adherence: d.value })), [dietSeries])
+  const studyChartData = useMemo(() => studySeries.map(d => ({ label: formatDayLabel(d.date), study: d.value })), [studySeries])
+  const readingChartData = useMemo(() => readingSeries.map(d => ({ label: formatDayLabel(d.date), pages: d.value })), [readingSeries])
+  const expenseChartData = useMemo(() => expenseSeries.map(d => ({ label: formatDayLabel(d.date), expense: d.value })), [expenseSeries])
+  const wellnessChartData = useMemo(() => {
+    return wellnessSeries.sleepSeries.map((d, i) => ({
+      label: formatDayLabel(d.date),
+      sleep: d.value > 0 ? d.value : null,
+      energy: (wellnessSeries.energySeries[i]?.value || 0) > 0 ? wellnessSeries.energySeries[i].value : null,
+      mood: (wellnessSeries.moodSeries[i]?.value || 0) > 0 ? wellnessSeries.moodSeries[i].value : null,
+    }))
+  }, [wellnessSeries])
 
   // ─── Overall Score ─────────────────────────────────────
   const overallScore = useMemo(() => {
@@ -255,21 +352,24 @@ export function EvolucaoTab({
     hasTrainingData || hasDietData || hasStudyData ||
     hasReadingData || hasFinanceData || hasWellnessData
 
+  // ─── XAxis interval ───────────────────────────────────
+  const xInterval = period <= 7 ? 0 : period <= 14 ? 1 : ('preserveStartEnd' as const)
+
   // ─── Render ────────────────────────────────────────────
   return (
     <div
-      className="pb-24 px-4 pt-4 space-y-4 max-w-5xl mx-auto overflow-x-hidden"
+      className="pb-24 px-4 pt-4 space-y-6 max-w-5xl mx-auto overflow-x-hidden"
       style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))' }}
     >
       {/* ── Header + PeriodToggle ────────────────────────── */}
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold">Evolução</h1>
-        <PeriodToggle value={period} onChange={setPeriod} options={[7, 30]} />
+        <PeriodToggle value={period} onChange={setPeriod} options={[7, 14, 30]} />
       </div>
 
       {/* ── Overall Score ────────────────────────────────── */}
       {hasAnyData && (
-        <div className="flex flex-col items-center py-6">
+        <div className="flex flex-col items-center py-4">
           <div className="relative w-24 h-24 flex items-center justify-center">
             <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="40" stroke="hsl(var(--muted))" strokeWidth="8" fill="none" />
@@ -290,701 +390,608 @@ export function EvolucaoTab({
         </div>
       )}
 
-      {/* ── KPI Row 1 – Produtividade ────────────────────── */}
-      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide md:grid md:grid-cols-4 [&>*]:flex-shrink-0 [&>*]:min-w-[140px] [&>*]:md:min-w-0">
-        <KpiTile
-          icon={<Target size={20} weight="duotone" />}
-          value={`${avgGoalProgress}%`}
-          label="Metas"
-          hint={`${activeGoals.length} ${activeGoals.length === 1 ? 'ativa' : 'ativas'}`}
-          tone={avgGoalProgress >= 80 ? 'success' : 'default'}
-        />
-        <KpiTile
-          icon={<Fire size={20} weight="duotone" />}
-          value={`${avgHabitConsistency}%`}
-          label="Hábitos"
-          hint={`${activeHabits.length} · ${period}d`}
-          tone={avgHabitConsistency >= 80 ? 'success' : 'default'}
-        />
-        <KpiTile
-          icon={<Timer size={20} weight="duotone" />}
-          value={`${totalFocusMinutes}m`}
-          label="Foco"
-          hint={`${todayFocus} min hoje`}
-          tone={totalFocusMinutes >= 60 ? 'primary' : 'default'}
-        />
-        <KpiTile
-          icon={<CheckCircle size={20} weight="duotone" />}
-          value={totalTasksCompleted}
-          label="Tarefas"
-          hint={`${todayTasks} hoje · ${period}d`}
-          tone={totalTasksCompleted > 0 ? 'success' : 'default'}
-        />
-      </div>
+      {/* ═══════════════════════════════════════════════════
+          TABS: Módulos
+         ═══════════════════════════════════════════════════ */}
+      {hasAnyData && (
+        <Tabs defaultValue="produtividade" className="space-y-4">
+          <TabsList className="w-full grid grid-cols-4 sm:flex sm:flex-wrap sm:justify-start gap-1 bg-transparent p-0 h-auto">
+            <TabsTrigger value="produtividade" className="gap-1 data-[state=active]:bg-secondary rounded-full px-2.5 py-1.5 text-xs sm:text-sm sm:px-3">
+              <Timer size={16} weight="bold" className="shrink-0 text-primary" />
+              <span className="truncate">Produtividade</span>
+            </TabsTrigger>
+            {hasTrainingData && (
+              <TabsTrigger value="treino" className="gap-1 data-[state=active]:bg-secondary rounded-full px-2.5 py-1.5 text-xs sm:text-sm sm:px-3">
+                <Barbell size={16} weight="bold" className="shrink-0 text-orange-500" />
+                <span className="truncate">Treino</span>
+              </TabsTrigger>
+            )}
+            {hasDietData && (
+              <TabsTrigger value="dieta" className="gap-1 data-[state=active]:bg-secondary rounded-full px-2.5 py-1.5 text-xs sm:text-sm sm:px-3">
+                <ForkKnife size={16} weight="bold" className="shrink-0 text-lime-600" />
+                <span className="truncate">Dieta</span>
+              </TabsTrigger>
+            )}
+            {hasStudyData && (
+              <TabsTrigger value="estudos" className="gap-1 data-[state=active]:bg-secondary rounded-full px-2.5 py-1.5 text-xs sm:text-sm sm:px-3">
+                <GraduationCap size={16} weight="bold" className="shrink-0 text-purple-500" />
+                <span className="truncate">Estudos</span>
+              </TabsTrigger>
+            )}
+            {hasReadingData && (
+              <TabsTrigger value="leitura" className="gap-1 data-[state=active]:bg-secondary rounded-full px-2.5 py-1.5 text-xs sm:text-sm sm:px-3">
+                <BookOpen size={16} weight="bold" className="shrink-0 text-teal-500" />
+                <span className="truncate">Leitura</span>
+              </TabsTrigger>
+            )}
+            {hasFinanceData && (
+              <TabsTrigger value="financas" className="gap-1 data-[state=active]:bg-secondary rounded-full px-2.5 py-1.5 text-xs sm:text-sm sm:px-3">
+                <Wallet size={16} weight="bold" className="shrink-0 text-green-600" />
+                <span className="truncate">Finanças</span>
+              </TabsTrigger>
+            )}
+            {hasWellnessData && (
+              <TabsTrigger value="bemestar" className="gap-1 data-[state=active]:bg-secondary rounded-full px-2.5 py-1.5 text-xs sm:text-sm sm:px-3">
+                <Heart size={16} weight="bold" className="shrink-0 text-rose-500" />
+                <span className="truncate">Bem-estar</span>
+              </TabsTrigger>
+            )}
+          </TabsList>
 
-      {/* ── KPI Row 2 – Saúde & Corpo ────────────────────── */}
-      {hasHealthData && (
-        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide md:grid md:grid-cols-4 [&>*]:flex-shrink-0 [&>*]:min-w-[140px] [&>*]:md:min-w-0">
-          {hasTrainingData && (
-            <KpiTile
-              icon={<Barbell size={20} weight="duotone" />}
-              value={trainingCount.current}
-              label="Treinos"
-              hint={`${period}d`}
-            />
-          )}
-          {hasDietData && (
-            <KpiTile
-              icon={<ForkKnife size={20} weight="duotone" />}
-              value={`${dietAdherence}%`}
-              label="Dieta"
-              hint={`${todayDietCompleted}/${todayDietMeals.length || dietTemplates.length} hoje`}
-              tone={dietAdherence >= 80 ? 'success' : 'default'}
-            />
-          )}
-          {hasWellnessData && (
-            <KpiTile
-              icon={<Moon size={20} weight="duotone" />}
-              value={`${wellnessStatsData.avgSleep}h`}
-              label="Sono (média)"
-              hint={`${wellnessStatsData.checkInCount} check-ins`}
-              tone={wellnessStatsData.avgSleep >= 7 ? 'success' : 'default'}
-            />
-          )}
-          {hasWellnessData && (
-            <KpiTile
-              icon={<Smiley size={20} weight="duotone" />}
-              value={`${wellnessStatsData.checkInRate}%`}
-              label="Check-ins"
-              hint={`${period}d`}
-              tone={wellnessStatsData.checkInRate >= 80 ? 'success' : 'default'}
-            />
-          )}
-        </div>
-      )}
-
-      {/* ── KPI Row 3 – Desenvolvimento ──────────────────── */}
-      {hasDevelopmentData && (
-        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide md:grid md:grid-cols-4 [&>*]:flex-shrink-0 [&>*]:min-w-[140px] [&>*]:md:min-w-0">
-          {hasStudyData && (
-            <KpiTile
-              icon={<GraduationCap size={20} weight="duotone" />}
-              value={`${studyMinutes.current}m`}
-              label="Estudos"
-              hint={`${period}d`}
-              tone={studyMinutes.current >= 120 ? 'primary' : 'default'}
-            />
-          )}
-          {hasReadingData && (
-            <KpiTile
-              icon={<BookOpen size={20} weight="duotone" />}
-              value={pagesRead.current}
-              label="Páginas lidas"
-              hint={`${period}d`}
-              tone={pagesRead.current > 0 ? 'primary' : 'default'}
-            />
-          )}
-          {hasReadingData && (
-            <KpiTile
-              icon={<BookBookmark size={20} weight="duotone" />}
-              value={readingStatsData.reading}
-              label="Em leitura"
-              hint={`${readingStatsData.completed} concluídos`}
-            />
-          )}
-          {hasReadingData && (
-            <KpiTile
-              icon={<Brain size={20} weight="duotone" />}
-              value={`${readingStatsData.avgProgress}%`}
-              label="Progresso médio"
-              hint="livros ativos"
-              tone={readingStatsData.avgProgress >= 50 ? 'success' : 'default'}
-            />
-          )}
-        </div>
-      )}
-
-      {/* ── KPI Row 4 – Finanças ─────────────────────────── */}
-      {hasFinanceData && (
-        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide md:grid md:grid-cols-4 [&>*]:flex-shrink-0 [&>*]:min-w-[140px] [&>*]:md:min-w-0">
-          <KpiTile
-            icon={<Wallet size={20} weight="duotone" />}
-            value={brl.format(financeBalance.income)}
-            label="Receita"
-            hint={`${period}d`}
-            tone="success"
-          />
-          <KpiTile
-            icon={<CurrencyDollar size={20} weight="duotone" />}
-            value={brl.format(financeBalance.expense)}
-            label="Despesas"
-            hint={`${period}d`}
-          />
-          <KpiTile
-            icon={<TrendUp size={20} weight="duotone" />}
-            value={brl.format(financeBalance.balance)}
-            label="Saldo"
-            hint={`${period}d`}
-            tone={financeBalance.balance >= 0 ? 'success' : 'default'}
-          />
-          <KpiTile
-            icon={<Lightning size={20} weight="duotone" />}
-            value={`${savingsRate}%`}
-            label="Taxa de economia"
-            hint={`${period}d`}
-            tone={savingsRate >= 20 ? 'success' : 'default'}
-          />
-        </div>
-      )}
-
-      {/* ── Planejado vs Executado ────────────────────────── */}
-      {plannedMinutes > 0 && (
-        <SectionCard
-          title="Planejado vs Executado"
-          icon={<CalendarBlank size={18} weight="duotone" />}
-          action={<span className="text-xs font-mono">{executedRatio}%</span>}
-        >
-          <div className="w-full bg-secondary rounded-full h-2">
-            <div
-              className="bg-primary h-2 rounded-full transition-all"
-              style={{ width: `${Math.min(executedRatio, 100)}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-            <span>{totalFocusMinutes} min foco</span>
-            <span>{plannedMinutes} min planejado</span>
-          </div>
-        </SectionCard>
-      )}
-
-      {/* ══════════════════════════════════════════════════════
-          SECTION: Produtividade
-         ══════════════════════════════════════════════════════ */}
-      <div className="space-y-3">
-        <button
-          onClick={() => toggleSection('produtividade')}
-          className="flex items-center gap-2 w-full text-left py-1"
-          aria-expanded={openSections.produtividade}
-        >
-          <Timer size={18} weight="duotone" className="text-primary" />
-          <span className="text-sm font-semibold flex-1">Produtividade</span>
-          <CaretDown size={14} className={cn('transition-transform text-muted-foreground', openSections.produtividade && 'rotate-180')} />
-        </button>
-
-        {openSections.produtividade && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-            {/* Charts grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Foco Sparkline */}
-              <SectionCard
-                title="Minutos de foco"
-                icon={<ChartLineUp size={18} weight="duotone" />}
-                action={<TrendIndicator current={totalFocusMinutes} previous={prevTotalFocusMinutes} />}
-              >
-                <Sparkline
-                  data={focusValues}
-                  width={320}
-                  height={48}
-                  color="hsl(var(--primary))"
-                  fillColor="hsl(var(--primary))"
-                  label={`Minutos de foco nos últimos ${period} dias`}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                  <span>{period}d atrás</span>
-                  <span>Hoje</span>
-                </div>
-              </SectionCard>
-
-              {/* Tarefas Bars */}
-              <SectionCard
-                title="Tarefas concluídas"
-                icon={<CheckCircle size={18} weight="duotone" />}
-                action={<TrendIndicator current={totalTasksCompleted} previous={prevTotalTasksCompleted} />}
-              >
-                <MiniBarChart
-                  data={tasksValues}
-                  width={320}
-                  height={48}
-                  color="hsl(142.1 76.2% 36.3%)"
-                  label={`Tarefas concluídas nos últimos ${period} dias`}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                  <span>{period}d atrás</span>
-                  <span>Hoje</span>
-                </div>
-              </SectionCard>
-
-              {/* Hábitos Bars */}
-              <SectionCard
-                title="Consistência diária"
-                icon={<Fire size={18} weight="duotone" />}
-                action={<TrendIndicator current={avgHabitConsistency} previous={prevAvgHabitConsistency} />}
-              >
-                <MiniBarChart
-                  data={habitsValues}
-                  width={320}
-                  height={48}
-                  color="hsl(var(--accent))"
-                  label={`Consistência de hábitos nos últimos ${period} dias`}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                  <span>{period}d atrás</span>
-                  <span>Hoje</span>
-                </div>
-              </SectionCard>
+          {/* ── Produtividade ──────────────────────────────── */}
+          <TabsContent value="produtividade" className="space-y-4 mt-0">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <SummaryCard
+                icon={<Timer size={18} className="text-primary" weight="duotone" />}
+                value={`${totalFocusMinutes}m`}
+                label="Foco total"
+                trend={focusTrend}
+              />
+              <SummaryCard
+                icon={<CheckCircle size={18} className="text-emerald-500" weight="duotone" />}
+                value={totalTasksCompleted}
+                label="Tarefas feitas"
+                trend={tasksTrend}
+              />
+              <SummaryCard
+                icon={<Fire size={18} className="text-amber-500" weight="duotone" />}
+                value={`${avgHabitConsistency}%`}
+                label="Hábitos"
+                trend={habitsTrend}
+              />
+              <SummaryCard
+                icon={<Target size={18} className="text-blue-500" weight="duotone" />}
+                value={`${avgGoalProgress}%`}
+                label="Metas"
+              />
             </div>
 
-            {/* Goals detail */}
-            {activeGoals.length > 0 && (
-              <SectionCard
-                title="Progresso das Metas"
-                icon={<Target size={18} weight="duotone" />}
-              >
-                <div className="space-y-4">
-                  {activeGoals.map((goal, idx) => {
-                    const goalKRs = keyResults.filter(kr => kr.goalId === goal.id)
-                    return (
-                      <div key={goal.id} className="space-y-2.5">
-                        <p className="text-sm font-medium">{goal.objective}</p>
-                        <div className="space-y-2">
-                          {goalKRs.map(kr => {
-                            const progress = getKeyResultProgress(kr, tasks, habits, habitLogs)
-                            const isHabitKR = kr.krType === 'habit'
-                            const krCheckpoints = isHabitKR ? [] : tasks.filter(t => t.keyResultId === kr.id)
-                            const completedCheckpoints = krCheckpoints.filter(t => t.status === 'done').length
-                            return (
-                              <div key={kr.id}>
-                                <div className="flex items-baseline justify-between mb-1">
-                                  <span className="text-xs text-muted-foreground">{kr.description}</span>
-                                  <span className="text-xs font-mono">
-                                    {isHabitKR ? `${progress}% consistência` : `${completedCheckpoints}/${krCheckpoints.length}`}
-                                  </span>
-                                </div>
-                                <div className="w-full bg-secondary rounded-full h-1.5">
-                                  <div
-                                    className="bg-primary h-1.5 rounded-full transition-all"
-                                    style={{ width: `${Math.min(progress, 100)}%` }}
-                                  />
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                        {idx < activeGoals.length - 1 && (
-                          <div className="border-t border-border/50 mt-4" />
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </SectionCard>
+            {/* Planejado vs Executado */}
+            {plannedMinutes > 0 && (
+              <Card>
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <CalendarBlank size={16} weight="duotone" className="text-muted-foreground" />
+                      <span className="text-sm font-medium">Planejado vs Executado</span>
+                    </div>
+                    <span className="text-xs font-mono font-semibold">{executedRatio}%</span>
+                  </div>
+                  <div className="w-full bg-secondary rounded-full h-2">
+                    <div
+                      className="bg-primary h-2 rounded-full transition-all"
+                      style={{ width: `${Math.min(executedRatio, 100)}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                    <span>{totalFocusMinutes} min foco</span>
+                    <span>{plannedMinutes} min planejado</span>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
-            {/* Active Habits */}
+            {/* Foco Chart */}
+            <Card>
+              <CardHeader className="pb-2 px-3 pt-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <ChartLineUp size={16} className="text-primary" weight="duotone" />
+                  Minutos de Foco
+                </CardTitle>
+                <p className="text-[10px] text-muted-foreground">{todayFocus} min hoje</p>
+              </CardHeader>
+              <CardContent className="px-2 pb-3">
+                <ChartContainer config={focusChartCfg} className="h-[140px] w-full">
+                  <AreaChart data={focusChartData} accessibilityLayer>
+                    <defs>
+                      <linearGradient id="focusGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                    <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={6} className="text-[10px]" interval={xInterval} />
+                    <YAxis tickLine={false} axisLine={false} width={35} tickFormatter={(v: number) => `${v}m`} className="text-[10px]" />
+                    <ChartTooltip content={<ChartTooltipContent formatter={(value) => `${value} min`} />} />
+                    <Area dataKey="focus" type="monotone" stroke="var(--color-focus)" fill="url(#focusGrad)" strokeWidth={2} dot={{ r: 2, fill: 'var(--color-focus)' }} />
+                  </AreaChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+
+            {/* Tarefas Chart */}
+            <Card>
+              <CardHeader className="pb-2 px-3 pt-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <CheckCircle size={16} className="text-emerald-500" weight="duotone" />
+                  Tarefas Concluídas
+                </CardTitle>
+                <p className="text-[10px] text-muted-foreground">{todayTasks} hoje</p>
+              </CardHeader>
+              <CardContent className="px-2 pb-3">
+                <ChartContainer config={tasksChartCfg} className="h-[120px] w-full">
+                  <BarChart data={tasksChartData} accessibilityLayer>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                    <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={6} className="text-[10px]" interval={xInterval} />
+                    <YAxis tickLine={false} axisLine={false} width={25} className="text-[10px]" />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="tasks" fill="var(--color-tasks)" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+
+            {/* Hábitos Chart */}
             {activeHabits.length > 0 && (
-              <SectionCard
-                title="Hábitos Ativos"
-                icon={<Fire size={18} weight="duotone" />}
-              >
-                <div className="space-y-3">
-                  {activeHabits.map(habit => {
-                    const periodLogs = habitsSeries.reduce((count, day) => {
-                      const dayLogs = habitLogs.filter(log => log.habitId === habit.id && log.date === day.date)
-                      return count + (dayLogs.length > 0 ? 1 : 0)
-                    }, 0)
-                    const streak = calculateStreak(habit.id, habitLogs)
-                    return (
-                      <div key={habit.id} className="flex items-center justify-between min-h-[48px] p-2 rounded-lg hover:bg-accent/50 transition-colors">
-                        <div className="flex-1">
-                          <p className="text-sm">{habit.name}</p>
-                          {streak > 0 && (
-                            <p className="text-xs text-amber-500 flex items-center gap-0.5">
-                              <Fire size={12} weight="fill" />
-                              {streak} dias
-                            </p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-mono">{periodLogs}/{period}</div>
-                          <div className="text-[10px] text-muted-foreground">{period}d</div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </SectionCard>
+              <Card>
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Fire size={16} className="text-amber-500" weight="duotone" />
+                    Consistência de Hábitos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-2 pb-3">
+                  <ChartContainer config={habitsChartCfg} className="h-[120px] w-full">
+                    <BarChart data={habitsChartData} accessibilityLayer>
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={6} className="text-[10px]" interval={xInterval} />
+                      <YAxis tickLine={false} axisLine={false} width={30} domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} className="text-[10px]" />
+                      <ChartTooltip content={<ChartTooltipContent formatter={(value) => `${value}%`} />} />
+                      <Bar dataKey="habits" fill="var(--color-habits)" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
             )}
-          </div>
-        )}
-      </div>
 
-      {/* ══════════════════════════════════════════════════════
-          SECTION: Saúde & Corpo
-         ══════════════════════════════════════════════════════ */}
-      {hasHealthData && (
-        <div className="space-y-3">
-          <button
-            onClick={() => toggleSection('saude')}
-            className="flex items-center gap-2 w-full text-left py-1"
-            aria-expanded={openSections.saude}
-          >
-            <Heart size={18} weight="duotone" className="text-red-500" />
-            <span className="text-sm font-semibold flex-1">Saúde & Corpo</span>
-            <CaretDown size={14} className={cn('transition-transform text-muted-foreground', openSections.saude && 'rotate-180')} />
-          </button>
-
-          {openSections.saude && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Treinos por dia */}
-                {hasTrainingData && (
-                  <SectionCard
-                    title="Treinos por dia"
-                    icon={<Barbell size={18} weight="duotone" />}
-                    action={<span className="text-xs text-muted-foreground font-mono">{trainingCount.current} total</span>}
-                  >
-                    <MiniBarChart
-                      data={trainingValues}
-                      width={320}
-                      height={48}
-                      color="hsl(24.6 95% 53.1%)"
-                      label={`Treinos nos últimos ${period} dias`}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                      <span>{period}d atrás</span>
-                      <span>Hoje</span>
-                    </div>
-                  </SectionCard>
-                )}
-
-                {/* Tonelagem */}
-                {hasTrainingData && (
-                  <SectionCard
-                    title="Tonelagem diária"
-                    icon={<TrendUp size={18} weight="duotone" />}
-                    action={
-                      <span className="text-xs text-muted-foreground font-mono">
-                        {tonnage.current >= 1000 ? `${(tonnage.current / 1000).toFixed(1)}t` : `${tonnage.current}kg`}
-                      </span>
-                    }
-                  >
-                    <Sparkline
-                      data={tonnageValues}
-                      width={320}
-                      height={48}
-                      color="hsl(24.6 95% 53.1%)"
-                      fillColor="hsl(24.6 95% 53.1%)"
-                      label={`Tonelagem nos últimos ${period} dias`}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                      <span>{period}d atrás</span>
-                      <span>Hoje</span>
-                    </div>
-                  </SectionCard>
-                )}
-
-                {/* Dieta aderência */}
-                {hasDietData && (
-                  <SectionCard
-                    title="Aderência diária"
-                    icon={<ForkKnife size={18} weight="duotone" />}
-                    action={<TrendIndicator current={dietAdherence} previous={prevDietAdherence} />}
-                  >
-                    <MiniBarChart
-                      data={dietValues}
-                      width={320}
-                      height={48}
-                      color="hsl(83 80% 44%)"
-                      label={`Aderência à dieta nos últimos ${period} dias`}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                      <span>{period}d atrás</span>
-                      <span>Hoje</span>
-                    </div>
-                  </SectionCard>
-                )}
-
-                {/* Sono sparkline */}
-                {hasWellnessData && (
-                  <SectionCard
-                    title="Horas de sono"
-                    icon={<Moon size={18} weight="duotone" />}
-                    action={<span className="text-xs text-muted-foreground font-mono">{wellnessStatsData.avgSleep}h média</span>}
-                  >
-                    <Sparkline
-                      data={sleepValues}
-                      width={320}
-                      height={48}
-                      color="hsl(226 70% 55%)"
-                      fillColor="hsl(226 70% 55%)"
-                      label={`Horas de sono nos últimos ${period} dias`}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                      <span>{period}d atrás</span>
-                      <span>Hoje</span>
-                    </div>
-                  </SectionCard>
-                )}
-
-                {/* Humor / Energia mini bars */}
-                {hasWellnessData && (
-                  <SectionCard
-                    title="Humor & Energia"
-                    icon={<Smiley size={18} weight="duotone" />}
-                  >
-                    <div className="space-y-3">
-                      <div>
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Smiley size={12} weight="duotone" className="text-amber-500" />
-                          <span className="text-[10px] text-muted-foreground">Humor</span>
-                        </div>
-                        <MiniBarChart
-                          data={moodValues}
-                          width={320}
-                          height={28}
-                          color="hsl(38 92% 50%)"
-                          label="Humor"
-                          className="w-full"
-                        />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Lightning size={12} weight="duotone" className="text-orange-500" />
-                          <span className="text-[10px] text-muted-foreground">Energia</span>
-                        </div>
-                        <MiniBarChart
-                          data={energyValues}
-                          width={320}
-                          height={28}
-                          color="hsl(24.6 95% 53.1%)"
-                          label="Energia"
-                          className="w-full"
-                        />
-                      </div>
-                    </div>
-                  </SectionCard>
-                )}
-              </div>
-
-              {/* Dieta streak */}
-              {hasDietData && dietStreak > 0 && (
-                <SectionCard
-                  title="Streak de dieta"
-                  icon={<Fire size={18} weight="duotone" />}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold text-amber-500">{dietStreak}</span>
-                    <span className="text-sm text-muted-foreground">dias consecutivos com 100% de aderência</span>
-                  </div>
-                </SectionCard>
-              )}
-
-              {/* Wellness programs */}
-              {wellnessProgramsProgress.length > 0 && (
-                <SectionCard
-                  title="Programas de Bem-estar"
-                  icon={<Heart size={18} weight="duotone" />}
-                >
-                  <div className="space-y-3">
-                    {wellnessProgramsProgress.map(p => (
-                      <div key={p.programId} className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">{programLabels[p.type] || p.type}</span>
-                          <span className="text-xs font-mono text-muted-foreground">
-                            {p.completedDays}/{p.totalDays} dias
-                          </span>
-                        </div>
-                        <div className="w-full bg-secondary rounded-full h-1.5">
-                          <div
-                            className="h-1.5 rounded-full transition-all"
-                            style={{
-                              width: `${Math.min(p.progress, 100)}%`,
-                              backgroundColor: 'hsl(226 70% 55%)',
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </SectionCard>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ══════════════════════════════════════════════════════
-          SECTION: Desenvolvimento
-         ══════════════════════════════════════════════════════ */}
-      {hasDevelopmentData && (
-        <div className="space-y-3">
-          <button
-            onClick={() => toggleSection('desenvolvimento')}
-            className="flex items-center gap-2 w-full text-left py-1"
-            aria-expanded={openSections.desenvolvimento}
-          >
-            <GraduationCap size={18} weight="duotone" className="text-purple-500" />
-            <span className="text-sm font-semibold flex-1">Desenvolvimento</span>
-            <CaretDown size={14} className={cn('transition-transform text-muted-foreground', openSections.desenvolvimento && 'rotate-180')} />
-          </button>
-
-          {openSections.desenvolvimento && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Study minutes sparkline */}
-                {hasStudyData && (
-                  <SectionCard
-                    title="Minutos de estudo"
-                    icon={<GraduationCap size={18} weight="duotone" />}
-                    action={<TrendIndicator current={studyMinutes.current} previous={studyMinutes.previous} />}
-                  >
-                    <Sparkline
-                      data={studyValues}
-                      width={320}
-                      height={48}
-                      color="hsl(262.1 83.3% 57.8%)"
-                      fillColor="hsl(262.1 83.3% 57.8%)"
-                      label={`Minutos de estudo nos últimos ${period} dias`}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                      <span>{period}d atrás</span>
-                      <span>Hoje</span>
-                    </div>
-                  </SectionCard>
-                )}
-
-                {/* Pages read bars */}
-                {hasReadingData && (
-                  <SectionCard
-                    title="Páginas lidas"
-                    icon={<BookOpen size={18} weight="duotone" />}
-                    action={<TrendIndicator current={pagesRead.current} previous={pagesRead.previous} />}
-                  >
-                    <MiniBarChart
-                      data={readingValues}
-                      width={320}
-                      height={48}
-                      color="hsl(172 66% 50.2%)"
-                      label={`Páginas lidas nos últimos ${period} dias`}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                      <span>{period}d atrás</span>
-                      <span>Hoje</span>
-                    </div>
-                  </SectionCard>
-                )}
-              </div>
-
-              {/* Top subjects */}
-              {hasStudyData && studySubjects.length > 0 && (
-                <SectionCard
-                  title="Matérias por tempo"
-                  icon={<Brain size={18} weight="duotone" />}
-                >
-                  <div className="space-y-2">
-                    {studySubjects.map(subject => (
-                      <div key={subject.subjectId} className="flex items-center gap-2 min-h-[36px]">
-                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: subject.color }} />
-                        <span className="text-sm flex-1 truncate">{subject.name}</span>
-                        <span className="text-xs font-mono text-muted-foreground">{subject.minutes}m</span>
-                      </div>
-                    ))}
-                  </div>
-                </SectionCard>
-              )}
-
-              {/* Books in progress */}
-              {readingBooks.length > 0 && (
-                <SectionCard
-                  title="Livros em andamento"
-                  icon={<BookBookmark size={18} weight="duotone" />}
-                >
-                  <div className="space-y-3">
-                    {readingBooks.map(book => {
-                      const progress = book.totalPages > 0
-                        ? Math.round((book.currentPage / book.totalPages) * 100)
-                        : 0
+            {/* Goals progress */}
+            {activeGoals.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Target size={16} className="text-blue-500" weight="duotone" />
+                    Progresso das Metas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-3 pb-3">
+                  <div className="space-y-4">
+                    {activeGoals.map((goal, idx) => {
+                      const goalKRs = keyResults.filter(kr => kr.goalId === goal.id)
                       return (
-                        <div key={book.id} className="flex items-center gap-3 min-h-[48px]">
-                          <BookOpen size={16} weight="duotone" className="text-teal-500 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm truncate">{book.title}</p>
-                            <p className="text-[10px] text-muted-foreground">{book.author}</p>
+                        <div key={goal.id} className="space-y-2.5">
+                          <p className="text-sm font-medium">{goal.objective}</p>
+                          <div className="space-y-2">
+                            {goalKRs.map(kr => {
+                              const progress = getKeyResultProgress(kr, tasks, habits, habitLogs)
+                              const isHabitKR = kr.krType === 'habit'
+                              const krCheckpoints = isHabitKR ? [] : tasks.filter(t => t.keyResultId === kr.id)
+                              const completedCheckpoints = krCheckpoints.filter(t => t.status === 'done').length
+                              return (
+                                <div key={kr.id}>
+                                  <div className="flex items-baseline justify-between mb-1">
+                                    <span className="text-xs text-muted-foreground">{kr.description}</span>
+                                    <span className="text-xs font-mono">
+                                      {isHabitKR ? `${progress}% consistência` : `${completedCheckpoints}/${krCheckpoints.length}`}
+                                    </span>
+                                  </div>
+                                  <div className="w-full bg-secondary rounded-full h-1.5">
+                                    <div
+                                      className="bg-primary h-1.5 rounded-full transition-all"
+                                      style={{ width: `${Math.min(progress, 100)}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              )
+                            })}
                           </div>
-                          <div className="text-right flex-shrink-0">
-                            <div className="text-xs font-mono">{book.currentPage}/{book.totalPages}</div>
-                            <div className="w-16 bg-secondary rounded-full h-1 mt-1">
-                              <div
-                                className="bg-teal-500 h-1 rounded-full"
-                                style={{ width: `${Math.min(progress, 100)}%` }}
-                              />
-                            </div>
+                          {idx < activeGoals.length - 1 && <div className="border-t border-border/50 mt-4" />}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Active Habits detail */}
+            {activeHabits.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Fire size={16} className="text-amber-500" weight="duotone" />
+                    Hábitos Ativos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-3 pb-3">
+                  <div className="space-y-1">
+                    {activeHabits.map(habit => {
+                      const periodLogs = habitsSeries.reduce((count, day) => {
+                        const dayLogs = habitLogs.filter(log => log.habitId === habit.id && log.date === day.date)
+                        return count + (dayLogs.length > 0 ? 1 : 0)
+                      }, 0)
+                      const streak = calculateStreak(habit.id, habitLogs)
+                      return (
+                        <div key={habit.id} className="flex items-center justify-between min-h-[40px] p-2 rounded-lg hover:bg-accent/50 transition-colors">
+                          <div className="flex-1">
+                            <p className="text-sm">{habit.name}</p>
+                            {streak > 0 && (
+                              <p className="text-xs text-amber-500 flex items-center gap-0.5">
+                                <Fire size={12} weight="fill" />
+                                {streak} dias
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-mono">{periodLogs}/{period}</div>
+                            <div className="text-[10px] text-muted-foreground">{period}d</div>
                           </div>
                         </div>
                       )
                     })}
                   </div>
-                </SectionCard>
-              )}
-            </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* ── Treino ────────────────────────────────────── */}
+          {hasTrainingData && (
+            <TabsContent value="treino" className="space-y-4 mt-0">
+              <div className="grid grid-cols-2 gap-2">
+                <SummaryCard
+                  icon={<Barbell size={18} className="text-orange-500" weight="duotone" />}
+                  value={trainingCount.current}
+                  label={`Treinos · ${period}d`}
+                  trend={trainingTrend}
+                />
+                <SummaryCard
+                  icon={<TrendUp size={18} className="text-orange-500" weight="duotone" />}
+                  value={tonnage.current >= 1000 ? `${(tonnage.current / 1000).toFixed(1)}t` : `${tonnage.current}kg`}
+                  label="Tonelagem total"
+                  trend={tonnageTrend}
+                />
+              </div>
+
+              {/* Treinos por dia */}
+              <Card>
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Barbell size={16} className="text-orange-500" weight="duotone" />
+                    Treinos por Dia
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-2 pb-3">
+                  <ChartContainer config={trainingChartCfg} className="h-[120px] w-full">
+                    <BarChart data={trainingChartData} accessibilityLayer>
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={6} className="text-[10px]" interval={xInterval} />
+                      <YAxis tickLine={false} axisLine={false} width={25} className="text-[10px]" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="count" fill="var(--color-count)" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              {/* Tonelagem */}
+              <Card>
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <TrendUp size={16} className="text-orange-500" weight="duotone" />
+                    Tonelagem Diária
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-2 pb-3">
+                  <ChartContainer config={tonnageChartCfg} className="h-[140px] w-full">
+                    <AreaChart data={tonnageChartData} accessibilityLayer>
+                      <defs>
+                        <linearGradient id="tonnageGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(24.6 95% 53.1%)" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(24.6 95% 53.1%)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={6} className="text-[10px]" interval={xInterval} />
+                      <YAxis
+                        tickLine={false} axisLine={false} width={35} className="text-[10px]"
+                        tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}t` : `${v}kg`}
+                      />
+                      <ChartTooltip content={<ChartTooltipContent formatter={(value) => `${Number(value).toLocaleString('pt-BR')} kg`} />} />
+                      <Area dataKey="tonnage" type="monotone" stroke="var(--color-tonnage)" fill="url(#tonnageGrad)" strokeWidth={2} dot={{ r: 2, fill: 'var(--color-tonnage)' }} />
+                    </AreaChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+            </TabsContent>
           )}
-        </div>
-      )}
 
-      {/* ══════════════════════════════════════════════════════
-          SECTION: Finanças
-         ══════════════════════════════════════════════════════ */}
-      {hasFinanceData && (
-        <div className="space-y-3">
-          <button
-            onClick={() => toggleSection('financas')}
-            className="flex items-center gap-2 w-full text-left py-1"
-            aria-expanded={openSections.financas}
-          >
-            <Wallet size={18} weight="duotone" className="text-green-600" />
-            <span className="text-sm font-semibold flex-1">Finanças</span>
-            <CaretDown size={14} className={cn('transition-transform text-muted-foreground', openSections.financas && 'rotate-180')} />
-          </button>
+          {/* ── Dieta ─────────────────────────────────────── */}
+          {hasDietData && (
+            <TabsContent value="dieta" className="space-y-4 mt-0">
+              <div className="grid grid-cols-3 gap-2">
+                <SummaryCard
+                  icon={<ForkKnife size={18} className="text-lime-600" weight="duotone" />}
+                  value={`${dietAdherence}%`}
+                  label="Aderência"
+                  trend={dietTrend}
+                />
+                <SummaryCard
+                  icon={<Fire size={18} className="text-amber-500" weight="duotone" />}
+                  value={`${dietStreak}d`}
+                  label="Streak"
+                />
+                <SummaryCard
+                  icon={<CheckCircle size={18} className="text-emerald-500" weight="duotone" />}
+                  value={`${todayDietCompleted}/${todayDietMeals.length || dietTemplates.length}`}
+                  label="Hoje"
+                />
+              </div>
 
-          {openSections.financas && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Daily expenses bars */}
-                <SectionCard
-                  title="Gastos diários"
-                  icon={<CurrencyDollar size={18} weight="duotone" />}
-                  action={<span className="text-xs text-muted-foreground font-mono">{brl.format(financeBalance.expense)}</span>}
-                >
-                  <MiniBarChart
-                    data={expenseValues}
-                    width={320}
-                    height={48}
-                    color="hsl(0 84.2% 60.2%)"
-                    label={`Gastos nos últimos ${period} dias`}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                    <span>{period}d atrás</span>
-                    <span>Hoje</span>
-                  </div>
-                </SectionCard>
+              {/* Aderência chart */}
+              <Card>
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <ForkKnife size={16} className="text-lime-600" weight="duotone" />
+                    Aderência Diária
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-2 pb-3">
+                  <ChartContainer config={dietChartCfg} className="h-[120px] w-full">
+                    <BarChart data={dietChartData} accessibilityLayer>
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={6} className="text-[10px]" interval={xInterval} />
+                      <YAxis tickLine={false} axisLine={false} width={30} domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} className="text-[10px]" />
+                      <ChartTooltip content={<ChartTooltipContent formatter={(value) => `${value}%`} />} />
+                      <Bar dataKey="adherence" fill="var(--color-adherence)" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
 
-                {/* Income vs Expenses */}
-                <SectionCard
-                  title="Receita vs Despesa"
-                  icon={<TrendUp size={18} weight="duotone" />}
-                >
+              {/* Diet streak highlight */}
+              {dietStreak > 0 && (
+                <div className="bg-amber-500/10 rounded-lg p-3 text-center">
+                  <p className="text-xs text-amber-700 dark:text-amber-400">
+                    <Fire size={14} weight="fill" className="inline -mt-0.5 mr-1" />
+                    <strong>{dietStreak}</strong> dias consecutivos com 100% de aderência
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+          )}
+
+          {/* ── Estudos ───────────────────────────────────── */}
+          {hasStudyData && (
+            <TabsContent value="estudos" className="space-y-4 mt-0">
+              <div className="grid grid-cols-2 gap-2">
+                <SummaryCard
+                  icon={<GraduationCap size={18} className="text-purple-500" weight="duotone" />}
+                  value={`${studyMinutes.current}m`}
+                  label={`Estudos · ${period}d`}
+                  trend={studyTrend}
+                />
+                <SummaryCard
+                  icon={<Brain size={18} className="text-purple-400" weight="duotone" />}
+                  value={studySubjects.length}
+                  label="Matérias ativas"
+                />
+              </div>
+
+              {/* Estudo chart */}
+              <Card>
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <GraduationCap size={16} className="text-purple-500" weight="duotone" />
+                    Minutos de Estudo
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-2 pb-3">
+                  <ChartContainer config={studyChartCfg} className="h-[140px] w-full">
+                    <AreaChart data={studyChartData} accessibilityLayer>
+                      <defs>
+                        <linearGradient id="studyGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(262.1 83.3% 57.8%)" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(262.1 83.3% 57.8%)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={6} className="text-[10px]" interval={xInterval} />
+                      <YAxis tickLine={false} axisLine={false} width={35} tickFormatter={(v: number) => `${v}m`} className="text-[10px]" />
+                      <ChartTooltip content={<ChartTooltipContent formatter={(value) => `${value} min`} />} />
+                      <Area dataKey="study" type="monotone" stroke="var(--color-study)" fill="url(#studyGrad)" strokeWidth={2} dot={{ r: 2, fill: 'var(--color-study)' }} />
+                    </AreaChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              {/* Matérias por tempo */}
+              {studySubjects.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2 px-3 pt-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Brain size={16} className="text-purple-400" weight="duotone" />
+                      Matérias por Tempo
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-3 pb-3">
+                    <div className="space-y-2">
+                      {studySubjects.map(subject => (
+                        <div key={subject.subjectId} className="flex items-center gap-2 min-h-[36px]">
+                          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: subject.color }} />
+                          <span className="text-sm flex-1 truncate">{subject.name}</span>
+                          <span className="text-xs font-mono text-muted-foreground">{subject.minutes}m</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          )}
+
+          {/* ── Leitura ───────────────────────────────────── */}
+          {hasReadingData && (
+            <TabsContent value="leitura" className="space-y-4 mt-0">
+              <div className="grid grid-cols-3 gap-2">
+                <SummaryCard
+                  icon={<BookOpen size={18} className="text-teal-500" weight="duotone" />}
+                  value={pagesRead.current}
+                  label={`Páginas · ${period}d`}
+                  trend={readingTrend}
+                />
+                <SummaryCard
+                  icon={<BookBookmark size={18} className="text-teal-400" weight="duotone" />}
+                  value={readingStatsData.reading}
+                  label="Em leitura"
+                />
+                <SummaryCard
+                  icon={<Brain size={18} className="text-teal-600" weight="duotone" />}
+                  value={`${readingStatsData.avgProgress}%`}
+                  label="Progresso médio"
+                />
+              </div>
+
+              {/* Páginas chart */}
+              <Card>
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <BookOpen size={16} className="text-teal-500" weight="duotone" />
+                    Páginas Lidas por Dia
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-2 pb-3">
+                  <ChartContainer config={readingChartCfg} className="h-[120px] w-full">
+                    <BarChart data={readingChartData} accessibilityLayer>
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={6} className="text-[10px]" interval={xInterval} />
+                      <YAxis tickLine={false} axisLine={false} width={25} className="text-[10px]" />
+                      <ChartTooltip content={<ChartTooltipContent formatter={(value) => `${value} pgs`} />} />
+                      <Bar dataKey="pages" fill="var(--color-pages)" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              {/* Livros em andamento */}
+              {readingBooks.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2 px-3 pt-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <BookBookmark size={16} className="text-teal-400" weight="duotone" />
+                      Livros em Andamento
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-3 pb-3">
+                    <div className="space-y-3">
+                      {readingBooks.map(book => {
+                        const progress = book.totalPages > 0
+                          ? Math.round((book.currentPage / book.totalPages) * 100)
+                          : 0
+                        return (
+                          <div key={book.id} className="flex items-center gap-3 min-h-[44px]">
+                            <BookOpen size={16} weight="duotone" className="text-teal-500 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm truncate">{book.title}</p>
+                              <p className="text-[10px] text-muted-foreground">{book.author}</p>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <div className="text-xs font-mono">{book.currentPage}/{book.totalPages}</div>
+                              <div className="w-16 bg-secondary rounded-full h-1 mt-1">
+                                <div
+                                  className="bg-teal-500 h-1 rounded-full"
+                                  style={{ width: `${Math.min(progress, 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          )}
+
+          {/* ── Finanças ──────────────────────────────────── */}
+          {hasFinanceData && (
+            <TabsContent value="financas" className="space-y-4 mt-0">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <SummaryCard
+                  icon={<Wallet size={18} className="text-green-600" weight="duotone" />}
+                  value={brl.format(financeBalance.income)}
+                  label="Receita"
+                />
+                <SummaryCard
+                  icon={<CurrencyDollar size={18} className="text-red-500" weight="duotone" />}
+                  value={brl.format(financeBalance.expense)}
+                  label="Despesas"
+                />
+                <SummaryCard
+                  icon={<TrendUp size={18} className={financeBalance.balance >= 0 ? 'text-green-600' : 'text-red-500'} weight="duotone" />}
+                  value={brl.format(financeBalance.balance)}
+                  label="Saldo"
+                />
+                <SummaryCard
+                  icon={<Lightning size={18} className="text-amber-500" weight="duotone" />}
+                  value={`${savingsRate}%`}
+                  label="Taxa economia"
+                />
+              </div>
+
+              {/* Gastos chart */}
+              <Card>
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <CurrencyDollar size={16} className="text-red-500" weight="duotone" />
+                    Gastos Diários
+                  </CardTitle>
+                  <p className="text-[10px] text-muted-foreground">Total: {brl.format(financeBalance.expense)}</p>
+                </CardHeader>
+                <CardContent className="px-2 pb-3">
+                  <ChartContainer config={expenseChartCfg} className="h-[120px] w-full">
+                    <BarChart data={expenseChartData} accessibilityLayer>
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={6} className="text-[10px]" interval={xInterval} />
+                      <YAxis tickLine={false} axisLine={false} width={50} tickFormatter={(v: number) => brl.format(v)} className="text-[10px]" />
+                      <ChartTooltip content={<ChartTooltipContent formatter={(value) => brl.format(Number(value))} />} />
+                      <Bar dataKey="expense" fill="var(--color-expense)" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              {/* Receita vs Despesa */}
+              <Card>
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <TrendUp size={16} className="text-green-600" weight="duotone" />
+                    Receita vs Despesa
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-3 pb-3">
                   <div className="space-y-3">
-                    {/* Income bar */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs text-muted-foreground">Receita</span>
@@ -1002,7 +1009,6 @@ export function EvolucaoTab({
                         />
                       </div>
                     </div>
-                    {/* Expense bar */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs text-muted-foreground">Despesa</span>
@@ -1020,7 +1026,6 @@ export function EvolucaoTab({
                         />
                       </div>
                     </div>
-                    {/* Balance summary */}
                     <div className="flex items-center justify-between pt-2 border-t border-border/50">
                       <span className="text-xs font-medium">Saldo</span>
                       <span className={cn('text-sm font-bold', financeBalance.balance >= 0 ? 'text-green-600' : 'text-red-500')}>
@@ -1028,72 +1033,159 @@ export function EvolucaoTab({
                       </span>
                     </div>
                   </div>
-                </SectionCard>
-              </div>
-            </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           )}
-        </div>
-      )}
 
-      {/* ══════════════════════════════════════════════════════
-          Tendências (all modules)
-         ══════════════════════════════════════════════════════ */}
-      {hasAnyData && (
-        <SectionCard
-          title={`Tendências (${period}d vs anterior)`}
-          icon={<TrendUp size={18} weight="duotone" />}
-        >
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            <div className="text-center">
-              <div className="text-xs text-muted-foreground mb-1">Foco</div>
-              <TrendIndicator current={totalFocusMinutes} previous={prevTotalFocusMinutes} className="justify-center" />
-            </div>
-            <div className="text-center">
-              <div className="text-xs text-muted-foreground mb-1">Tarefas</div>
-              <TrendIndicator current={totalTasksCompleted} previous={prevTotalTasksCompleted} className="justify-center" />
-            </div>
-            <div className="text-center">
-              <div className="text-xs text-muted-foreground mb-1">Hábitos</div>
-              <TrendIndicator current={avgHabitConsistency} previous={prevAvgHabitConsistency} className="justify-center" />
-            </div>
-            {hasTrainingData && (
-              <div className="text-center">
-                <div className="text-xs text-muted-foreground mb-1">Treinos</div>
-                <TrendIndicator current={trainingCount.current} previous={trainingCount.previous} className="justify-center" />
+          {/* ── Bem-estar ─────────────────────────────────── */}
+          {hasWellnessData && (
+            <TabsContent value="bemestar" className="space-y-4 mt-0">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-3 gap-2">
+                <SummaryCard
+                  icon={<Moon size={18} className="text-blue-500" weight="duotone" />}
+                  value={`${wellnessStatsData.avgSleep}h`}
+                  label="Média sono"
+                  trend={sleepTrend}
+                />
+                <SummaryCard
+                  icon={<Lightning size={18} className="text-amber-500" weight="duotone" />}
+                  value={moodLabel(avgPositive(energyValues))}
+                  label="Energia"
+                  trend={energyTrend}
+                />
+                <SummaryCard
+                  icon={<Smiley size={18} className="text-emerald-500" weight="duotone" />}
+                  value={moodLabel(avgPositive(moodValues))}
+                  label="Humor"
+                  trend={moodTrend}
+                />
               </div>
-            )}
-            {hasDietData && (
-              <div className="text-center">
-                <div className="text-xs text-muted-foreground mb-1">Dieta</div>
-                <TrendIndicator current={dietAdherence} previous={prevDietAdherence} className="justify-center" />
+
+              {/* Sono chart */}
+              <Card>
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Moon size={16} className="text-blue-500" weight="duotone" />
+                    Horas de Sono
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-2 pb-3">
+                  <ChartContainer config={sleepChartCfg} className="h-[140px] w-full">
+                    <AreaChart data={wellnessChartData} accessibilityLayer>
+                      <defs>
+                        <linearGradient id="evSleepGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(226 70% 55%)" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(226 70% 55%)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={6} className="text-[10px]" interval={xInterval} />
+                      <YAxis tickLine={false} axisLine={false} width={30} domain={[0, 12]} tickFormatter={(v: number) => `${v}h`} className="text-[10px]" />
+                      <ChartTooltip content={<ChartTooltipContent formatter={(value) => value !== null ? `${Number(value).toFixed(1)}h` : 'Sem dados'} />} />
+                      <Area dataKey="sleep" type="monotone" stroke="var(--color-sleep)" fill="url(#evSleepGrad)" strokeWidth={2} dot={{ r: 2, fill: 'var(--color-sleep)' }} connectNulls />
+                    </AreaChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              {/* Energia chart */}
+              <Card>
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Lightning size={16} className="text-amber-500" weight="duotone" />
+                    Nível de Energia
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-2 pb-3">
+                  <ChartContainer config={energyChartCfg} className="h-[120px] w-full">
+                    <BarChart data={wellnessChartData} accessibilityLayer>
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={6} className="text-[10px]" interval={xInterval} />
+                      <YAxis
+                        tickLine={false} axisLine={false} width={40} domain={[0, 3]} ticks={[1, 2, 3]}
+                        tickFormatter={(v: number) => { if (v === 1) return 'Baixo'; if (v === 2) return 'Médio'; if (v === 3) return 'Alto'; return '' }}
+                        className="text-[10px]"
+                      />
+                      <ChartTooltip content={<ChartTooltipContent formatter={(value) => { const v = Number(value); if (v === 1) return 'Baixo'; if (v === 2) return 'Médio'; if (v === 3) return 'Alto'; return 'Sem dados' }} />} />
+                      <Bar dataKey="energy" fill="var(--color-energy)" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              {/* Humor chart */}
+              <Card>
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Smiley size={16} className="text-emerald-500" weight="duotone" />
+                    Humor
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-2 pb-3">
+                  <ChartContainer config={moodChartCfg} className="h-[120px] w-full">
+                    <BarChart data={wellnessChartData} accessibilityLayer>
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={6} className="text-[10px]" interval={xInterval} />
+                      <YAxis
+                        tickLine={false} axisLine={false} width={40} domain={[0, 3]} ticks={[1, 2, 3]}
+                        tickFormatter={(v: number) => { if (v === 1) return 'Baixo'; if (v === 2) return 'Médio'; if (v === 3) return 'Alto'; return '' }}
+                        className="text-[10px]"
+                      />
+                      <ChartTooltip content={<ChartTooltipContent formatter={(value) => { const v = Number(value); if (v === 1) return 'Baixo'; if (v === 2) return 'Médio'; if (v === 3) return 'Alto'; return 'Sem dados' }} />} />
+                      <Bar dataKey="mood" fill="var(--color-mood)" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              {/* Programas */}
+              {wellnessProgramsProgress.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2 px-3 pt-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Heart size={16} className="text-rose-500" weight="duotone" />
+                      Programas de Bem-estar
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-3 pb-3">
+                    <div className="space-y-3">
+                      {wellnessProgramsProgress.map(p => (
+                        <div key={p.programId} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">{programLabels[p.type] || p.type}</span>
+                            <span className="text-xs font-mono text-muted-foreground">
+                              {p.completedDays}/{p.totalDays} dias
+                            </span>
+                          </div>
+                          <div className="w-full bg-secondary rounded-full h-1.5">
+                            <div
+                              className="h-1.5 rounded-full transition-all"
+                              style={{
+                                width: `${Math.min(p.progress, 100)}%`,
+                                backgroundColor: 'hsl(226 70% 55%)',
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Check-in consistency */}
+              <div className="bg-muted/30 rounded-lg p-3 text-center">
+                <p className="text-xs text-muted-foreground">
+                  <strong>{wellnessStatsData.checkInCount}</strong> check-in{wellnessStatsData.checkInCount !== 1 ? 's' : ''} nos últimos <strong>{period}</strong> dias
+                  {' '}({wellnessStatsData.checkInRate}% de consistência)
+                </p>
               </div>
-            )}
-            {hasStudyData && (
-              <div className="text-center">
-                <div className="text-xs text-muted-foreground mb-1">Estudos</div>
-                <TrendIndicator current={studyMinutes.current} previous={studyMinutes.previous} className="justify-center" />
-              </div>
-            )}
-            {hasReadingData && (
-              <div className="text-center">
-                <div className="text-xs text-muted-foreground mb-1">Leitura</div>
-                <TrendIndicator current={pagesRead.current} previous={pagesRead.previous} className="justify-center" />
-              </div>
-            )}
-            {hasFinanceData && (
-              <div className="text-center">
-                <div className="text-xs text-muted-foreground mb-1">Saldo</div>
-                <TrendIndicator current={financeBalance.balance} previous={financeBalance.prevBalance} className="justify-center" />
-              </div>
-            )}
-            {hasWellnessData && (
-              <div className="text-center">
-                <div className="text-xs text-muted-foreground mb-1">Sono</div>
-                <TrendIndicator current={wellnessStatsData.avgSleep} previous={wellnessStatsData.prevAvgSleep} className="justify-center" />
-              </div>
-            )}
-          </div>
-        </SectionCard>
+            </TabsContent>
+          )}
+
+        </Tabs>
       )}
 
       {/* ── Empty state ──────────────────────────────────── */}

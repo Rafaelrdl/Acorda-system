@@ -563,9 +563,9 @@ export function PlanDetailView({
           setShowAllSuggested(false)
         }
       }}>
-        <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
           {/* Header */}
-          <div className="p-4 border-b space-y-3">
+          <div className="p-4 border-b space-y-3 shrink-0">
             <DialogHeader className="flex-row items-center justify-between space-y-0">
               <DialogTitle>Biblioteca de Exercícios</DialogTitle>
               <Button 
@@ -597,11 +597,11 @@ export function PlanDetailView({
               </div>
 
               {/* Filtro por grupo muscular (chips) */}
-              <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+              <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-thin">
                 <button
                   onClick={() => setSelectedGroup('all')}
                   aria-pressed={selectedGroup === 'all'}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-colors ${
                     selectedGroup === 'all'
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted hover:bg-muted/80'
@@ -618,7 +618,7 @@ export function PlanDetailView({
                     key={group.value}
                     onClick={() => setSelectedGroup(group.value)}
                     aria-pressed={selectedGroup === group.value}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-colors ${
                       selectedGroup === group.value
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted hover:bg-muted/80'
@@ -630,13 +630,13 @@ export function PlanDetailView({
               </div>
 
               {/* Filtro por equipamento (chips) */}
-              <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+              <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-thin">
                 {EQUIPMENT_OPTIONS.map((equip) => (
                   <button
                     key={equip.value}
                     onClick={() => setSelectedEquipment(equip.value)}
                     aria-pressed={selectedEquipment === equip.value}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-colors ${
                       selectedEquipment === equip.value
                         ? 'bg-secondary text-secondary-foreground'
                         : 'bg-muted/50 hover:bg-muted/80'

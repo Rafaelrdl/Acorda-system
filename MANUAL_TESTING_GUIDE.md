@@ -1254,7 +1254,7 @@ Após salvar a sessão, o dialog de **auto-teste** abre automaticamente:
 | Dias | Marque: **Ter**, **Qui** |
 | Observações | `Foco em pegada pronada nos puxadores` |
 
-- [ ] 2 fichas criadas
+- [x] 2 fichas criadas
 
 ### 16.2 Adicionar Exercícios à Ficha A
 
@@ -1288,27 +1288,27 @@ Abra "Treino A - Peito e Tríceps" e adicione exercícios:
 | Nome do Exercício | `Tríceps Testa` |
 | Grupo Muscular | `Tríceps` (triceps) |
 
-- [ ] 4 exercícios adicionados à ficha
+- [x] 4 exercícios adicionados à ficha
 
 ### 16.3 Configurar Prescrição (séries x repetições)
 
 Clique em um exercício para configurar a prescrição:
 
 **Supino Reto:**
-- [ ] Use o preset rápido `4×8–12`
-- [ ] Ou configure manualmente:
+- [x] Use o preset rápido `4×8–12`
+- [x] Ou configure manualmente:
   - Séries: `4`
   - Reps mín: `8`
   - Reps máx: `12`
 
 **Tríceps Pulley:**
-- [ ] Use o preset rápido `3×12`
+- [x] Use o preset rápido `3×12`
 
 ### 16.4 Configurar Técnica Avançada (opcional)
 
 Para "Supino Reto", adicione técnica:
-- [ ] Selecione `Backoff Set` → Percentual: `25%`
-- [ ] Ou selecione `Rest-Pause` → Pause: `15s`, Mini-sets: `3`
+- [x] Selecione `Backoff Set` → Percentual: `25%`
+- [x] Ou selecione `Rest-Pause` → Pause: `15s`, Mini-sets: `3`
 
 ### 16.5 Iniciar Treino (aba Treinar)
 
@@ -1501,24 +1501,69 @@ Se manual, registre uma refeição:
 > Acesse a aba "Evolução" na navegação inferior.
 
 ### 20.1 Score Geral
-- [ ] Score de 0-100 exibido
+- [ ] Score de 0-100 exibido no círculo animado
 - [ ] Score reflete as atividades feitas nos outros módulos
-- [ ] Badge de nível visível (Iniciante, Regular, Consistente, etc.)
+- [ ] Label de nível visível (Excelente / Bom / Regular / Precisa melhorar)
+- [ ] Cor do círculo muda conforme faixa do score
 
-### 20.2 Gráficos e Métricas
-- [ ] Gráfico de tendência de score (últimos 7/30 dias)
-- [ ] Breakdown por módulo (Tarefas, Hábitos, Metas, etc.)
-- [ ] Horas de foco acumuladas
-- [ ] Taxa de conclusão de tarefas
-- [ ] Streak de hábitos
+### 20.2 Seletor de Período
+- [ ] Toggle de período com opções 7, 14 e 30 dias
+- [ ] Alterar o período atualiza todos os dados e gráficos
+- [ ] Padrão é 7 dias
 
-### 20.3 Insights
-- [ ] Cards com insights personalizados
-- [ ] Sugestões de melhoria baseadas nos dados
+### 20.3 Abas por Módulo
+- [ ] Barra de abas responsiva: grid 4 colunas no mobile, inline no desktop
+- [ ] Aba "Produtividade" sempre visível (com ícone Timer)
+- [ ] Demais abas só aparecem se há dados: Treino, Dieta, Estudos, Leitura, Finanças, Bem-estar
+- [ ] Aba ativa tem destaque visual (bg-secondary)
+- [ ] Clicar em outra aba troca o conteúdo exibido
+- [ ] Produtividade é a aba padrão (selecionada ao abrir)
 
-### 20.4 Comparativo Temporal
-- [ ] Compare esta semana vs semana passada
-- [ ] Setas de tendência (↑ melhorou, ↓ piorou)
+### 20.4 Módulo Produtividade
+- [ ] Cards resumo: Foco total, Tarefas feitas, Hábitos %, Metas %
+- [ ] Cada card mostra badge de tendência (Subindo / Caindo / Estável)
+- [ ] Card "Planejado vs Executado" com barra de progresso (se há blocos planejados)
+- [ ] Gráfico AreaChart "Minutos de Foco" com gradiente e tooltip
+- [ ] Gráfico BarChart "Tarefas Concluídas" com tooltip
+- [ ] Gráfico BarChart "Consistência de Hábitos" com eixo 0-100%
+- [ ] Card "Progresso das Metas" com barras de progresso dos KRs
+- [ ] Card "Hábitos Ativos" com contagem de dias e streak
+
+### 20.5 Módulo Treino
+- [ ] Cards resumo: Treinos no período + Tonelagem total com tendência
+- [ ] Gráfico BarChart "Treinos por Dia"
+- [ ] Gráfico AreaChart "Tonelagem Diária" com gradiente
+
+### 20.6 Módulo Dieta
+- [ ] Cards resumo: Aderência %, Streak, Hoje (completados/total)
+- [ ] Gráfico BarChart "Aderência Diária" com eixo 0-100%
+- [ ] Destaque amber se há streak ativo
+
+### 20.7 Módulo Estudos
+- [ ] Cards resumo: Minutos de estudo + Matérias ativas
+- [ ] Gráfico AreaChart "Minutos de Estudo" com gradiente
+- [ ] Lista de matérias com cor, nome e tempo em minutos
+
+### 20.8 Módulo Leitura
+- [ ] Cards resumo: Páginas lidas, Em leitura, Progresso médio %
+- [ ] Gráfico BarChart "Páginas Lidas por Dia"
+- [ ] Lista "Livros em Andamento" com progresso visual
+
+### 20.9 Módulo Finanças
+- [ ] Cards resumo: Receita, Despesas, Saldo, Taxa economia
+- [ ] Gráfico BarChart "Gastos Diários" com eixo em R$
+- [ ] Card "Receita vs Despesa" com barras comparativas e saldo
+
+### 20.10 Módulo Bem-estar
+- [ ] Cards resumo: Média sono (h), Energia (Alto/Médio/Baixo), Humor com tendências
+- [ ] Gráfico AreaChart "Horas de Sono" com gradiente e connectNulls
+- [ ] Gráfico BarChart "Nível de Energia" com eixo Baixo/Médio/Alto
+- [ ] Gráfico BarChart "Humor" com eixo Baixo/Médio/Alto
+- [ ] Card "Programas de Bem-estar" com progresso (se houver)
+- [ ] Indicador de consistência de check-ins
+
+### 20.11 Estado Vazio
+- [ ] Se não há dados em nenhum módulo, exibe mensagem de início
 
 ---
 
