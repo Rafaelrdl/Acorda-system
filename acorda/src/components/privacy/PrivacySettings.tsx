@@ -3,6 +3,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
@@ -13,30 +23,21 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { UserId } from '@/lib/types'
-import { ShieldCheck, Trash, Download, Info, FileText, FileCsv, FileArrowDown } from '@phosphor-icons/react'
+import { ShieldCheck, Trash, Info } from '@phosphor-icons/react'
 import { toast } from 'sonner'
-import { getDateKey } from '@/lib/helpers'
 
 interface PrivacySettingsProps {
   userId: UserId
   onDeleteAllData: () => Promise<void>
-  onExportFinance: () => string
-  onExportStudy: () => string
-  onExportReading: () => string
-  onExportAllJSON?: () => Promise<string>
 }
 
 export function PrivacySettings({
   userId: _userId,
   onDeleteAllData,
-  onExportFinance,
-  onExportStudy,
-  onExportReading,
-  onExportAllJSON,
 }: PrivacySettingsProps) {
+  const [showFirstConfirm, setShowFirstConfirm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [confirmText, setConfirmText] = useState('')
-  const [exporting, setExporting] = useState(false)
 
   const handleDelete = async () => {
     if (confirmText !== 'APAGAR') return
@@ -48,65 +49,6 @@ export function PrivacySettings({
     } catch (error) {
       console.error('Erro ao apagar dados:', error)
       toast.error(error instanceof Error ? error.message : 'Erro ao apagar dados')
-    }
-  }
-
-  const handleExport = (type: 'finance' | 'study' | 'reading') => {
-    let data = ''
-    let filename = ''
-    
-    try {
-      switch (type) {
-        case 'finance':
-          data = onExportFinance()
-          filename = `acorda-financas-${getDateKey(new Date())}.csv`
-          break
-        case 'study':
-          data = onExportStudy()
-          filename = `acorda-estudos-${getDateKey(new Date())}.md`
-          break
-        case 'reading':
-          data = onExportReading()
-          filename = `acorda-leitura-${getDateKey(new Date())}.md`
-          break
-      }
-
-      const blob = new Blob([data], { type: 'text/plain' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-
-      toast.success('Arquivo exportado com sucesso')
-    } catch {
-      toast.error('Erro ao exportar dados')
-    }
-  }
-
-  const handleExportAllJSON = async () => {
-    if (!onExportAllJSON) return
-    setExporting(true)
-    try {
-      const data = await onExportAllJSON()
-      const filename = `acorda-backup-completo-${getDateKey(new Date())}.json`
-      const blob = new Blob([data], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-      toast.success('Backup completo exportado')
-    } catch {
-      toast.error('Erro ao exportar dados')
-    } finally {
-      setExporting(false)
     }
   }
 
@@ -136,64 +78,9 @@ export function PrivacySettings({
                   <li>Check-ins de bem-estar</li>
                   <li>Arquivos PDF (sincronizados com o servidor para backup)</li>
                 </ul>
-                <p className="font-medium mt-3">O que NÃO é armazenado:</p>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li>Gravações de áudio (apenas transcrições são salvas)</li>
-                </ul>
               </div>
             </AlertDescription>
           </Alert>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Download size={20} />
-            Exportar Dados
-          </CardTitle>
-          <CardDescription>
-            Baixe seus dados em formatos abertos
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {/* Exportar tudo JSON */}
-          {onExportAllJSON && (
-            <Button
-              variant="default"
-              className="w-full justify-start"
-              onClick={handleExportAllJSON}
-              disabled={exporting}
-            >
-              <FileArrowDown className="mr-2" />
-              {exporting ? 'Exportando...' : 'Exportar tudo (JSON)'}
-            </Button>
-          )}
-
-          <Button 
-            variant="outline" 
-            className="w-full justify-start"
-            onClick={() => handleExport('finance')}
-          >
-            <FileCsv className="mr-2" />
-            Exportar Finanças (CSV)
-          </Button>
-          <Button 
-            variant="outline" 
-            className="w-full justify-start"
-            onClick={() => handleExport('study')}
-          >
-            <FileText className="mr-2" />
-            Exportar Estudos (Markdown)
-          </Button>
-          <Button 
-            variant="outline" 
-            className="w-full justify-start"
-            onClick={() => handleExport('reading')}
-          >
-            <FileText className="mr-2" />
-            Exportar Leitura (Markdown)
-          </Button>
         </CardContent>
       </Card>
 
@@ -210,7 +97,7 @@ export function PrivacySettings({
         <CardContent>
           <Button 
             variant="destructive" 
-            onClick={() => setShowDeleteConfirm(true)}
+            onClick={() => setShowFirstConfirm(true)}
             className="w-full"
           >
             Apagar Todos os Meus Dados
@@ -218,19 +105,47 @@ export function PrivacySettings({
         </CardContent>
       </Card>
 
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      {/* Primeiro modal — confirmação inicial */}
+      <AlertDialog open={showFirstConfirm} onOpenChange={setShowFirstConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem certeza que deseja apagar todos os seus dados?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todos os seus dados serão apagados permanentemente, incluindo tarefas, metas, hábitos, finanças, estudos, leituras, treinos e check-ins de bem-estar. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                setShowFirstConfirm(false)
+                setShowDeleteConfirm(true)
+              }}
+            >
+              Sim, quero apagar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Segundo modal — confirmação final com digitação */}
+      <Dialog open={showDeleteConfirm} onOpenChange={(open) => {
+        setShowDeleteConfirm(open)
+        if (!open) setConfirmText('')
+      }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmar Exclusão de Dados</DialogTitle>
+            <DialogTitle>Confirmação Final</DialogTitle>
             <DialogDescription>
-              Esta ação apagará permanentemente todos os seus dados do sistema. Isso inclui tarefas, metas, hábitos, finanças, estudos e leituras.
+              Última chance. Após confirmar, todos os seus dados serão apagados permanentemente e não poderão ser recuperados.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Alert className="border-destructive">
               <Info className="h-4 w-4" />
               <AlertDescription>
-                Esta ação não pode ser desfeita. Considere exportar seus dados antes de continuar.
+                Esta ação não pode ser desfeita.
               </AlertDescription>
             </Alert>
             <div className="space-y-2">

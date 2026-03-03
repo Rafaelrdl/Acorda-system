@@ -1,21 +1,13 @@
 import { useState } from 'react'
-import { useKV } from '@/lib/sync-storage'
 import { GoogleCalendarIntegration } from './GoogleCalendarIntegration'
 import { PrivacySettings } from '../privacy/PrivacySettings'
 import type { UserId } from '@/lib/types'
 import {
   GoogleCalendarConnection,
   GoogleCalendarEvent,
-  Transaction,
-  Book,
-  ReadingLog,
-  PDFHighlight,
-  StudySession,
 } from '@/lib/types'
-import { getSyncKey, createGoogleCalendarConnection } from '@/lib/helpers'
-import { exportFinanceToCSV, exportStudyToMarkdown, exportReadingToMarkdown } from '@/lib/export'
+import { createGoogleCalendarConnection } from '@/lib/helpers'
 import { deleteAllUserData } from '@/lib/dataCleanup'
-import { storage, syncManager } from '@/lib/sync-storage'
 import { api } from '@/lib/api'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Calendar, ShieldCheck } from '@phosphor-icons/react'
@@ -114,11 +106,6 @@ export function IntegrationsCentral({
   onUpdateConnection,
   onUpdateEvents,
 }: IntegrationsCentralProps) {
-  const [transactions] = useKV<Transaction[]>(getSyncKey(userId, 'financeTransactions'), [])
-  const [books] = useKV<Book[]>(getSyncKey(userId, 'books'), [])
-  const [readingLogs] = useKV<ReadingLog[]>(getSyncKey(userId, 'readingLogs'), [])
-  const [pdfHighlights] = useKV<PDFHighlight[]>(getSyncKey(userId, 'pdfHighlights'), [])
-  const [studySessions] = useKV<StudySession[]>(getSyncKey(userId, 'studySessions'), [])
   const [isSyncing, setIsSyncing] = useState(false)
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
@@ -223,30 +210,6 @@ export function IntegrationsCentral({
     window.location.reload()
   }
 
-  const handleExportFinance = (): string => {
-    return exportFinanceToCSV(transactions || [])
-  }
-
-  const handleExportStudy = (): string => {
-    return exportStudyToMarkdown(studySessions || [])
-  }
-
-  const handleExportReading = (): string => {
-    return exportReadingToMarkdown(books || [], readingLogs || [], pdfHighlights || [])
-  }
-
-  const handleExportAllJSON = async (): Promise<string> => {
-    const allKeys = await storage.keys()
-    const userPrefix = `user_${userId}_`
-    const userKeys = allKeys.filter(k => k.startsWith(userPrefix))
-    const dump: Record<string, unknown> = {}
-    for (const key of userKeys) {
-      const entityName = key.replace(userPrefix, '')
-      dump[entityName] = await storage.get(key)
-    }
-    return JSON.stringify(dump, null, 2)
-  }
-
   return (
     <div className="pb-24">
       <Tabs defaultValue="calendar" className="w-full">
@@ -275,10 +238,6 @@ export function IntegrationsCentral({
           <PrivacySettings
             userId={userId}
             onDeleteAllData={handleDeleteAllData}
-            onExportFinance={handleExportFinance}
-            onExportStudy={handleExportStudy}
-            onExportReading={handleExportReading}
-            onExportAllJSON={handleExportAllJSON}
           />
         </TabsContent>
       </Tabs>

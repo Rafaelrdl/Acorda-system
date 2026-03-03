@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogClose, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,7 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { UserId, Goal, KeyResult, Project, Task, Habit, KRType } from '@/lib/types'
 import { createGoal, createKeyResult, createTask, createHabit, generateId } from '@/lib/helpers'
-import { Plus, Trash, LightbulbFilament, Target, ListChecks, Repeat } from '@phosphor-icons/react'
+import { Plus, Trash, LightbulbFilament, Target, ListChecks, Repeat, X } from '@phosphor-icons/react'
 
 interface GoalWizardDialogProps {
   open: boolean
@@ -241,13 +241,19 @@ export function GoalWizardDialog({ open, onOpenChange, userId, onSave }: GoalWiz
       if (!open) resetForm()
       onOpenChange(open)
     }}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto [&>button:last-child]:hidden">
         <DialogHeader>
-          <div className="flex items-center justify-between pr-6">
-            <DialogTitle>Novo Objetivo</DialogTitle>
+          <div className="flex items-center gap-2">
+            <DialogTitle className="flex-1">Novo Objetivo</DialogTitle>
             <Badge variant="secondary" className="text-xs whitespace-nowrap">
               PASSO {step} DE 4
             </Badge>
+            <DialogClose asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 -mr-2">
+                <X size={16} />
+                <span className="sr-only">Fechar</span>
+              </Button>
+            </DialogClose>
           </div>
           <Progress value={progress} className="h-1 mt-2" />
         </DialogHeader>

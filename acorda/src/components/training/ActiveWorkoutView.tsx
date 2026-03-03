@@ -19,8 +19,6 @@ import {
   X,
   Clock,
   Barbell,
-  Play,
-  Pause,
   Timer,
   PencilSimple
 } from '@phosphor-icons/react'
@@ -72,29 +70,16 @@ export function ActiveWorkoutView({
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [endNotes, setEndNotes] = useState('')
 
-  // Série ativa: exercício em andamento
-  const [activeSeriesExerciseId, setActiveSeriesExerciseId] = useState<string | null>(null)
-  const [seriesStartedAt, setSeriesStartedAt] = useState<number | null>(null)
-  const [seriesElapsed, setSeriesElapsed] = useState(0)
-
   // Cronômetro geral (vivo)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
 
-  // Reset series elapsed when stopped
-  useEffect(() => {
-    if (!seriesStartedAt) setSeriesElapsed(0)
-  }, [seriesStartedAt])
-
-  // Timer consolidado: cronômetro geral + série ativa
+  // Timer consolidado: cronômetro geral
   useEffect(() => {
     const id = setInterval(() => {
       setElapsedSeconds(Math.floor((Date.now() - session.startedAt) / 1000))
-      if (seriesStartedAt) {
-        setSeriesElapsed(Math.floor((Date.now() - seriesStartedAt) / 1000))
-      }
     }, 1000)
     return () => clearInterval(id)
-  }, [session.startedAt, seriesStartedAt])
+  }, [session.startedAt])
 
   const formatTimer = (totalSec: number) => {
     const m = Math.floor(totalSec / 60)
@@ -254,28 +239,6 @@ export function ActiveWorkoutView({
                     <p className="font-medium text-sm truncate">{exercise.name}</p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    {/* Botão Iniciar / Pausar série */}
-                    {activeSeriesExerciseId === item.exerciseId ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-amber-600 border-amber-400 h-8 text-xs"
-                        onClick={() => { setActiveSeriesExerciseId(null); setSeriesStartedAt(null) }}
-                      >
-                        <Pause size={14} className="mr-1" />
-                        {formatTimer(seriesElapsed)}
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs"
-                        onClick={() => { setActiveSeriesExerciseId(item.exerciseId); setSeriesStartedAt(Date.now()) }}
-                      >
-                        <Play size={14} className="mr-1" />
-                        Série
-                      </Button>
-                    )}
                     <Button
                       size="sm"
                       variant="outline"

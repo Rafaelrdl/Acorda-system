@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import type { UserId } from '@/lib/types'
-import { PomodoroPreset, PomodoroSession, Task, InboxItem } from '@/lib/types'
-import { formatPomodoroTime, createPomodoroPreset, createPomodoroSession, createInboxItem } from '@/lib/helpers'
+import { PomodoroPreset, PomodoroSession, Task } from '@/lib/types'
+import { formatPomodoroTime, createPomodoroPreset, createPomodoroSession } from '@/lib/helpers'
 import { getElapsedMs, getElapsedMinutes } from '@/lib/pomodoro'
 import { Play, Pause, X, SkipForward, Lightning, Plus, PencilSimple, Trash } from '@phosphor-icons/react'
 import { Input } from '@/components/ui/input'
@@ -20,7 +20,6 @@ interface PomodoroDialogProps {
   presets: PomodoroPreset[]
   tasks: Task[]
   onSessionComplete: (session: PomodoroSession) => void
-  onInterruptionCapture?: (item: InboxItem) => void
   onSavePreset?: (preset: PomodoroPreset) => void
   onDeletePreset?: (id: string) => void
   selectedTaskId?: string
@@ -41,7 +40,6 @@ export function PomodoroDialog({
   presets,
   tasks,
   onSessionComplete,
-  onInterruptionCapture,
   onSavePreset,
   onDeletePreset,
   selectedTaskId
@@ -235,16 +233,6 @@ export function PomodoroDialog({
   const handleInterruption = () => {
     if (!currentSession) return
     
-    const taskTitle = selectedTask 
-      ? tasks.find(t => t.id === selectedTask)?.title 
-      : undefined
-    
-    const content = taskTitle 
-      ? `Interrupção durante foco em: ${taskTitle}`
-      : 'Interrupção durante sessão de foco'
-    
-    const interruptionItem = createInboxItem(userId, content)
-    
     // Update local counter first (independent state for reliable UI)
     setInterruptionsCount(prev => prev + 1)
     
@@ -255,11 +243,7 @@ export function PomodoroDialog({
       updatedAt: Date.now()
     } : null)
     
-    if (onInterruptionCapture) {
-      onInterruptionCapture(interruptionItem)
-    }
-    
-    toast.success('Interrupção registrada na Inbox')
+    toast.success('Interrupção registrada')
   }
 
   const handleSaveNotes = () => {
@@ -645,7 +629,7 @@ export function PomodoroDialog({
                 </Button>
               </div>
 
-              {currentSession && phase === 'focus' && onInterruptionCapture && (
+              {currentSession && phase === 'focus' && (
                 <Button 
                   onClick={handleInterruption} 
                   variant="outline" 

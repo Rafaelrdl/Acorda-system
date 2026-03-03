@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
   DialogContent,
+  DialogClose,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -44,7 +45,8 @@ import {
   CaretRight,
   Lightning,
   Link,
-  Pencil
+  Pencil,
+  X
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { ExerciseDialog, MUSCLE_GROUPS } from './ExerciseDialog'
@@ -563,11 +565,11 @@ export function PlanDetailView({
           setShowAllSuggested(false)
         }
       }}>
-        <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden [&>button:last-child]:hidden">
           {/* Header */}
           <div className="p-4 border-b space-y-3 shrink-0">
-            <DialogHeader className="flex-row items-center justify-between space-y-0">
-              <DialogTitle>Biblioteca de Exercícios</DialogTitle>
+            <DialogHeader className="flex-row items-center gap-2 space-y-0">
+              <DialogTitle className="flex-1">Biblioteca de Exercícios</DialogTitle>
               <Button 
                 variant="outline" 
                 size="sm"
@@ -579,6 +581,12 @@ export function PlanDetailView({
                 <Plus size={14} className="mr-1" />
                 Criar
               </Button>
+              <DialogClose asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                  <X size={16} />
+                  <span className="sr-only">Fechar</span>
+                </Button>
+              </DialogClose>
             </DialogHeader>
               
               {/* Busca */}

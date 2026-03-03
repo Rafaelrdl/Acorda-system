@@ -1234,16 +1234,18 @@ Após salvar a sessão, o dialog de **auto-teste** abre automaticamente:
 
 ## 16. Treino
 
-> Acesse o módulo "Treino" pela navegação.
+> Acesse o módulo "Treino" pela navegação. O módulo possui 3 abas: **Treinar**, **Fichas** e **Progresso**.
 
 ### 16.1 Criar Ficha de Treino (aba Fichas)
+
+Clique em **"Nova Ficha"** (botão com ícone +):
 
 **Ficha 1:**
 
 | Campo | Valor sugerido |
 |-------|---------------|
 | Nome da Ficha | `Treino A - Peito e Tríceps` |
-| Dias | Marque: **Seg**, **Qua** |
+| Dias da Semana | Marque: **Seg**, **Qua** |
 | Observações | `Começar com aquecimento 5min esteira` |
 
 **Ficha 2:**
@@ -1251,113 +1253,194 @@ Após salvar a sessão, o dialog de **auto-teste** abre automaticamente:
 | Campo | Valor sugerido |
 |-------|---------------|
 | Nome da Ficha | `Treino B - Costas e Bíceps` |
-| Dias | Marque: **Ter**, **Qui** |
+| Dias da Semana | Marque: **Ter**, **Qui** |
 | Observações | `Foco em pegada pronada nos puxadores` |
 
-- [x] 2 fichas criadas
+- [x] Validação: nome obrigatório e pelo menos 1 dia selecionado
+- [x] Botão "Criar" desabilitado enquanto formulário inválido
+- [x] 2 fichas criadas e listadas com nome, contagem de exercícios e dias agendados
 
-### 16.2 Adicionar Exercícios à Ficha A
+### 16.2 Gerenciar Fichas (ações da lista)
 
-Abra "Treino A - Peito e Tríceps" e adicione exercícios:
+- [x] Clique no menu **⋯** de uma ficha → opções: **Editar**, **Arquivar**, **Excluir**
+- [x] **Editar**: abre dialog pré-preenchido → altere o nome → **"Salvar"**
+- [x] **Arquivar**: ficha sai da lista ativa
+- [x] Clique em **"Arquivadas (N)"** → ficha arquivada aparece com badge "Arquivada"
+- [x] No menu ⋯ da ficha arquivada, clique em **"Restaurar"** → volta para lista ativa
+- [x] **Excluir**: dialog de confirmação aparece → confirmar exclusão
+- [x] Clique em **"Ver Ativas"** para voltar à lista ativa
 
-**Exercício 1:**
+### 16.3 Adicionar Exercícios à Ficha A (Biblioteca de Exercícios)
 
-| Campo | Valor sugerido |
-|-------|---------------|
-| Nome do Exercício | `Supino Reto` |
-| Grupo Muscular | `Peito` (chest) |
+Abra "Treino A - Peito e Tríceps" e clique em **"Adicionar Exercício"**. A Biblioteca de Exercícios abre com:
 
-**Exercício 2:**
+1. **Campo de busca** (ícone lupa) — filtra exercícios por nome
+2. **Chips de grupo muscular**: Todos, Peito, Costas, Ombros, Bíceps, Tríceps, etc.
+3. **Chips de equipamento**: Todos, Barra, Halteres, Máquina, Cabo, Peso corporal
+4. **Seção "Sugeridos"** (ícone ✨) — catálogo com ~90 exercícios pré-definidos
+5. **Seção "Meus exercícios"** — exercícios criados pelo usuário
 
-| Campo | Valor sugerido |
-|-------|---------------|
-| Nome do Exercício | `Crucifixo Inclinado` |
-| Grupo Muscular | `Peito` (chest) |
+**Adicione exercícios do catálogo (clique sobre cada um):**
 
-**Exercício 3:**
+| # | Exercício | Grupo | Equipamento | Categoria |
+|---|-----------|-------|-------------|-----------|
+| 1 | `Supino Reto` | Peito | Barra | Composto |
+| 2 | `Crucifixo Inclinado` | Peito | Halteres | Isolador |
+| 3 | `Tríceps Pulley` | Tríceps | Cabo | Isolador |
+| 4 | `Tríceps Testa` | Tríceps | Barra | Isolador |
 
-| Campo | Valor sugerido |
-|-------|---------------|
-| Nome do Exercício | `Tríceps Pulley` |
-| Grupo Muscular | `Tríceps` (triceps) |
-
-**Exercício 4:**
-
-| Campo | Valor sugerido |
-|-------|---------------|
-| Nome do Exercício | `Tríceps Testa` |
-| Grupo Muscular | `Tríceps` (triceps) |
-
+- [x] Busca filtra corretamente por nome
+- [x] Chip de grupo muscular filtra a lista (ex.: selecione "Peito" → só exercícios de peito)
+- [x] Chip de equipamento filtra a lista (ex.: "Barra" → só exercícios com barra)
+- [x] Seção "Sugeridos" prioriza exercícios dos grupos musculares já na ficha
+- [x] Botão "Ver todos (N mais)" expande lista completa de sugeridos
+- [x] Exercícios já adicionados à ficha não aparecem na biblioteca
 - [x] 4 exercícios adicionados à ficha
 
-### 16.3 Configurar Prescrição (séries x repetições)
+### 16.4 Criar Exercício Personalizado
 
-Clique em um exercício para configurar a prescrição:
-
-**Supino Reto:**
-- [x] Use o preset rápido `4×8–12`
-- [x] Ou configure manualmente:
-  - Séries: `4`
-  - Reps mín: `8`
-  - Reps máx: `12`
-
-**Tríceps Pulley:**
-- [x] Use o preset rápido `3×12`
-
-### 16.4 Configurar Técnica Avançada (opcional)
-
-Para "Supino Reto", adicione técnica:
-- [x] Selecione `Backoff Set` → Percentual: `25%`
-- [x] Ou selecione `Rest-Pause` → Pause: `15s`, Mini-sets: `3`
-
-### 16.5 Iniciar Treino (aba Treinar)
-
-- [ ] Selecione "Treino A - Peito e Tríceps"
-- [ ] Clique em "Iniciar Treino"
-- [ ] Timer de treino começa
-
-### 16.6 Registrar Séries
-
-Para cada exercício, registre as séries:
-
-**Supino Reto - Série 1:**
+Na Biblioteca ou no PlanDetailView, clique em **"Criar Novo"** / **"Criar"**:
 
 | Campo | Valor sugerido |
 |-------|---------------|
-| Repetições | `12` |
-| Carga (kg) | `60` |
-| Aquecimento | ❌ Não |
+| Nome do Exercício | `Supino com Elástico` |
+| Grupo Muscular | `Peito` (chest) |
+| Equipamento | `Outro` |
 
-**Supino Reto - Série 2:**
+- [x] Exercício criado e aparece em "Meus exercícios"
+- [x] Pode ser adicionado a qualquer ficha
+
+### 16.5 Reordenar Exercícios na Ficha
+
+No detalhe da ficha, cada exercício mostra botões de seta:
+
+- [x] Clique em **↑** para mover exercício para cima
+- [x] Clique em **↓** para mover exercício para baixo
+- [x] Ordem reflete na execução do treino
+
+### 16.6 Configurar Prescrição (séries × repetições)
+
+Clique no ícone **lápis** ✏️ de um exercício (ou ao adicioná-lo) para abrir o dialog de configuração:
+
+**Supino Reto — via Preset rápido:**
+
+Presets disponíveis (grid de botões):
+`3×15` | `3×12` | `3×8` | `4×15` | `4×12` | `4×8` | `3×8–12` | `4×8–12`
+
+- [x] Clique em `4×8–12` → preset aplicado
+- [x] Badge na ficha atualiza para "4×8–12"
+
+**Crucifixo Inclinado — via configuração manual (Personalizar):**
+
+Clique em **"Personalizar"** e configure:
 
 | Campo | Valor sugerido |
 |-------|---------------|
-| Repetições | `10` |
-| Carga (kg) | `70` |
-| Aquecimento | ❌ |
+| Séries de trabalho | `3` (stepper +/-) |
+| Usar faixa de reps | ✅ Ligado |
+| Reps mín | `10` |
+| Reps máx | `15` |
+| Nota | `Pausar 2s no pico da contração` |
 
-**Supino Reto - Série 3:**
+- [x] Stepper incrementa/decrementa séries (range 1–10)
+- [x] Switch "Usar faixa de reps" alterna entre reps fixas e faixa
+- [x] Desligando o switch, campo "Reps" aparece em vez de min/max
+- [x] Campo de nota opcional aparece
+- [x] Badge na ficha atualiza para "3×10–15"
+
+**Tríceps Pulley — via preset:**
+- [x] Clique em `3×12` → preset aplicado
+
+### 16.7 Configurar Estrutura Avançada — Warmup/Feeder/Work (opcional)
+
+No dialog de prescrição, ative o switch **"Ativar estrutura avançada"**:
 
 | Campo | Valor sugerido |
 |-------|---------------|
-| Repetições | `8` |
-| Carga (kg) | `80` |
-| Aquecimento | ❌ |
+| Warmup sets (aquecimento) | `2` |
+| Feeder sets (aproximação) | `1` |
+| Work sets (trabalho) | `3` |
 
-- [ ] 3 séries registradas para o exercício
-- [ ] Carga e reps exibidos na lista
+- [x] Switch ativa os campos de warmup/feeder/work
+- [x] Presets são ocultados ao ativar
+- [x] Badge na ficha mostra: "2W + 1F + 3WS"
+- [x] Tooltip de ajuda explica a diferença entre warmup, feeder e work sets
 
-### 16.7 Finalizar Treino
-- [ ] Clique em "Finalizar Treino"
-- [ ] Sessão salva com duração total
-- [ ] Aparece no histórico (aba Progresso)
+### 16.8 Configurar Técnica Avançada (opcional)
 
-### 16.8 Verificar Progresso (aba Progresso)
-- [ ] Gráficos de volume e carga por grupo muscular
-- [ ] Histórico de treinos anteriores
-- [ ] Evolução de carga por exercício
+No dialog de prescrição, ative o switch **"Ativar técnica"** e selecione uma das pill buttons:
 
----
+**Opção A — Backoff Set:**
+
+| Campo | Valor sugerido |
+|-------|---------------|
+| Técnica | `Backoff Set` (ícone Barbell) |
+| Redução de carga | `25%` (input, range 10–50%) |
+| Nota da técnica | `Aplicar na última série` |
+
+- [x] Descrição "Como fazer" aparece (expandível): top set pesado → reduzir 20-30% → 1-2 séries extras
+- [x] Aviso de cautela exibido
+- [x] Badge amber "Backoff" aparece no exercício na ficha
+
+**Opção B — Rest-Pause:**
+
+| Campo | Valor sugerido |
+|-------|---------------|
+| Técnica | `Rest-Pause` (ícone Lightning) |
+| Pausa entre mini-sets | `20s` (range 10–60s) |
+| Reps total alvo | `12` (range 6–30) |
+
+- [x] Badge "Rest-Pause" aparece no exercício
+
+**Opção C — Widowmaker:**
+
+| Campo | Valor sugerido |
+|-------|---------------|
+| Técnica | `Widowmaker` (ícone Fire) |
+
+- [x] Prescrição forçada automaticamente para `1×20`
+
+**Opção D — Bi-set / Superset:**
+
+| Campo | Valor sugerido |
+|-------|---------------|
+| Técnica | `Bi-set` (ícone Link) |
+| Exercício parceiro | Selecione outro exercício da ficha |
+
+- [x] Select lista exercícios da ficha
+- [x] Info "Bi-set com [nome]" aparece no exercício
+
+**Opção E — Personalizada:**
+
+| Campo | Valor sugerido |
+|-------|---------------|
+| Técnica | `Personalizada` (ícone ?) |
+| Nome da técnica | `Drop-set triplo` |
+| Descrição | `Fazer 3 drops de 20% sem descanso` |
+
+- [x] Campos de nome e descrição aparecem para técnica custom
+
+**Opção F — Pulse Set:**
+
+| Campo | Valor sugerido |
+|-------|---------------|
+| Técnica | `Pulse Set` (ícone Fire) |
+
+- [x] Descrição explica: reps completas + pulsos parciais no ponto de tensão
+
+### 16.9 Botão "Sem configuração"
+
+Ao adicionar um exercício, é possível pular a configuração:
+
+- [x] Clique em **"Sem configuração"** → exercício adicionado com default `3×8–12`
+- [x] Badge na ficha mostra "3×8–12"
+
+### 16.10 Remover Exercício da Ficha
+
+- [x] Clique no ícone **lixeira** 🗑️ de um exercício
+- [x] Dialog de confirmação aparece
+- [x] Confirmar → exercício removido da ficha
+
 
 ## 17. Dieta
 
@@ -1405,13 +1488,13 @@ Alimentos:
 - `Whey Protein` — Qtd: `30` — Un: `g`
 - `Banana` — Qtd: `1` — Un: `unidade`
 
-- [ ] 3 templates criados
+- [x] 3 templates criados
 
 ### 17.2 Registrar Refeição do Dia (aba Hoje)
 
 Se os templates auto-geram refeições:
-- [ ] Verifique se as refeições do dia aparecem automaticamente
-- [ ] Marque refeições como consumidas
+- [x] Verifique se as refeições do dia aparecem automaticamente
+- [x] Marque refeições como consumidas
 
 Se manual, registre uma refeição:
 
@@ -1422,11 +1505,11 @@ Se manual, registre uma refeição:
 | Alimentos | `Salmão grelhado` — 200g, `Batata doce` — 150g, `Brócolis` — 100g |
 | Notas | `Refeição pós-treino. Mais proteína.` |
 
-- [ ] Refeição registrada e visível na timeline do dia
+- [x] Refeição registrada e visível na timeline do dia
 
 ### 17.3 Verificar Histórico (aba Histórico)
-- [ ] Dias anteriores com refeições registradas aparecem
-- [ ] Pode navegar entre datas
+- [x] Dias anteriores com refeições registradas aparecem
+- [x] Pode navegar entre datas
 
 ---
 
@@ -1436,10 +1519,10 @@ Se manual, registre uma refeição:
 
 > Clique no avatar ou nome no topo → "Perfil"
 
-- [ ] Avatar exibido (ou fallback com iniciais)
-- [ ] Clique no avatar para upload de imagem → selecione um JPG/PNG
-- [ ] Avatar atualiza após upload
-- [ ] Botão de deletar avatar funciona
+- [x] Avatar exibido (ou fallback com iniciais)
+- [x] Clique no avatar para upload de imagem → selecione um JPG/PNG
+- [x] Avatar atualiza após upload
+- [x] Botão de deletar avatar funciona
 
 ### 18.2 Configurações Gerais
 
@@ -1450,51 +1533,24 @@ Se manual, registre uma refeição:
 | Modo escuro | Toggle ON/OFF → tema muda imediatamente |
 | Início da semana | Selecione `Domingo` ou `Segunda` |
 
-- [ ] Modo escuro liga/desliga corretamente
-- [ ] Início da semana muda o calendário
+- [x] Modo escuro liga/desliga corretamente
+- [x] Início da semana muda o calendário
 
 ### 18.3 Módulos
 
 > Clique em "Módulos" para ativar/desativar
 
-- [ ] Desative "Dieta" → módulo some da navegação
-- [ ] Reative "Dieta" → módulo reaparece
-- [ ] Teste com cada módulo: Finanças, Leitura, Estudos, Bem-estar, Treino, Dieta
+- [x] Desative "Dieta" → módulo some da navegação
+- [x] Reative "Dieta" → módulo reaparece
+- [x] Teste com cada módulo: Finanças, Leitura, Estudos, Bem-estar, Treino, Dieta
 
 ### 18.4 Privacidade
-- [ ] Acesse tela de privacidade
-- [ ] Informações de privacidade exibidas corretamente
+- [x] Acesse tela de privacidade
+- [x] Informações de privacidade exibidas corretamente
 
 ---
 
-## 19. Exportação de Dados
 
-> Acesse "Exportar dados" (geralmente via Configurações ou menu do perfil)
-
-### 19.1 Exportar Tarefas
-
-| Campo | Ação |
-|-------|------|
-| Tarefas e projetos | ✅ Marcado |
-| Hábitos e registros | ❌ Desmarcado |
-| Metas e Key Results | ❌ Desmarcado |
-
-- [ ] Clique em "Exportar"
-- [ ] Arquivo `.md` gerado e baixado
-- [ ] Conteúdo inclui as tarefas criadas anteriormente
-
-### 19.2 Exportar Tudo
-
-| Campo | Ação |
-|-------|------|
-| Tarefas e projetos | ✅ Marcado |
-| Hábitos e registros | ✅ Marcado |
-| Metas e Key Results | ✅ Marcado |
-
-- [ ] Arquivo exportado com todos os dados
-- [ ] Conteúdo contém seções # Tarefas, # Hábitos, # Metas
-
----
 
 ## 20. Evolução (Dashboard)
 

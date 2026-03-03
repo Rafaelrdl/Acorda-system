@@ -946,7 +946,6 @@ function MainApp({ user }: { user: User }) {
         presets={(pomodoroPresets || []).filter(p => !p.deleted_at)}
         tasks={tasks || []}
         onSessionComplete={handlePomodoroComplete}
-        onInterruptionCapture={handleCapture}
         onSavePreset={(preset) => {
           const exists = (pomodoroPresets || []).some(p => p.id === preset.id)
           if (exists) {
