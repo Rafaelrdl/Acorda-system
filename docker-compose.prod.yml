@@ -1,18 +1,27 @@
 # Production overrides – usage:
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 #
-# All secrets MUST be supplied via environment variables or a .env file.
+# All secrets MUST be supplied via a .env file at the project root.
 # Never commit real secrets to version control.
+#
+# Required env vars:
+#   SECRET_KEY, POSTGRES_PASSWORD, ALLOWED_HOSTS, FRONTEND_URL,
+#   BACKEND_URL, CORS_ALLOWED_ORIGINS, CSRF_TRUSTED_ORIGINS,
+#   ADMIN_PASSWORD, VITE_API_URL
 
 services:
+  # ── Banco de dados ────────────────────────────────────────
   db:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
     ports: []            # Do not expose DB port in production
 
+  # ── Cache / Broker ────────────────────────────────────────
   redis:
     ports: []            # Do not expose Redis port in production
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
 
+  # ── Backend Django ────────────────────────────────────────
   web:
     command: >-
       gunicorn --bind 0.0.0.0:8000
@@ -22,7 +31,9 @@ services:
       --access-logfile - --error-logfile -
       config.wsgi:application
     volumes:
-      - media_data:/app/media    # Persist user uploads across restarts
+      - media_data:/app/media
+    ports:
+      - "8000:8000"
     environment:
       - DEBUG=False
       - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY}
@@ -34,6 +45,7 @@ services:
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:?Set CORS_ALLOWED_ORIGINS}
       - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:?Set CSRF_TRUSTED_ORIGINS}
       - SECURE_PROXY_SSL_HEADER=HTTP_X_FORWARDED_PROTO,https
+      - USE_X_FORWARDED_HOST=True
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:?Set ADMIN_PASSWORD}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@somosacorda.com}
       - SENDGRID_API_KEY=${SENDGRID_API_KEY:-}
@@ -46,6 +58,8 @@ services:
       - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-Acorda <contato@somosacorda.com>}
       - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN:-}
       - MP_WEBHOOK_SECRET=${MP_WEBHOOK_SECRET:-}
+      - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}
+      - GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET:-}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/')"]
       interval: 30s
@@ -54,6 +68,7 @@ services:
       start_period: 40s
     restart: always
 
+  # ── Celery Worker ─────────────────────────────────────────
   celery:
     command: celery -A config worker -l WARNING --concurrency 4
     volumes: []
@@ -74,8 +89,9 @@ services:
       - MP_WEBHOOK_SECRET=${MP_WEBHOOK_SECRET:-}
     restart: always
 
+  # ── Celery Beat ───────────────────────────────────────────
   celery-beat:
-    command: celery -A config beat -l WARNING --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: celery -A config beat -l WARNING --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=""
     volumes: []
     environment:
       - DEBUG=False
@@ -84,5 +100,19 @@ services:
       - REDIS_URL=redis://redis:6379/0
     restart: always
 
+  # ── Frontend (Nginx + SPA build) ──────────────────────────
+  frontend:
+    image: ""  # Clear the node:20-alpine image
+    build:
+      context: ./acorda
+      args:
+        VITE_API_URL: ${VITE_API_URL:?Set VITE_API_URL}
+    command: []  # Clear the dev command
+    volumes: []  # No bind mounts
+    ports:
+      - "80:80"
+    restart: always
+
 volumes:
+  postgres_data:
   media_data:
