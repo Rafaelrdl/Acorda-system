@@ -182,7 +182,7 @@ export function PricingSection() {
           }`}
         >
           Anual
-          <span className="absolute -top-2.5 -right-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+          <span className="absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
             2 meses grátis
           </span>
         </button>
