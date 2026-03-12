@@ -16,6 +16,7 @@ class HealthCheckView(APIView):
     """Health check endpoint for load balancers and monitoring."""
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_classes = []
 
     def get(self, request):
         # Verify database connectivity

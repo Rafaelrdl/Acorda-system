@@ -12,6 +12,7 @@ import { api } from '@/lib/api'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Calendar, ShieldCheck } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { syncManager } from '@/lib/sync-storage'
 
 const GOOGLE_IDENTITY_SRC = 'https://accounts.google.com/gsi/client'
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'

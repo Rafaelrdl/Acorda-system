@@ -52,6 +52,9 @@ def _build_external_reference(plan, payer_email: str) -> str:
 
 def _parse_external_reference(external_reference: str) -> dict:
     """Parse external_reference built by _build_external_reference."""
+    if not external_reference:
+        return {}
+
     parts = external_reference.split('|')
     if len(parts) >= 4 and parts[0] == 'acorda':
         return {
@@ -225,10 +228,15 @@ class WebhookView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        topic = data.get('type') or request.query_params.get('topic')
+        topic = (
+            data.get('type')
+            or request.query_params.get('type')
+            or request.query_params.get('topic')
+        )
         data_inner = data.get('data')
         resource_id = (
             (data_inner.get('id') if isinstance(data_inner, dict) else None)
+            or request.query_params.get('data.id')
             or request.query_params.get('id')
         )
         
@@ -266,8 +274,8 @@ class WebhookView(APIView):
         mp_status: str = mp_payment.get('status') or ''
         payer_email = mp_payment.get('payer', {}).get('email', '')
         payer_name = (
-            mp_payment.get('payer', {}).get('first_name', '') + ' ' +
-            mp_payment.get('payer', {}).get('last_name', '')
+            (mp_payment.get('payer', {}).get('first_name', '') or '') + ' ' +
+            (mp_payment.get('payer', {}).get('last_name', '') or '')
         ).strip()
         amount = mp_payment.get('transaction_amount')
         external_reference = mp_payment.get('external_reference', '')

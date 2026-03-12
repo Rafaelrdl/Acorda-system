@@ -131,7 +131,7 @@ export function ScheduleTaskDialog({
   const conflicts = (() => {
     if (!selectedDate || totalDurationMins <= 0) return []
     const dateKey = getDateKey(selectedDate)
-    const dayBlocks = calendarBlocks.filter(b => !b.deletedAt && b.date === dateKey)
+    const dayBlocks = calendarBlocks.filter(b => !(b as any).deleted_at && b.date === dateKey)
     return dayBlocks.filter(b => {
       return startTime < b.endTime && endTime > b.startTime
     })
