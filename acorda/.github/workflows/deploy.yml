@@ -1,0 +1,52 @@
+name: Deploy Produção
+
+on:
+  push:
+    branches: ["main"]
+
+  # Permite rodar manualmente pelo painel do GitHub
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          command_timeout: 8m
+          script: |
+            set -e
+
+            echo "=== Iniciando deploy ==="
+            cd ~/Acorda-system
+
+            echo ">>> Git pull..."
+            git pull origin main
+
+            echo ">>> Criando .env vazio para o backend (se não existir)..."
+            touch acorda-backend/.env
+
+            echo ">>> Build e restart dos containers..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+
+            echo ">>> Rodando migrations..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web python manage.py migrate --noinput
+
+            echo ">>> Coletando static files..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web python manage.py collectstatic --noinput
+
+            echo ">>> Limpando imagens antigas..."
+            docker image prune -f
+
+            echo ">>> Verificando saúde dos containers..."
+            sleep 10
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
+
+            echo "=== Deploy concluído ==="
