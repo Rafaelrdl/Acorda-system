@@ -272,10 +272,22 @@ export function InvestmentsTab({
               )}
             </div>
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(inv)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => openEdit(inv)}
+                aria-label="Editar investimento"
+              >
                 <PencilSimple className="w-3.5 h-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteId(inv.id)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-destructive"
+                onClick={() => setDeleteId(inv.id)}
+                aria-label="Excluir investimento"
+              >
                 <Trash className="w-3.5 h-3.5" />
               </Button>
             </div>
