@@ -83,16 +83,8 @@ export function FinanceCentral({ userId }: FinanceCentralProps) {
               onAddTransaction={(transaction) => {
                 setTransactions(current => [...(current || []), transaction])
               }}
-              onUpdateTransaction={(transaction) => {
-                setTransactions(current => 
-                  (current || []).map(t => t.id === transaction.id ? transaction : t)
-                )
-              }}
               onDeleteTransaction={(id) => {
                 setTransactions(current => (current || []).filter(t => t.id !== id))
-              }}
-              onAddAuditLog={(log) => {
-                setAuditLogs(current => [...(current || []), log])
               }}
             />
           </TabsContent>

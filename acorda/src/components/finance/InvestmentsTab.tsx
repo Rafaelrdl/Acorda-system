@@ -211,7 +211,7 @@ export function InvestmentsTab({
       }
       onUpdateInvestment(updateTimestamp({
         ...movementInvestment,
-        amountInvested: movementInvestment.amountInvested - amount,
+        amountInvested: Math.max(0, movementInvestment.amountInvested - amount),
         currentValue: movementInvestment.currentValue - amount,
       }))
       onAddTransaction(createTransaction(userId, 'income', amount, movementDate, movementAccountId,
@@ -229,7 +229,8 @@ export function InvestmentsTab({
     }
     const investedNum = parseCurrencyToNumber(amountInvested)
 
-    const currentNum = parseCurrencyToNumber(currentValue) || investedNum
+    const rawCurrentNum = parseCurrencyToNumber(currentValue)
+    const currentNum = currentValue !== '' ? rawCurrentNum : investedNum
     const goalNum = parseCurrencyToNumber(goalValue)
 
     if (editingInvestment) {
@@ -294,7 +295,7 @@ export function InvestmentsTab({
                 </p>
               )}
             </div>
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
                 variant="ghost"
                 size="icon"

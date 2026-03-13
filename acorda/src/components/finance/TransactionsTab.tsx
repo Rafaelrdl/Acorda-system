@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
 import type { UserId } from '@/lib/types'
-import { Transaction, FinanceCategory, FinanceAccount, FinanceAuditLog } from '@/lib/types'
+import { Transaction, FinanceCategory, FinanceAccount } from '@/lib/types'
 import { formatCurrency, createTransaction, getDateKey } from '@/lib/helpers'
 import { Plus, TrendUp, TrendDown, Trash, Sparkle, CalendarBlank } from '@phosphor-icons/react'
 import { format, parseISO } from 'date-fns'
@@ -23,11 +23,8 @@ interface TransactionsTabProps {
   categories: FinanceCategory[]
   accounts: FinanceAccount[]
   transactions: Transaction[]
-  auditLogs: FinanceAuditLog[]
   onAddTransaction: (transaction: Transaction) => void
-  onUpdateTransaction: (transaction: Transaction) => void
   onDeleteTransaction: (id: string) => void
-  onAddAuditLog: (log: FinanceAuditLog) => void
 }
 
 export function TransactionsTab({
@@ -37,7 +34,6 @@ export function TransactionsTab({
   transactions,
   onAddTransaction,
   onDeleteTransaction,
-  onAddAuditLog: _onAddAuditLog,
 }: TransactionsTabProps) {
   const [showIncomeDialog, setShowIncomeDialog] = useState(false)
   const [showExpenseDialog, setShowExpenseDialog] = useState(false)

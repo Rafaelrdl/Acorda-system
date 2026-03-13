@@ -402,7 +402,7 @@ class Income(SyncableModel):
     day_of_month = models.IntegerField('Dia do mês', null=True, blank=True)
     is_active = models.BooleanField('Ativo', default=True)
     auto_confirm = models.BooleanField('Confirmação automática', default=False)
-    last_confirmed_month = models.CharField('Último mês confirmado', max_length=7, blank=True, null=True)
+    last_confirmed_month = models.CharField('Último mês confirmado', max_length=10, blank=True, null=True)
 
     class Meta:
         verbose_name = 'Renda'
@@ -421,7 +421,7 @@ class FixedExpense(SyncableModel):
     day_of_month = models.IntegerField('Dia do mês', null=True, blank=True)
     is_active = models.BooleanField('Ativo', default=True)
     auto_confirm = models.BooleanField('Confirmação automática', default=False)
-    last_confirmed_month = models.CharField('Último mês confirmado', max_length=7, blank=True, null=True)
+    last_confirmed_month = models.CharField('Último mês confirmado', max_length=10, blank=True, null=True)
 
     class Meta:
         verbose_name = 'Despesa Fixa'
