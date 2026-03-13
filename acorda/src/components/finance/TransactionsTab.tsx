@@ -23,11 +23,8 @@ interface TransactionsTabProps {
   categories: FinanceCategory[]
   accounts: FinanceAccount[]
   transactions: Transaction[]
-  auditLogs: FinanceAuditLog[]
   onAddTransaction: (transaction: Transaction) => void
-  onUpdateTransaction: (transaction: Transaction) => void
   onDeleteTransaction: (id: string) => void
-  onAddAuditLog: (log: FinanceAuditLog) => void
 }
 
 export function TransactionsTab({
@@ -37,7 +34,6 @@ export function TransactionsTab({
   transactions,
   onAddTransaction,
   onDeleteTransaction,
-  onAddAuditLog: _onAddAuditLog,
 }: TransactionsTabProps) {
   const [showIncomeDialog, setShowIncomeDialog] = useState(false)
   const [showExpenseDialog, setShowExpenseDialog] = useState(false)

@@ -38,6 +38,7 @@ const SYNCABLE_ENTITIES = [
   'financeIncomes',
   'financeFixedExpenses',
   'financeAuditLogs',
+  'financeInvestments',
   'books',
   'readingLogs',
   'pdfDocuments',
@@ -478,6 +479,8 @@ async function updateForeignKeyReferences(userId: UserId, idMapping: Record<stri
     'readingLogs': ['bookId'],
     'pdfHighlights': ['documentId'],
     'financeTransactions': ['categoryId', 'accountId'],
+    'financeIncomes': ['categoryId', 'accountId'],
+    'financeFixedExpenses': ['categoryId', 'accountId'],
   }
   
   for (const [entityType, fields] of Object.entries(foreignKeyFields)) {

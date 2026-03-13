@@ -205,9 +205,7 @@ export function IncomeExpensesTab({
       
       onUpdateIncome(updateTimestamp({
         ...income,
-        // Normalize to month key (YYYY-MM) to keep lastConfirmedMonth compatible with
-        // places that do strict equality checks against getMonthKey(today)
-        lastConfirmedMonth: getMonthKey(today),
+        lastConfirmedMonth: getConfirmationMarker(income.frequency, today),
       }))
       
       toast.success(`Receita "${income.name}" lançada automaticamente`)
@@ -236,8 +234,7 @@ export function IncomeExpensesTab({
       
       onUpdateFixedExpense(updateTimestamp({
         ...expense,
-        // Normalize to month key (YYYY-MM) for consistency with equality checks elsewhere
-        lastConfirmedMonth: getMonthKey(today),
+        lastConfirmedMonth: getConfirmationMarker(expense.frequency, today),
       }))
       
       toast.success(`Despesa "${expense.name}" lançada automaticamente`)
