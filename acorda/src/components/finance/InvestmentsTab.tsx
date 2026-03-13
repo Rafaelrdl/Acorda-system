@@ -435,8 +435,8 @@ export function InvestmentsTab({
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label>Nome *</Label>
-              <Input placeholder="Ex: CDB Banco Inter" value={name} onChange={e => setName(e.target.value)} />
+              <Label htmlFor="investment-name">Nome *</Label>
+              <Input id="investment-name" placeholder="Ex: CDB Banco Inter" value={name} onChange={e => setName(e.target.value)} />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
