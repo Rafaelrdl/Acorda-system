@@ -541,6 +541,8 @@ export function NoteEditor({
                 size="sm"
                 onClick={() => setShowPreview(v => !v)}
                 className="h-10 w-10 p-0 shrink-0 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
+                aria-label={showPreview ? 'Editar' : 'Prévia'}
+                aria-pressed={showPreview}
               >
                 {showPreview ? <PencilSimpleLine size={16} /> : <Eye size={16} />}
               </Button>
