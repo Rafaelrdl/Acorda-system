@@ -1,6 +1,6 @@
 # pyright: reportAttributeAccessIssue=false
 """
-Tests for the sync app - validates all 43 entities and 4 sync endpoints.
+Tests for the sync app - validates all entities and 4 sync endpoints.
 """
 import time
 import uuid
@@ -27,7 +27,7 @@ from .serializers import ENTITY_MODELS, ENTITY_SERIALIZERS
 
 
 class TestSyncEntitiesConfiguration(TestCase):
-    """Test that all 43 entities are properly configured for sync."""
+    """Test that all entities are properly configured for sync."""
     
     EXPECTED_ENTITIES = [
         'tasks',
@@ -242,7 +242,7 @@ class TestSyncEndpoints(APITestCase):
         self.assertTrue(response.data['success'])
         self.assertIn('changes', response.data)
         
-        # Should have all 43 entity types
+        # Should include all entity types configured for sync
         self.assertEqual(len(response.data['changes']), 43)
     
     def test_sync_pull_with_since_parameter(self):
