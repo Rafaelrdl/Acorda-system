@@ -45,13 +45,16 @@ function shouldConfirmRecurrence(
     }
 
     case 'yearly': {
-      if (lastConfirmed === currentMonth) return false
       // Only fire in the same month as creation
       const createdDate = new Date(createdAt)
       if (today.getMonth() !== createdDate.getMonth()) return false
-      // Check if already confirmed this year
-      const year = today.getFullYear().toString()
-      if (lastConfirmed?.startsWith(year)) return false
+      // Consider as already confirmed only if marker refers to the current month
+      if (
+        lastConfirmed === currentMonth ||
+        lastConfirmed?.startsWith(currentMonth + '-')
+      ) {
+        return false
+      }
       return currentDay >= dayOfMonth
     }
 
