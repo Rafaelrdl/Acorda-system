@@ -1061,19 +1061,19 @@ export function getFinanceBalanceForPeriod(
 
   const income = currentTx
     .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0)
+    .reduce((sum, t) => sum + Number(t.amount), 0)
 
   const expense = currentTx
     .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0)
+    .reduce((sum, t) => sum + Number(t.amount), 0)
 
   const prevIncome = prevTx
     .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0)
+    .reduce((sum, t) => sum + Number(t.amount), 0)
 
   const prevExpense = prevTx
     .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0)
+    .reduce((sum, t) => sum + Number(t.amount), 0)
 
   return {
     income,
@@ -1101,7 +1101,7 @@ export function getDailyExpenseSeries(
 
     const dayExpense = transactions
       .filter(t => t.userId === userId && t.date === dateKey && t.type === 'expense')
-      .reduce((acc, t) => acc + t.amount, 0)
+      .reduce((acc, t) => acc + Number(t.amount), 0)
 
     result.push({ date: dateKey, value: dayExpense })
   }

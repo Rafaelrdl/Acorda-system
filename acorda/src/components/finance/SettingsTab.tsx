@@ -102,6 +102,11 @@ export function SettingsTab({
     return balanceMap
   }, [accounts, transactions])
 
+  const linkedAccountTransactionsCount = useMemo(
+    () => (deleteAccountId ? transactions.filter(t => t.accountId === deleteAccountId).length : 0),
+    [deleteAccountId, transactions],
+  )
+
   return (
     <div className="space-y-4">
       <Tabs defaultValue="accounts" className="w-full">
@@ -360,6 +365,11 @@ export function SettingsTab({
             <AlertDialogTitle>Excluir conta</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir esta conta?
+              {linkedAccountTransactionsCount > 0 && (
+                <span className="block mt-1 font-medium">
+                  {linkedAccountTransactionsCount} transação(ões) associada(s) a esta conta ficarão sem conta vinculada.
+                </span>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

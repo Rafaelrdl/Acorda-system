@@ -1,12 +1,20 @@
-import { Transaction, Book, ReadingLog, PDFHighlight, StudySession } from './types'
+import { Transaction, Book, ReadingLog, PDFHighlight, StudySession, FinanceCategory } from './types'
 
-export function exportFinanceToCSV(transactions: Transaction[]): string {
-  const headers = ['Data', 'Tipo', 'Descrição', 'Valor']
+export function exportFinanceToCSV(transactions: Transaction[], categories: FinanceCategory[] = []): string {
+  const categoryMap = new Map(categories.map(c => [c.id, c.name]))
+  const headers = ['Data', 'Tipo', 'Descrição', 'Categoria', 'Valor']
+  const escapeField = (value: string) => {
+    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+      return `"${value.replace(/"/g, '""')}"`
+    }
+    return value
+  }
   const rows = transactions.map(t => [
     t.date,
     t.type === 'income' ? 'Receita' : t.type === 'expense' ? 'Despesa' : 'Transferência',
-    t.description,
-    t.amount.toFixed(2)
+    escapeField(t.description || ''),
+    escapeField(categoryMap.get(t.categoryId || '') || ''),
+    Number(t.amount).toFixed(2)
   ])
 
   return [
