@@ -863,9 +863,10 @@ export function useStorage<T>(
 
     const handleSyncUpdate = () => {
       storage.get<T>(key).then((stored) => {
-        if (stored !== undefined) {
-          setData(stored)
-        }
+        // Keep React state consistent with IndexedDB:
+        // - if a value exists, use it
+        // - if the key was removed (stored === undefined), reset to the default
+        setData(stored !== undefined ? stored : defaultRef.current)
       })
     }
     
