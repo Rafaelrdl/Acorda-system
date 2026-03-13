@@ -35,12 +35,12 @@ function getTypeLabel(type: InvestmentType): string {
 
 function parseCurrencyToNumber(value: string): number {
   if (!value) return 0
-  return parseFloat(value.replace(/\./g, '').replace(',', '.')) || 0
+  return parseFloat(value) || 0
 }
 
 function numberToCurrencyString(value: number): string {
   if (!value) return ''
-  return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return value.toString()
 }
 
 interface InvestmentsTabProps {
