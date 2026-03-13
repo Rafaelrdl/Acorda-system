@@ -291,6 +291,15 @@ async function _dbClear(storeName: string): Promise<void> {
   })
 }
 
+// Custom event fired when sync updates IndexedDB, so useKV hooks can re-read
+const SYNC_UPDATED_EVENT = 'acorda-sync-updated'
+
+function notifySyncUpdated() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(SYNC_UPDATED_EVENT))
+  }
+}
+
 // Sync Manager
 class SyncManager {
   private syncInProgress = false
@@ -456,6 +465,7 @@ class SyncManager {
       
       // Update sync metadata using server-provided sync_version as cursor
       const meta = await this.getSyncMeta(userId)
+      const hasRemoteChanges = meta.lastSyncVersion !== serverVersion
       await this.setSyncMeta({
         ...meta,
         lastSyncTimestamp: new Date().toISOString(),
@@ -464,6 +474,9 @@ class SyncManager {
       }, userId)
       
       if (import.meta.env.DEV) console.log('[Sync] Sync completed successfully')
+      if (hasRemoteChanges) {
+        notifySyncUpdated()
+      }
       return { success: true }
     } catch (error) {
       console.error('[Sync] Sync failed:', error)
@@ -667,6 +680,8 @@ class SyncManager {
       
       const userId = await this.resolveUserId()
       
+      let hasLocalChanges = false
+      
       // Store all data locally with fromServer mapping
       for (const [entityType, items] of Object.entries(response.data)) {
         const storeKey = `user_${userId}_${entityType}`
@@ -683,11 +698,14 @@ class SyncManager {
           const latest = pickLatestSingleton(backfilledItems)
           if (latest) {
             await dbSet(STORES.DATA, storeKey, latest)
+            hasLocalChanges = true
           } else {
             await dbDelete(STORES.DATA, storeKey)
+            hasLocalChanges = true
           }
         } else {
           await dbSet(STORES.DATA, storeKey, backfilledItems)
+          hasLocalChanges = true
         }
       }
       
@@ -702,6 +720,9 @@ class SyncManager {
       await this.clearUserPendingChanges(userId)
       
       if (import.meta.env.DEV) console.log('[Sync] Full sync completed')
+      if (hasLocalChanges) {
+        notifySyncUpdated()
+      }
       return { success: true }
     } catch (error) {
       console.error('[Sync] Full sync failed:', error)
@@ -840,6 +861,27 @@ export function useStorage<T>(
     })
     
     return () => { mounted = false }
+  }, [key])
+  
+  // Re-read from IndexedDB when sync completes to prevent stale React state
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      // In non-browser environments (Node, SSR, Vitest node env), skip
+      // registering the listener to avoid ReferenceError on `window`.
+      return
+    }
+
+    const handleSyncUpdate = () => {
+      storage.get<T>(key).then((stored) => {
+        // Keep React state consistent with IndexedDB:
+        // - if a value exists, use it
+        // - if the key was removed (stored === undefined), reset to the default
+        setData(stored !== undefined ? stored : defaultRef.current)
+      })
+    }
+    
+    window.addEventListener(SYNC_UPDATED_EVENT, handleSyncUpdate)
+    return () => window.removeEventListener(SYNC_UPDATED_EVENT, handleSyncUpdate)
   }, [key])
   
   // Process side effects AFTER React commits the state update
