@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -38,12 +38,18 @@ import {
   Tag,
   Globe,
   Clock,
-  TextAa
+  TextAa,
+  Eye,
+  PencilSimpleLine
 } from '@phosphor-icons/react'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import type { UserId, Reference } from '@/lib/types'
 import { updateTimestamp } from '@/lib/helpers'
 import { v4 as uuidv4 } from 'uuid'
 import { toast } from 'sonner'
+
+marked.setOptions({ breaks: true, gfm: true })
 
 interface NoteEditorProps {
   open: boolean
@@ -84,6 +90,7 @@ export function NoteEditor({
   const [charCount, setCharCount] = useState(0)
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -101,6 +108,7 @@ export function NoteEditor({
         setSourceUrl('')
       }
       setHasUnsavedChanges(false)
+      setShowPreview(false)
     }
   }, [note, open])
 
@@ -137,7 +145,7 @@ export function NoteEditor({
       onSave(updateTimestamp({
         ...note,
         title: title.trim() || 'Sem título',
-        content: content.trim(),
+        content,
         tags: parsedTags,
         sourceUrl: sourceUrl.trim() || undefined,
       }))
@@ -146,7 +154,7 @@ export function NoteEditor({
         id: uuidv4(),
         userId,
         title: title.trim() || 'Sem título',
-        content: content.trim(),
+        content,
         tags: parsedTags,
         sourceUrl: sourceUrl.trim() || undefined,
         createdAt: now,
@@ -396,12 +404,16 @@ export function NoteEditor({
             handleSave()
             break
           case 'b':
-            e.preventDefault()
-            insertFormat('bold')
+            if (document.activeElement === textareaRef.current) {
+              e.preventDefault()
+              insertFormat('bold')
+            }
             break
           case 'i':
-            e.preventDefault()
-            insertFormat('italic')
+            if (document.activeElement === textareaRef.current) {
+              e.preventDefault()
+              insertFormat('italic')
+            }
             break
         }
       }
@@ -417,6 +429,12 @@ export function NoteEditor({
     // adding it would re-register the listener on every content change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, handleSave, handleClose])
+
+  const renderedHtml = useMemo(() => {
+    if (!showPreview || !content) return ''
+    const raw = marked.parse(content) as string
+    return DOMPurify.sanitize(raw)
+  }, [showPreview, content])
 
   if (!open) return null
 
@@ -515,6 +533,22 @@ export function NoteEditor({
             </div>
           ))}
           
+          <Separator orientation="vertical" className="h-5 mx-1.5" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={showPreview ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setShowPreview(v => !v)}
+                className="h-10 w-10 p-0 shrink-0 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
+              >
+                {showPreview ? <PencilSimpleLine size={16} /> : <Eye size={16} />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {showPreview ? 'Editar' : 'Prévia'}
+            </TooltipContent>
+          </Tooltip>
 
         </div>
       </TooltipProvider>
@@ -569,16 +603,24 @@ export function NoteEditor({
             {/* Separador sutil */}
             <div className="h-px bg-gradient-to-r from-border/60 via-border/30 to-transparent mb-5 mt-3" />
 
-            {/* Área de texto principal - full area */}
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Comece a escrever..."
-              className="w-full min-h-[50vh] resize-none bg-transparent text-[15px] sm:text-base leading-7 placeholder:text-muted-foreground/30 focus:outline-none font-[inherit] text-foreground"
-              style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif" }}
-            />
+            {showPreview ? (
+              /* Markdown preview */
+              <div
+                className="prose prose-sm dark:prose-invert max-w-none min-h-[50vh] text-[15px] sm:text-base leading-7 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-3 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-2 [&_ul]:list-disc [&_ol]:list-decimal [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:rounded-lg [&_a]:text-primary [&_a]:underline"
+                dangerouslySetInnerHTML={{ __html: renderedHtml || '<p class="text-muted-foreground/30">Nada para exibir</p>' }}
+              />
+            ) : (
+              /* Área de texto principal - full area */
+              <textarea
+                ref={textareaRef}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Comece a escrever..."
+                className="w-full min-h-[50vh] resize-none bg-transparent text-[15px] sm:text-base leading-7 placeholder:text-muted-foreground/30 focus:outline-none font-[inherit] text-foreground"
+                style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif" }}
+              />
+            )}
           </div>
         </div>
       </div>
