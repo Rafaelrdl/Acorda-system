@@ -138,6 +138,7 @@ export function FinanceCentral({ userId }: FinanceCentralProps) {
               userId={userId}
               investments={investments || []}
               accounts={accounts || []}
+              transactions={transactions || []}
               onAddInvestment={(investment) => {
                 setInvestments(current => [...(current || []), investment])
               }}
