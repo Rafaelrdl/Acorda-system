@@ -3,7 +3,7 @@
  * Handles caching, offline support, and background sync
  */
 
-const CACHE_VERSION = 'v1.0.0';
+const CACHE_VERSION = 'v1.1.0';
 const STATIC_CACHE = `acorda-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `acorda-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `acorda-api-${CACHE_VERSION}`;
@@ -89,9 +89,46 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: Cache-first with network fallback
+  // Static assets with hashes (/assets/*): Cache-first (immutable content)
   if (isStaticAsset(url.pathname)) {
     event.respondWith(cacheFirstWithNetwork(request, STATIC_CACHE));
+    return;
+  }
+
+  // Navigation requests (HTML): Network-first to always get fresh chunk references
+  if (request.mode === 'navigate') {
+    event.respondWith((async () => {
+      try {
+        // Try network first
+        const networkResponse = await fetch(request);
+
+        // Cache the fresh response in the dynamic cache
+        const dynamicCache = await caches.open(DYNAMIC_CACHE);
+        dynamicCache.put(request, networkResponse.clone());
+
+        return networkResponse;
+      } catch (error) {
+        // Offline or network error: fallback to cached HTML shell
+        const staticCache = await caches.open(STATIC_CACHE);
+
+        const cachedIndex =
+          (await staticCache.match('/index.html')) ||
+          (await staticCache.match('/'));
+
+        if (cachedIndex) {
+          return cachedIndex;
+        }
+
+        // Final fallback: minimal HTML offline page (avoid JSON for navigations)
+        return new Response(
+          '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Offline</title></head><body><h1>Você está offline</h1><p>Não foi possível carregar esta página e não há uma versão em cache disponível.</p></body></html>',
+          {
+            status: 503,
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          }
+        );
+      }
+    })());
     return;
   }
 
