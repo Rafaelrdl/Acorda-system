@@ -19,6 +19,7 @@ import {
   Income,
   FixedExpense,
   FinanceAuditLog,
+  Investment,
   Book,
   ReadingLog,
   PDFDocument,
@@ -644,6 +645,41 @@ export function formatCurrency(amount: number): string {
     style: 'currency',
     currency: 'BRL',
   }).format(amount)
+}
+
+export function createInvestment(
+  userId: UserId,
+  name: string,
+  type: Investment['type'],
+  amountInvested: number,
+  startDate: string,
+  options: {
+    institution?: string
+    currentValue?: number
+    maturityDate?: string
+    goalValue?: number | null
+    goalName?: string
+    notes?: string
+  } = {}
+): Investment {
+  const now = Date.now()
+  return {
+    id: generateId(),
+    userId,
+    name,
+    type,
+    institution: options.institution || '',
+    amountInvested: Number(amountInvested),
+    currentValue: options.currentValue != null ? Number(options.currentValue) : Number(amountInvested),
+    startDate,
+    maturityDate: options.maturityDate || '',
+    goalValue: options.goalValue != null ? Number(options.goalValue) : null,
+    goalName: options.goalName || '',
+    notes: options.notes || '',
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
+  }
 }
 
 export function getMonthKey(date: Date): string {
