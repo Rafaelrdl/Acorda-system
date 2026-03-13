@@ -410,7 +410,7 @@ export function TransactionsTab({
                         </Badge>
                       )}
                       <span className="text-xs text-muted-foreground">
-                        {new Date(transaction.date).toLocaleDateString('pt-BR')}
+                        {new Date(transaction.date + 'T00:00:00').toLocaleDateString('pt-BR')}
                       </span>
                       {account && (
                         <span className="text-xs text-muted-foreground">

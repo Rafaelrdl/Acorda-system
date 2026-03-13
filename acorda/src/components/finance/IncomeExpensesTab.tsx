@@ -15,6 +15,68 @@ import { formatCurrency, createIncome, createFixedExpense, createTransaction, up
 import { Plus, Trash, TrendUp, TrendDown, Wallet, Check, Clock, Lightning, PencilSimple } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
+/** Determines if a recurrence should fire today based on its frequency */
+function shouldConfirmRecurrence(
+  frequency: RecurrenceFrequency | undefined,
+  dayOfMonth: number,
+  lastConfirmed: string | undefined,
+  createdAt: number,
+  today: Date,
+): boolean {
+  const freq = frequency || 'monthly'
+  const todayKey = getDateKey(today)
+  const currentMonth = getMonthKey(today)
+  const currentDay = today.getDate()
+
+  switch (freq) {
+    case 'daily':
+      return lastConfirmed !== todayKey
+
+    case 'weekly':
+    case 'biweekly': {
+      if (!lastConfirmed) return true
+      // lastConfirmed may be YYYY-MM (legacy monthly) or YYYY-MM-DD
+      const lastDate = lastConfirmed.length === 10
+        ? new Date(lastConfirmed + 'T00:00:00')
+        : new Date(lastConfirmed + '-01T00:00:00')
+      if (isNaN(lastDate.getTime())) return true
+      const diffDays = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24))
+      return diffDays >= (freq === 'weekly' ? 7 : 14)
+    }
+
+    case 'yearly': {
+      if (lastConfirmed === currentMonth) return false
+      // Only fire in the same month as creation
+      const createdDate = new Date(createdAt)
+      if (today.getMonth() !== createdDate.getMonth()) return false
+      // Check if already confirmed this year
+      const year = today.getFullYear().toString()
+      if (lastConfirmed?.startsWith(year)) return false
+      return currentDay >= dayOfMonth
+    }
+
+    case 'monthly':
+    default:
+      if (lastConfirmed === currentMonth) return false
+      return currentDay >= dayOfMonth
+  }
+}
+
+/** Returns the appropriate confirmation marker for a given frequency */
+function getConfirmationMarker(frequency: RecurrenceFrequency | undefined, today: Date): string {
+  const freq = frequency || 'monthly'
+  switch (freq) {
+    case 'daily':
+    case 'weekly':
+    case 'biweekly':
+      return getDateKey(today)
+    case 'yearly':
+    case 'monthly':
+    default:
+      return getMonthKey(today)
+  }
+}
+
 interface IncomeExpensesTabProps {
   userId: UserId
   categories: FinanceCategory[]
@@ -75,8 +137,8 @@ export function IncomeExpensesTab({
   const [expenseAutoConfirm, setExpenseAutoConfirm] = useState(false)
 
   const today = new Date()
-  const currentDay = today.getDate()
   const currentMonth = getMonthKey(today)
+  const todayKey = getDateKey(today)
 
   const activeIncomes = incomes.filter(i => i.isActive)
   const activeExpenses = fixedExpenses.filter(e => e.isActive)
@@ -86,37 +148,47 @@ export function IncomeExpensesTab({
   
   const expenseCategories = categories.filter(c => c.type === 'expense')
 
-  // Calcular pendentes de confirmação (manuais que já passaram do dia e não foram confirmados este mês)
+  // Calcular pendentes de confirmação (manuais que já passaram do dia e não foram confirmados)
   const pendingIncomes = useMemo(() => {
     return activeIncomes.filter(income => {
-      if (income.autoConfirm) return false // Automáticos não aparecem como pendentes
-      const dayOfMonth = income.dayOfMonth || 1
-      if (currentDay < dayOfMonth) return false // Ainda não chegou o dia
-      if (income.lastConfirmedMonth === currentMonth) return false // Já confirmado este mês
-      return true
+      if (income.autoConfirm) return false
+      return shouldConfirmRecurrence(
+        income.frequency,
+        income.dayOfMonth || 1,
+        income.lastConfirmedMonth,
+        income.createdAt,
+        today,
+      )
     })
-  }, [activeIncomes, currentDay, currentMonth])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeIncomes, todayKey])
 
   const pendingExpenses = useMemo(() => {
     return activeExpenses.filter(expense => {
       if (expense.autoConfirm) return false
-      const dayOfMonth = expense.dayOfMonth || 1
-      if (currentDay < dayOfMonth) return false
-      if (expense.lastConfirmedMonth === currentMonth) return false
-      return true
+      return shouldConfirmRecurrence(
+        expense.frequency,
+        expense.dayOfMonth || 1,
+        expense.lastConfirmedMonth,
+        expense.createdAt,
+        today,
+      )
     })
-  }, [activeExpenses, currentDay, currentMonth])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeExpenses, todayKey])
 
   // Processar lançamentos automáticos
   useEffect(() => {
-    // Receitas automáticas
     activeIncomes.forEach(income => {
       if (!income.autoConfirm) return
-      const dayOfMonth = income.dayOfMonth || 1
-      if (currentDay < dayOfMonth) return // Ainda não chegou o dia
-      if (income.lastConfirmedMonth === currentMonth) return // Já processado este mês
+      if (!shouldConfirmRecurrence(
+        income.frequency,
+        income.dayOfMonth || 1,
+        income.lastConfirmedMonth,
+        income.createdAt,
+        today,
+      )) return
       
-      // Criar transação automática
       const transaction = createTransaction(
         userId,
         'income',
@@ -128,21 +200,23 @@ export function IncomeExpensesTab({
       )
       onAddTransaction(transaction)
       
-      // Atualizar lastConfirmedMonth
       onUpdateIncome(updateTimestamp({
         ...income,
-        lastConfirmedMonth: currentMonth,
+        lastConfirmedMonth: getConfirmationMarker(income.frequency, today),
       }))
       
       toast.success(`Receita "${income.name}" lançada automaticamente`)
     })
 
-    // Despesas automáticas
     activeExpenses.forEach(expense => {
       if (!expense.autoConfirm) return
-      const dayOfMonth = expense.dayOfMonth || 1
-      if (currentDay < dayOfMonth) return
-      if (expense.lastConfirmedMonth === currentMonth) return
+      if (!shouldConfirmRecurrence(
+        expense.frequency,
+        expense.dayOfMonth || 1,
+        expense.lastConfirmedMonth,
+        expense.createdAt,
+        today,
+      )) return
       
       const transaction = createTransaction(
         userId,
@@ -157,16 +231,15 @@ export function IncomeExpensesTab({
       
       onUpdateFixedExpense(updateTimestamp({
         ...expense,
-        lastConfirmedMonth: currentMonth,
+        lastConfirmedMonth: getConfirmationMarker(expense.frequency, today),
       }))
       
       toast.success(`Despesa "${expense.name}" lançada automaticamente`)
     })
-  // Effect intentionally runs only when currentMonth changes (once per month).
-  // Including all referenced values would cause re-firing on every render,
-  // double-posting automatic transactions.  Values are stable within a month.
+  // Effect runs once per day (todayKey). The shouldConfirmRecurrence check
+  // prevents double-posting via lastConfirmedMonth.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentMonth])
+  }, [todayKey])
 
   const handleConfirmIncome = (income: Income) => {
     // Criar transação
@@ -181,10 +254,9 @@ export function IncomeExpensesTab({
     )
     onAddTransaction(transaction)
     
-    // Atualizar lastConfirmedMonth
     onUpdateIncome(updateTimestamp({
       ...income,
-      lastConfirmedMonth: currentMonth,
+      lastConfirmedMonth: getConfirmationMarker(income.frequency, today),
     }))
     
     toast.success(`Receita "${income.name}" confirmada e lançada`)
@@ -204,7 +276,7 @@ export function IncomeExpensesTab({
     
     onUpdateFixedExpense(updateTimestamp({
       ...expense,
-      lastConfirmedMonth: currentMonth,
+      lastConfirmedMonth: getConfirmationMarker(expense.frequency, today),
     }))
     
     toast.success(`Despesa "${expense.name}" confirmada e lançada`)

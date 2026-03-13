@@ -360,6 +360,14 @@ export function SettingsTab({
             <AlertDialogTitle>Excluir conta</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir esta conta?
+              {deleteAccountId && (() => {
+                const count = transactions.filter(t => t.accountId === deleteAccountId).length
+                return count > 0 ? (
+                  <span className="block mt-1 font-medium">
+                    {count} transação(ões) associada(s) a esta conta ficarão sem conta vinculada.
+                  </span>
+                ) : null
+              })()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

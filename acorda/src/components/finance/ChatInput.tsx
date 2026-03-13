@@ -223,7 +223,7 @@ Retorne APENAS o JSON, sem explicações.`
                 </Badge>
               )}
               <p className="text-xs text-muted-foreground">
-                {new Date(suggestion.date).toLocaleDateString('pt-BR')}
+                {new Date(suggestion.date + 'T00:00:00').toLocaleDateString('pt-BR')}
               </p>
             </div>
             {suggestion.confidence < 0.7 && (
