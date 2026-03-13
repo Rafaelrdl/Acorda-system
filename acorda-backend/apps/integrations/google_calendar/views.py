@@ -86,9 +86,11 @@ class GoogleCalendarConnectView(APIView):
         conn.connected_at = now
         conn.disconnected_at = 0
         conn.updated_at = now
+        conn.sync_version = now
         conn.save(update_fields=[
             'access_token', 'refresh_token', 'expires_at',
             'connected', 'connected_at', 'disconnected_at', 'updated_at',
+            'sync_version',
         ])
 
         return Response({
@@ -148,16 +150,18 @@ class GoogleCalendarDisconnectView(APIView):
         conn.connected = False
         conn.disconnected_at = now
         conn.updated_at = now
+        conn.sync_version = now
         conn.save(update_fields=[
             'access_token', 'refresh_token', 'expires_at',
             'connected', 'disconnected_at', 'updated_at',
+            'sync_version',
         ])
 
         # Soft-delete all events for this user
         GoogleCalendarEvent.objects.filter(
             user=request.user,
             deleted_at__isnull=True,
-        ).update(deleted_at=now, updated_at=now)
+        ).update(deleted_at=now, updated_at=now, sync_version=now)
 
         return Response({
             'disconnected': True,

@@ -127,6 +127,14 @@ class SyncPushView(APIView):
                         errors.append({'id': item_id, 'error': 'updated_at inválido.'})
                         continue
 
+                    # Clamp client timestamps: if client clock is ahead of server,
+                    # cap to server time to prevent a fast-clock device from
+                    # permanently blocking updates from other devices.
+                    max_drift_ms = 60_000  # allow 1 min of clock drift
+                    if item_updated_at > current_time + max_drift_ms:
+                        item_updated_at = current_time
+                        item_data['updated_at'] = current_time
+
                     try:
                         if item_deleted_at is not None:
                             item_deleted_at = int(item_deleted_at)

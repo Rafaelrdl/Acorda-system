@@ -43,7 +43,8 @@ class TaskSerializer(BaseSyncSerializer):
             'title', 'description', 'notes', 'status', 'client_status',
             'energy_level', 'estimated_minutes', 'tags',
             'scheduled_date', 'is_top_priority', 'is_two_minute_task',
-            'project_id', 'key_result_id', 'completed_at'
+            'project_id', 'key_result_id', 'completed_at',
+            'source_inbox_item_id'
         ]
 
 
@@ -69,7 +70,7 @@ class HabitSerializer(BaseSyncSerializer):
         fields = BaseSyncSerializer.Meta.fields + [
             'name', 'description', 'frequency', 'times_per_week', 'target_days',
             'minimum_version', 'key_result_id',
-            'is_active', 'color', 'icon'
+            'is_active', 'color', 'icon', 'preferred_time'
         ]
 
 
@@ -276,7 +277,7 @@ class StudySessionSerializer(BaseSyncSerializer):
         model = StudySession
         fields = BaseSyncSerializer.Meta.fields + [
             'subject_id', 'date', 'start_time', 'end_time',
-            'duration_minutes', 'quick_notes', 'self_test_questions'
+            'duration_minutes', 'quick_notes', 'final_notes', 'self_test_questions'
         ]
 
 

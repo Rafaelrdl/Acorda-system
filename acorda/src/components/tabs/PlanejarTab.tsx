@@ -1322,6 +1322,7 @@ export function PlanejarTab({
           } else {
             onAddReference(note)
           }
+          setEditingNote(note)
         }}
         onDelete={(noteId) => {
           onDeleteReference(noteId)

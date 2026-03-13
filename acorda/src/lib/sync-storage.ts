@@ -457,11 +457,11 @@ class SyncManager {
       // Resolve userId once for the entire sync cycle
       const userId = await this.resolveUserId()
 
-      // 1. Push pending changes (only removes confirmed items)
-      await this.pushPendingChanges(userId)
+      // 1. Push pending changes (returns entity types that had errors)
+      const failedEntities = await this.pushPendingChanges(userId)
       
-      // 2. Pull remote changes
-      const serverVersion = await this.pullRemoteChanges(userId)
+      // 2. Pull remote changes (skip entities with push errors to avoid resurrection)
+      const serverVersion = await this.pullRemoteChanges(userId, failedEntities)
       
       // Update sync metadata using server-provided sync_version as cursor
       const meta = await this.getSyncMeta(userId)
@@ -486,12 +486,13 @@ class SyncManager {
     }
   }
   
-  private async pushPendingChanges(userId: string) {
+  private async pushPendingChanges(userId: string): Promise<Set<string>> {
+    const failedEntities = new Set<string>()
     const pending = await this.getUserPendingChanges(userId)
     
     if (pending.length === 0) {
       if (import.meta.env.DEV) console.log('[Sync] No pending changes')
-      return
+      return failedEntities
     }
     
     if (import.meta.env.DEV) console.log('[Sync] Pushing', pending.length, 'pending changes')
@@ -538,6 +539,7 @@ class SyncManager {
         
         if (hasErrors) {
           console.warn(`[Sync] Entity "${entityType}" had errors, keeping pending:`, entityResult.errors)
+          failedEntities.add(entityType)
           continue
         }
         
@@ -552,9 +554,10 @@ class SyncManager {
       console.error('❌ [Sync] Push failed:', error)
       throw error
     }
+    return failedEntities
   }
   
-  private async pullRemoteChanges(userId: string): Promise<number> {
+  private async pullRemoteChanges(userId: string, skipEntities?: Set<string>): Promise<number> {
     const meta = await this.getSyncMeta(userId)
     
     // Use server sync_version as cursor (integer ms), not client clock
@@ -567,8 +570,18 @@ class SyncManager {
     try {
       const response = await api.syncPull(since)
       
+      // Track if any entities were skipped so we don't advance the cursor past unapplied changes
+      let hadSkippedEntities = false
+
       // Apply changes to local storage with fromServer mapping
       for (const [entityType, items] of Object.entries(response.changes)) {
+        // Skip entities that had push errors to avoid resurrecting locally-changed data
+        if (skipEntities?.has(entityType)) {
+          hadSkippedEntities = true
+          if (import.meta.env.DEV) console.log(`[Sync] Skipping pull for "${entityType}" (push had errors)`)
+          continue
+        }
+
         const storeKey = `user_${userId}_${entityType}`
         const currentRaw = await dbGet<SyncableItem[] | SyncableItem>(STORES.DATA, storeKey)
         const current = Array.isArray(currentRaw)
@@ -601,10 +614,22 @@ class SyncManager {
         }
       }
       
-      if (import.meta.env.DEV) console.log('[Sync] Pull completed')
+      if (import.meta.env.DEV) {
+        console.log('[Sync] Pull completed', hadSkippedEntities ? '(with skipped entities)' : '')
+      }
 
-      // Return the server-provided sync_version as canonical cursor
-      return response.sync_version ?? 0
+      // If we skipped any entities, don't advance the cursor past unapplied changes.
+      // Use the previous cursor (lastSyncVersion) as the canonical position.
+      const previousCursor = meta.lastSyncVersion ?? 0
+      if (hadSkippedEntities) {
+        if (import.meta.env.DEV) {
+          console.log('[Sync] Not advancing sync cursor due to skipped entities')
+        }
+        return previousCursor
+      }
+
+      // Otherwise, return the server-provided sync_version, falling back to the previous cursor.
+      return response.sync_version ?? previousCursor
     } catch (error) {
       console.error('[Sync] Pull failed:', error)
       throw error
