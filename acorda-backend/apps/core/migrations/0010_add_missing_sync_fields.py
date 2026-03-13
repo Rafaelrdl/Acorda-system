@@ -14,7 +14,10 @@ class Migration(migrations.Migration):
             model_name="habit",
             name="preferred_time",
             field=models.CharField(
-                blank=True, max_length=20, verbose_name="Horário preferido"
+                blank=True,
+                default="",
+                max_length=20,
+                verbose_name="Horário preferido",
             ),
         ),
         migrations.AddField(
