@@ -201,6 +201,7 @@ def _split_event_by_day(
                 'last_synced_at': synced_at,
                 'created_at': synced_at,
                 'updated_at': synced_at,
+                'sync_version': synced_at,
             })
 
         cursor = day_end
@@ -280,7 +281,7 @@ def fetch_and_sync_events(
             deleted_at__isnull=True,
         )
         deleted_count += qs.count()
-        qs.update(deleted_at=synced_at, updated_at=synced_at)
+        qs.update(deleted_at=synced_at, updated_at=synced_at, sync_version=synced_at)
 
     # Collect all google_event_ids coming from active events
     active_google_ids = {e['id'] for e in active_events}
@@ -292,7 +293,7 @@ def fetch_and_sync_events(
             google_event_id__in=active_google_ids,
             deleted_at__isnull=True,
         )
-        old_qs.update(deleted_at=synced_at, updated_at=synced_at)
+        old_qs.update(deleted_at=synced_at, updated_at=synced_at, sync_version=synced_at)
 
     # Create new rows
     new_rows: list[GoogleCalendarEvent] = []
@@ -310,7 +311,8 @@ def fetch_and_sync_events(
     # Update connection metadata
     connection.last_sync_at = synced_at
     connection.updated_at = synced_at
-    connection.save(update_fields=['last_sync_at', 'updated_at'])
+    connection.sync_version = synced_at
+    connection.save(update_fields=['last_sync_at', 'updated_at', 'sync_version'])
 
     return {
         'imported_count': len(new_rows),

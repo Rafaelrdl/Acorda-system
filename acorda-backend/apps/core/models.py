@@ -72,6 +72,7 @@ class Task(SyncableModel):
     project_id = models.UUIDField('Projeto', null=True, blank=True, db_index=True)
     key_result_id = models.UUIDField('Resultado chave', null=True, blank=True, db_index=True)
     completed_at = models.BigIntegerField('Concluído em', null=True, blank=True)
+    source_inbox_item_id = models.UUIDField('Item de inbox origem', null=True, blank=True)
     
     class Meta:
         verbose_name = 'Tarefa'
@@ -131,6 +132,7 @@ class Habit(SyncableModel):
     is_active = models.BooleanField('Ativo', default=True)
     color = models.CharField('Cor', max_length=20, blank=True)
     icon = models.CharField('Ícone', max_length=50, blank=True)
+    preferred_time = models.CharField('Horário preferido', max_length=20, blank=True)  # morning/afternoon/evening/anytime
     
     class Meta:
         verbose_name = 'Hábito'
@@ -587,6 +589,7 @@ class StudySession(SyncableModel):
     end_time = models.IntegerField('Fim (minutos desde meia-noite)', null=True, blank=True)
     duration_minutes = models.IntegerField('Duração (minutos)')
     quick_notes = models.TextField('Notas rápidas', blank=True)
+    final_notes = models.TextField('Notas finais', blank=True)
     self_test_questions = models.JSONField('Autoavaliação', default=list, blank=True)
 
     class Meta:
