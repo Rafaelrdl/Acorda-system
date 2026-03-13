@@ -185,10 +185,15 @@ export function InvestmentsTab({
       toast.success(`${formatCurrency(amount)} investido em ${movementInvestment.name}`)
     } else {
       // Withdraw: money leaves investment → goes to account
+      const availableValue = movementInvestment.currentValue
+      if (amount > availableValue) {
+        toast.error(`Valor máximo para resgate é ${formatCurrency(availableValue)}`)
+        return
+      }
       onUpdateInvestment(updateTimestamp({
         ...movementInvestment,
-        amountInvested: Math.max(0, movementInvestment.amountInvested - amount),
-        currentValue: Math.max(0, movementInvestment.currentValue - amount),
+        amountInvested: movementInvestment.amountInvested - amount,
+        currentValue: movementInvestment.currentValue - amount,
       }))
       onUpdateAccount(updateTimestamp({ ...account, balance: account.balance + amount }))
       onAddTransaction(createTransaction(userId, 'income', amount, movementDate, movementAccountId,
