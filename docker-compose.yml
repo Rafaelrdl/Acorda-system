@@ -113,7 +113,8 @@ services:
     volumes:
       - ./acorda:/app
       - /app/node_modules
-    ports: []
+    ports:
+      - "5173:5173"
     environment:
       - VITE_API_URL=/api
     depends_on:

@@ -10,9 +10,9 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Textarea } from '@/components/ui/textarea'
-import type { UserId, Investment, InvestmentType } from '@/lib/types'
-import { formatCurrency, createInvestment, updateTimestamp, getDateKey } from '@/lib/helpers'
-import { Plus, Trash, TrendUp, Target, Bank, PencilSimple, Vault } from '@phosphor-icons/react'
+import type { UserId, Investment, InvestmentType, FinanceAccount, Transaction } from '@/lib/types'
+import { formatCurrency, createInvestment, createTransaction, updateTimestamp, getDateKey } from '@/lib/helpers'
+import { Plus, Trash, TrendUp, Target, Bank, PencilSimple, Vault, ArrowFatLineDown, ArrowFatLineUp } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
 const INVESTMENT_TYPES: { value: InvestmentType; label: string }[] = [
@@ -46,21 +46,34 @@ function numberToCurrencyString(value: number): string {
 interface InvestmentsTabProps {
   userId: UserId
   investments: Investment[]
+  accounts: FinanceAccount[]
   onAddInvestment: (investment: Investment) => void
   onUpdateInvestment: (investment: Investment) => void
   onDeleteInvestment: (id: string) => void
+  onAddTransaction: (transaction: Transaction) => void
+  onUpdateAccount: (account: FinanceAccount) => void
 }
 
 export function InvestmentsTab({
   userId,
   investments,
+  accounts,
   onAddInvestment,
   onUpdateInvestment,
   onDeleteInvestment,
+  onAddTransaction,
+  onUpdateAccount,
 }: InvestmentsTabProps) {
   const [showDialog, setShowDialog] = useState(false)
   const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+
+  // Movement dialog state
+  const [movementInvestment, setMovementInvestment] = useState<Investment | null>(null)
+  const [movementType, setMovementType] = useState<'deposit' | 'withdraw'>('deposit')
+  const [movementAmount, setMovementAmount] = useState('')
+  const [movementAccountId, setMovementAccountId] = useState('')
+  const [movementDate, setMovementDate] = useState(getDateKey(new Date()))
 
   // Form state
   const [name, setName] = useState('')
@@ -136,16 +149,62 @@ export function InvestmentsTab({
     setShowDialog(true)
   }
 
+  function openMovement(inv: Investment, type: 'deposit' | 'withdraw') {
+    setMovementInvestment(inv)
+    setMovementType(type)
+    setMovementAmount('')
+    setMovementAccountId('')
+    setMovementDate(getDateKey(new Date()))
+  }
+
+  function handleMovement() {
+    if (!movementInvestment) return
+    const amount = parseCurrencyToNumber(movementAmount)
+    if (amount <= 0) {
+      toast.error('Informe o valor')
+      return
+    }
+    if (!movementAccountId) {
+      toast.error('Selecione a conta')
+      return
+    }
+
+    const account = accounts.find(a => a.id === movementAccountId)
+    if (!account) return
+
+    if (movementType === 'deposit') {
+      // Deposit: money leaves account → goes to investment
+      onUpdateInvestment(updateTimestamp({
+        ...movementInvestment,
+        amountInvested: movementInvestment.amountInvested + amount,
+        currentValue: movementInvestment.currentValue + amount,
+      }))
+      onUpdateAccount(updateTimestamp({ ...account, balance: account.balance - amount }))
+      onAddTransaction(createTransaction(userId, 'expense', amount, movementDate, movementAccountId,
+        `Investimento: ${movementInvestment.name}`))
+      toast.success(`${formatCurrency(amount)} investido em ${movementInvestment.name}`)
+    } else {
+      // Withdraw: money leaves investment → goes to account
+      onUpdateInvestment(updateTimestamp({
+        ...movementInvestment,
+        amountInvested: Math.max(0, movementInvestment.amountInvested - amount),
+        currentValue: Math.max(0, movementInvestment.currentValue - amount),
+      }))
+      onUpdateAccount(updateTimestamp({ ...account, balance: account.balance + amount }))
+      onAddTransaction(createTransaction(userId, 'income', amount, movementDate, movementAccountId,
+        `Resgate: ${movementInvestment.name}`))
+      toast.success(`${formatCurrency(amount)} resgatado de ${movementInvestment.name}`)
+    }
+
+    setMovementInvestment(null)
+  }
+
   function handleSave() {
     if (!name.trim()) {
       toast.error('Informe o nome do investimento')
       return
     }
     const investedNum = parseCurrencyToNumber(amountInvested)
-    if (investedNum <= 0) {
-      toast.error('Informe o valor investido')
-      return
-    }
 
     const currentNum = parseCurrencyToNumber(currentValue) || investedNum
     const goalNum = parseCurrencyToNumber(goalValue)
@@ -261,6 +320,18 @@ export function InvestmentsTab({
               Vencimento: {inv.maturityDate}
             </p>
           )}
+
+          {/* Movement buttons */}
+          <div className="flex gap-2 pt-1">
+            <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => openMovement(inv, 'deposit')}>
+              <ArrowFatLineDown className="w-3.5 h-3.5 mr-1 text-emerald-500" />
+              Investir
+            </Button>
+            <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => openMovement(inv, 'withdraw')}>
+              <ArrowFatLineUp className="w-3.5 h-3.5 mr-1 text-orange-500" />
+              Resgatar
+            </Button>
+          </div>
         </CardContent>
       </Card>
     )
@@ -412,6 +483,43 @@ export function InvestmentsTab({
 
             <Button className="w-full" onClick={handleSave}>
               {editingInvestment ? 'Salvar alterações' : 'Adicionar investimento'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de movimentação */}
+      <Dialog open={!!movementInvestment} onOpenChange={(open) => { if (!open) setMovementInvestment(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {movementType === 'deposit' ? 'Investir em' : 'Resgatar de'} {movementInvestment?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label>Valor *</Label>
+              <CurrencyInput value={movementAmount} onChange={setMovementAmount} />
+            </div>
+            <div className="space-y-2">
+              <Label>{movementType === 'deposit' ? 'Conta de origem' : 'Conta de destino'} *</Label>
+              <Select value={movementAccountId} onValueChange={setMovementAccountId}>
+                <SelectTrigger><SelectValue placeholder="Selecione a conta" /></SelectTrigger>
+                <SelectContent>
+                  {accounts.map(acc => (
+                    <SelectItem key={acc.id} value={acc.id}>
+                      {acc.name} ({formatCurrency(acc.balance)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Data</Label>
+              <Input type="date" value={movementDate} onChange={e => setMovementDate(e.target.value)} />
+            </div>
+            <Button className="w-full" onClick={handleMovement}>
+              {movementType === 'deposit' ? 'Confirmar investimento' : 'Confirmar resgate'}
             </Button>
           </div>
         </DialogContent>

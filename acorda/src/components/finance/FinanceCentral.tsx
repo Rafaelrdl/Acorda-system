@@ -137,6 +137,7 @@ export function FinanceCentral({ userId }: FinanceCentralProps) {
             <InvestmentsTab
               userId={userId}
               investments={investments || []}
+              accounts={accounts || []}
               onAddInvestment={(investment) => {
                 setInvestments(current => [...(current || []), investment])
               }}
@@ -147,6 +148,14 @@ export function FinanceCentral({ userId }: FinanceCentralProps) {
               }}
               onDeleteInvestment={(id) => {
                 setInvestments(current => (current || []).filter(i => i.id !== id))
+              }}
+              onAddTransaction={(transaction) => {
+                setTransactions(current => [...(current || []), transaction])
+              }}
+              onUpdateAccount={(account) => {
+                setAccounts(current =>
+                  (current || []).map(a => a.id === account.id ? account : a)
+                )
               }}
             />
           </TabsContent>
