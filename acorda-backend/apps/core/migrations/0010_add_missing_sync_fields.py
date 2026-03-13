@@ -23,7 +23,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="studysession",
             name="final_notes",
-            field=models.TextField(blank=True, verbose_name="Notas finais"),
+            field=models.TextField(
+                blank=True, default="", verbose_name="Notas finais"
+            ),
         ),
         migrations.AddField(
             model_name="task",
