@@ -855,6 +855,12 @@ export function useStorage<T>(
   
   // Re-read from IndexedDB when sync completes to prevent stale React state
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      // In non-browser environments (Node, SSR, Vitest node env), skip
+      // registering the listener to avoid ReferenceError on `window`.
+      return
+    }
+
     const handleSyncUpdate = () => {
       storage.get<T>(key).then((stored) => {
         if (stored !== undefined) {
