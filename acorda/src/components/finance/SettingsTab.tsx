@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -86,6 +86,21 @@ export function SettingsTab({
 
   const incomeCategories = categories.filter(c => c.type === 'income')
   const expenseCategories = categories.filter(c => c.type === 'expense')
+
+  const accountBalances = useMemo(() => {
+    const balanceMap: Record<string, number> = {}
+    for (const account of accounts) {
+      const initial = Number(account.balance || 0)
+      const income = transactions
+        .filter(t => t.accountId === account.id && t.type === 'income')
+        .reduce((sum, t) => sum + Number(t.amount), 0)
+      const expenses = transactions
+        .filter(t => t.accountId === account.id && t.type === 'expense')
+        .reduce((sum, t) => sum + Number(t.amount), 0)
+      balanceMap[account.id] = initial + income - expenses
+    }
+    return balanceMap
+  }, [accounts, transactions])
 
   return (
     <div className="space-y-4">
@@ -182,7 +197,7 @@ export function SettingsTab({
                       </div>
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-sm">
-                          {formatCurrency(account.balance)}
+                          {formatCurrency(accountBalances[account.id] ?? account.balance)}
                         </p>
                         <Button
                           size="icon"
