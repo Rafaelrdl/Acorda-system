@@ -97,7 +97,38 @@ self.addEventListener('fetch', (event) => {
 
   // Navigation requests (HTML): Network-first to always get fresh chunk references
   if (request.mode === 'navigate') {
-    event.respondWith(networkFirstWithCache(request, DYNAMIC_CACHE));
+    event.respondWith((async () => {
+      try {
+        // Try network first
+        const networkResponse = await fetch(request);
+
+        // Cache the fresh response in the dynamic cache
+        const dynamicCache = await caches.open(DYNAMIC_CACHE);
+        dynamicCache.put(request, networkResponse.clone());
+
+        return networkResponse;
+      } catch (error) {
+        // Offline or network error: fallback to cached HTML shell
+        const staticCache = await caches.open(STATIC_CACHE);
+
+        const cachedIndex =
+          (await staticCache.match('/index.html')) ||
+          (await staticCache.match('/'));
+
+        if (cachedIndex) {
+          return cachedIndex;
+        }
+
+        // Final fallback: minimal HTML offline page (avoid JSON for navigations)
+        return new Response(
+          '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Offline</title></head><body><h1>Você está offline</h1><p>Não foi possível carregar esta página e não há uma versão em cache disponível.</p></body></html>',
+          {
+            status: 503,
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          }
+        );
+      }
+    })());
     return;
   }
 
