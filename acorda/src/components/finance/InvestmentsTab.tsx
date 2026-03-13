@@ -184,6 +184,12 @@ export function InvestmentsTab({
       return
     }
 
+    const account = accounts.find((a) => a.id === movementAccountId)
+    if (!account) {
+      toast.error('Conta selecionada não existe mais. Atualize as contas e tente novamente.')
+      return
+    }
+
     if (movementType === 'deposit') {
       // Deposit: money leaves account → goes to investment
       // Account balance updates automatically via transaction (computed balance)
