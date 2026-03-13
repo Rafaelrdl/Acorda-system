@@ -47,6 +47,7 @@ interface InvestmentsTabProps {
   userId: UserId
   investments: Investment[]
   accounts: FinanceAccount[]
+  transactions: Transaction[]
   onAddInvestment: (investment: Investment) => void
   onUpdateInvestment: (investment: Investment) => void
   onDeleteInvestment: (id: string) => void
@@ -58,6 +59,7 @@ export function InvestmentsTab({
   userId,
   investments,
   accounts,
+  transactions,
   onAddInvestment,
   onUpdateInvestment,
   onDeleteInvestment,
@@ -67,6 +69,21 @@ export function InvestmentsTab({
   const [showDialog, setShowDialog] = useState(false)
   const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+
+  const accountBalances = useMemo(() => {
+    const map: Record<string, number> = {}
+    for (const account of accounts) {
+      const initial = Number(account.balance || 0)
+      const income = transactions
+        .filter(t => t.accountId === account.id && t.type === 'income')
+        .reduce((sum, t) => sum + Number(t.amount), 0)
+      const expenses = transactions
+        .filter(t => t.accountId === account.id && t.type === 'expense')
+        .reduce((sum, t) => sum + Number(t.amount), 0)
+      map[account.id] = initial + income - expenses
+    }
+    return map
+  }, [accounts, transactions])
 
   // Movement dialog state
   const [movementInvestment, setMovementInvestment] = useState<Investment | null>(null)
@@ -525,7 +542,7 @@ export function InvestmentsTab({
                 <SelectContent>
                   {accounts.map(acc => (
                     <SelectItem key={acc.id} value={acc.id}>
-                      {acc.name} ({formatCurrency(acc.balance)})
+                      {acc.name} ({formatCurrency(accountBalances[acc.id] ?? acc.balance)})
                     </SelectItem>
                   ))}
                 </SelectContent>
