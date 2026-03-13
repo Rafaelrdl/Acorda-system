@@ -291,6 +291,15 @@ async function _dbClear(storeName: string): Promise<void> {
   })
 }
 
+// Custom event fired when sync updates IndexedDB, so useKV hooks can re-read
+const SYNC_UPDATED_EVENT = 'acorda-sync-updated'
+
+function notifySyncUpdated() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(SYNC_UPDATED_EVENT))
+  }
+}
+
 // Sync Manager
 class SyncManager {
   private syncInProgress = false
@@ -464,6 +473,7 @@ class SyncManager {
       }, userId)
       
       if (import.meta.env.DEV) console.log('[Sync] Sync completed successfully')
+      notifySyncUpdated()
       return { success: true }
     } catch (error) {
       console.error('[Sync] Sync failed:', error)
@@ -702,6 +712,7 @@ class SyncManager {
       await this.clearUserPendingChanges(userId)
       
       if (import.meta.env.DEV) console.log('[Sync] Full sync completed')
+      notifySyncUpdated()
       return { success: true }
     } catch (error) {
       console.error('[Sync] Full sync failed:', error)
@@ -840,6 +851,20 @@ export function useStorage<T>(
     })
     
     return () => { mounted = false }
+  }, [key])
+  
+  // Re-read from IndexedDB when sync completes to prevent stale React state
+  useEffect(() => {
+    const handleSyncUpdate = () => {
+      storage.get<T>(key).then((stored) => {
+        if (stored !== undefined) {
+          setData(stored)
+        }
+      })
+    }
+    
+    window.addEventListener(SYNC_UPDATED_EVENT, handleSyncUpdate)
+    return () => window.removeEventListener(SYNC_UPDATED_EVENT, handleSyncUpdate)
   }, [key])
   
   // Process side effects AFTER React commits the state update
