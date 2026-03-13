@@ -9,17 +9,34 @@ import { QuickCapture } from '@/components/QuickCapture'
 import { applyTheme } from '@/lib/appearance'
 import type { OnboardingResult } from '@/components/onboarding/OnboardingFlow'
 
+// Retry wrapper for lazy imports: on chunk load failure (stale deploy),
+// reload the page once to get fresh HTML with correct chunk hashes.
+function lazyWithRetry(factory: () => Promise<{ default: React.ComponentType<any> }>) {
+  return lazy(() =>
+    factory().catch((err: Error) => {
+      const hasReloaded = sessionStorage.getItem('chunk-reload')
+      if (!hasReloaded && /Failed to fetch dynamically imported module|Loading chunk|import/i.test(err.message)) {
+        sessionStorage.setItem('chunk-reload', '1')
+        window.location.reload()
+        return new Promise(() => {}) // never resolves — page is reloading
+      }
+      sessionStorage.removeItem('chunk-reload')
+      throw err
+    })
+  )
+}
+
 // Lazy-loaded heavy modules (split into separate chunks)
-const OnboardingFlow = lazy(() => import('@/components/onboarding/OnboardingFlow').then(m => ({ default: m.OnboardingFlow })))
-const HojeTab = lazy(() => import('@/components/tabs/HojeTab').then(m => ({ default: m.HojeTab })))
-const PlanejarTab = lazy(() => import('@/components/tabs/PlanejarTab').then(m => ({ default: m.PlanejarTab })))
-const EvolucaoTab = lazy(() => import('@/components/tabs/EvolucaoTab').then(m => ({ default: m.EvolucaoTab })))
-const CentralModule = lazy(() => import('@/components/CentralModule').then(m => ({ default: m.CentralModule })))
-const PomodoroDialog = lazy(() => import('@/components/dialogs/PomodoroDialog').then(m => ({ default: m.PomodoroDialog })))
-const SettingsDialog = lazy(() => import('@/components/dialogs/SettingsDialog').then(m => ({ default: m.SettingsDialog })))
-const ProfileDialog = lazy(() => import('@/components/dialogs/ProfileDialog').then(m => ({ default: m.ProfileDialog })))
-const ModulesDialog = lazy(() => import('@/components/dialogs/ModulesDialog').then(m => ({ default: m.ModulesDialog })))
-const ExportDialog = lazy(() => import('@/components/dialogs/ExportDialog').then(m => ({ default: m.ExportDialog })))
+const OnboardingFlow = lazyWithRetry(() => import('@/components/onboarding/OnboardingFlow').then(m => ({ default: m.OnboardingFlow })))
+const HojeTab = lazyWithRetry(() => import('@/components/tabs/HojeTab').then(m => ({ default: m.HojeTab })))
+const PlanejarTab = lazyWithRetry(() => import('@/components/tabs/PlanejarTab').then(m => ({ default: m.PlanejarTab })))
+const EvolucaoTab = lazyWithRetry(() => import('@/components/tabs/EvolucaoTab').then(m => ({ default: m.EvolucaoTab })))
+const CentralModule = lazyWithRetry(() => import('@/components/CentralModule').then(m => ({ default: m.CentralModule })))
+const PomodoroDialog = lazyWithRetry(() => import('@/components/dialogs/PomodoroDialog').then(m => ({ default: m.PomodoroDialog })))
+const SettingsDialog = lazyWithRetry(() => import('@/components/dialogs/SettingsDialog').then(m => ({ default: m.SettingsDialog })))
+const ProfileDialog = lazyWithRetry(() => import('@/components/dialogs/ProfileDialog').then(m => ({ default: m.ProfileDialog })))
+const ModulesDialog = lazyWithRetry(() => import('@/components/dialogs/ModulesDialog').then(m => ({ default: m.ModulesDialog })))
+const ExportDialog = lazyWithRetry(() => import('@/components/dialogs/ExportDialog').then(m => ({ default: m.ExportDialog })))
 import { 
   InboxItem, 
   Task, 

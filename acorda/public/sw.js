@@ -3,7 +3,7 @@
  * Handles caching, offline support, and background sync
  */
 
-const CACHE_VERSION = 'v1.0.0';
+const CACHE_VERSION = 'v1.1.0';
 const STATIC_CACHE = `acorda-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `acorda-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `acorda-api-${CACHE_VERSION}`;
@@ -89,9 +89,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: Cache-first with network fallback
+  // Static assets with hashes (/assets/*): Cache-first (immutable content)
   if (isStaticAsset(url.pathname)) {
     event.respondWith(cacheFirstWithNetwork(request, STATIC_CACHE));
+    return;
+  }
+
+  // Navigation requests (HTML): Network-first to always get fresh chunk references
+  if (request.mode === 'navigate') {
+    event.respondWith(networkFirstWithCache(request, DYNAMIC_CACHE));
     return;
   }
 
