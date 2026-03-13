@@ -465,6 +465,7 @@ class SyncManager {
       
       // Update sync metadata using server-provided sync_version as cursor
       const meta = await this.getSyncMeta(userId)
+      const hasRemoteChanges = meta.lastSyncVersion !== serverVersion
       await this.setSyncMeta({
         ...meta,
         lastSyncTimestamp: new Date().toISOString(),
@@ -473,7 +474,9 @@ class SyncManager {
       }, userId)
       
       if (import.meta.env.DEV) console.log('[Sync] Sync completed successfully')
-      notifySyncUpdated()
+      if (hasRemoteChanges) {
+        notifySyncUpdated()
+      }
       return { success: true }
     } catch (error) {
       console.error('[Sync] Sync failed:', error)
