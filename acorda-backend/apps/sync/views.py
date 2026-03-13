@@ -261,18 +261,16 @@ class SyncFullView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        """Get all user data."""
+        """Get all user data (including soft-deleted for proper sync)."""
         current_time = int(time.time() * 1000)
         data = {}
         
         for entity_type, model in ENTITY_MODELS.items():
             serializer_class = ENTITY_SERIALIZERS[entity_type]
             
-            # Get all non-deleted items
-            queryset = model.objects.filter(
-                user=request.user,
-                deleted_at__isnull=True
-            )
+            # Return ALL items including soft-deleted so new devices
+            # can reconcile deletions properly via mergeChanges.
+            queryset = model.objects.filter(user=request.user)
             
             serializer = serializer_class(queryset, many=True)
             data[entity_type] = serializer.data
