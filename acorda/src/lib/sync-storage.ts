@@ -680,6 +680,8 @@ class SyncManager {
       
       const userId = await this.resolveUserId()
       
+      let hasLocalChanges = false
+      
       // Store all data locally with fromServer mapping
       for (const [entityType, items] of Object.entries(response.data)) {
         const storeKey = `user_${userId}_${entityType}`
@@ -696,11 +698,14 @@ class SyncManager {
           const latest = pickLatestSingleton(backfilledItems)
           if (latest) {
             await dbSet(STORES.DATA, storeKey, latest)
+            hasLocalChanges = true
           } else {
             await dbDelete(STORES.DATA, storeKey)
+            hasLocalChanges = true
           }
         } else {
           await dbSet(STORES.DATA, storeKey, backfilledItems)
+          hasLocalChanges = true
         }
       }
       
@@ -715,7 +720,9 @@ class SyncManager {
       await this.clearUserPendingChanges(userId)
       
       if (import.meta.env.DEV) console.log('[Sync] Full sync completed')
-      notifySyncUpdated()
+      if (hasLocalChanges) {
+        notifySyncUpdated()
+      }
       return { success: true }
     } catch (error) {
       console.error('[Sync] Full sync failed:', error)
