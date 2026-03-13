@@ -153,11 +153,6 @@ export function FinanceCentral({ userId }: FinanceCentralProps) {
               onAddTransaction={(transaction) => {
                 setTransactions(current => [...(current || []), transaction])
               }}
-              onUpdateAccount={(account) => {
-                setAccounts(current =>
-                  (current || []).map(a => a.id === account.id ? account : a)
-                )
-              }}
             />
           </TabsContent>
 
