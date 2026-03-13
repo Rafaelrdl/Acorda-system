@@ -304,8 +304,8 @@ class TestSyncEndpoints(APITestCase):
         # Should have all 42 entity types
         self.assertEqual(len(response.data['data']), 42)
     
-    def test_sync_full_excludes_deleted_items(self):
-        """Test that full sync excludes soft-deleted items."""
+    def test_sync_full_includes_deleted_items(self):
+        """Test that full sync includes soft-deleted items for proper cross-device reconciliation."""
         # Create active task
         active_id = str(uuid.uuid4())
         Task.objects.create(
@@ -339,7 +339,7 @@ class TestSyncEndpoints(APITestCase):
         
         task_ids = [t['id'] for t in response.data['data']['tasks']]
         self.assertIn(active_id, task_ids)
-        self.assertNotIn(deleted_id, task_ids)
+        self.assertIn(deleted_id, task_ids)
     
     def test_sync_full_requires_authentication(self):
         """Test that full sync requires authentication."""
