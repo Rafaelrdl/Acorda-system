@@ -570,10 +570,14 @@ class SyncManager {
     try {
       const response = await api.syncPull(since)
       
+      // Track if any entities were skipped so we don't advance the cursor past unapplied changes
+      let hadSkippedEntities = false
+
       // Apply changes to local storage with fromServer mapping
       for (const [entityType, items] of Object.entries(response.changes)) {
         // Skip entities that had push errors to avoid resurrecting locally-changed data
         if (skipEntities?.has(entityType)) {
+          hadSkippedEntities = true
           if (import.meta.env.DEV) console.log(`[Sync] Skipping pull for "${entityType}" (push had errors)`)
           continue
         }
@@ -610,10 +614,22 @@ class SyncManager {
         }
       }
       
-      if (import.meta.env.DEV) console.log('[Sync] Pull completed')
+      if (import.meta.env.DEV) {
+        console.log('[Sync] Pull completed', hadSkippedEntities ? '(with skipped entities)' : '')
+      }
 
-      // Return the server-provided sync_version as canonical cursor
-      return response.sync_version ?? 0
+      // If we skipped any entities, don't advance the cursor past unapplied changes.
+      // Use the previous cursor (lastSyncVersion) as the canonical position.
+      const previousCursor = meta.lastSyncVersion ?? 0
+      if (hadSkippedEntities) {
+        if (import.meta.env.DEV) {
+          console.log('[Sync] Not advancing sync cursor due to skipped entities')
+        }
+        return previousCursor
+      }
+
+      // Otherwise, return the server-provided sync_version, falling back to the previous cursor.
+      return response.sync_version ?? previousCursor
     } catch (error) {
       console.error('[Sync] Pull failed:', error)
       throw error
