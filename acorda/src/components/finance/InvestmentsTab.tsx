@@ -52,7 +52,6 @@ interface InvestmentsTabProps {
   onUpdateInvestment: (investment: Investment) => void
   onDeleteInvestment: (id: string) => void
   onAddTransaction: (transaction: Transaction) => void
-  onUpdateAccount: (account: FinanceAccount) => void
 }
 
 export function InvestmentsTab({
@@ -64,7 +63,6 @@ export function InvestmentsTab({
   onUpdateInvestment,
   onDeleteInvestment,
   onAddTransaction,
-  onUpdateAccount,
 }: InvestmentsTabProps) {
   const [showDialog, setShowDialog] = useState(false)
   const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null)
@@ -186,22 +184,20 @@ export function InvestmentsTab({
       return
     }
 
-    const account = accounts.find(a => a.id === movementAccountId)
-    if (!account) return
-
     if (movementType === 'deposit') {
       // Deposit: money leaves account → goes to investment
+      // Account balance updates automatically via transaction (computed balance)
       onUpdateInvestment(updateTimestamp({
         ...movementInvestment,
         amountInvested: movementInvestment.amountInvested + amount,
         currentValue: movementInvestment.currentValue + amount,
       }))
-      onUpdateAccount(updateTimestamp({ ...account, balance: account.balance - amount }))
       onAddTransaction(createTransaction(userId, 'expense', amount, movementDate, movementAccountId,
         `Investimento: ${movementInvestment.name}`))
       toast.success(`${formatCurrency(amount)} investido em ${movementInvestment.name}`)
     } else {
       // Withdraw: money leaves investment → goes to account
+      // Account balance updates automatically via transaction (computed balance)
       const availableValue = movementInvestment.currentValue
       if (amount > availableValue) {
         toast.error(`Valor máximo para resgate é ${formatCurrency(availableValue)}`)
@@ -212,7 +208,6 @@ export function InvestmentsTab({
         amountInvested: movementInvestment.amountInvested - amount,
         currentValue: movementInvestment.currentValue - amount,
       }))
-      onUpdateAccount(updateTimestamp({ ...account, balance: account.balance + amount }))
       onAddTransaction(createTransaction(userId, 'income', amount, movementDate, movementAccountId,
         `Resgate: ${movementInvestment.name}`))
       toast.success(`${formatCurrency(amount)} resgatado de ${movementInvestment.name}`)
