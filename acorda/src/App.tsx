@@ -13,16 +13,23 @@ import type { OnboardingResult } from '@/components/onboarding/OnboardingFlow'
 // reload the page once to get fresh HTML with correct chunk hashes.
 function lazyWithRetry(factory: () => Promise<{ default: React.ComponentType<any> }>) {
   return lazy(() =>
-    factory().catch((err: Error) => {
-      const hasReloaded = sessionStorage.getItem('chunk-reload')
-      if (!hasReloaded && /Failed to fetch dynamically imported module|Loading chunk|import/i.test(err.message)) {
-        sessionStorage.setItem('chunk-reload', '1')
-        window.location.reload()
-        return new Promise(() => {}) // never resolves — page is reloading
-      }
-      sessionStorage.removeItem('chunk-reload')
-      throw err
-    })
+    factory()
+      .then((module) => {
+        // On successful load, clear any previous reload flag so a future
+        // chunk failure in this session can trigger a new reload.
+        sessionStorage.removeItem('chunk-reload')
+        return module
+      })
+      .catch((err: Error) => {
+        const hasReloaded = sessionStorage.getItem('chunk-reload')
+        if (!hasReloaded && /Failed to fetch dynamically imported module|Loading chunk|import/i.test(err.message)) {
+          sessionStorage.setItem('chunk-reload', '1')
+          window.location.reload()
+          return new Promise(() => {}) // never resolves — page is reloading
+        }
+        sessionStorage.removeItem('chunk-reload')
+        throw err
+      })
   )
 }
 
