@@ -382,6 +382,8 @@ export function toServer(entityType: EntityType, item: MapperItem): Record<strin
     case 'finance_fixed_expenses':
     case 'financeAuditLogs':
     case 'finance_audit_logs':
+    case 'financeInvestments':
+    case 'finance_investments':
     case 'books':
     case 'readingLogs':
     case 'pdfDocuments':
@@ -484,6 +486,8 @@ export function fromServer(entityType: EntityType, item: MapperItem): Record<str
     case 'finance_fixed_expenses':
     case 'financeAuditLogs':
     case 'finance_audit_logs':
+    case 'financeInvestments':
+    case 'finance_investments':
     case 'books':
     case 'readingLogs':
     case 'pdfDocuments':

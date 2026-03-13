@@ -44,6 +44,7 @@ const SYNC_ENABLED_ENTITIES = [
   'financeIncomes',
   'financeFixedExpenses',
   'financeAuditLogs',
+  'financeInvestments',
   // Reading module
   'books',
   'readingLogs',

@@ -7,6 +7,7 @@ from apps.core.models import (
     Project, InboxItem, PomodoroSession, CalendarBlock, DailyNote, UserSettings,
     PomodoroPreset, Reference, GoogleCalendarConnection, GoogleCalendarEvent,
     FinanceCategory, FinanceAccount, Transaction, Income, FixedExpense, FinanceAuditLog,
+    Investment,
     Book, ReadingLog, PDFDocument, PDFHighlight,
     Subject, StudySession, ConsentLog, RecordedStudySession, ReviewScheduleItem,
     WellnessProgram, WellnessCheckIn, WellnessDayAction,
@@ -219,6 +220,16 @@ class FinanceAuditLogSerializer(BaseSyncSerializer):
         ]
 
 
+class InvestmentSerializer(BaseSyncSerializer):
+    class Meta(BaseSyncSerializer.Meta):
+        model = Investment
+        fields = BaseSyncSerializer.Meta.fields + [
+            'name', 'type', 'institution', 'amount_invested', 'current_value',
+            'start_date', 'maturity_date', 'goal_value', 'goal_name',
+            'notes', 'is_active'
+        ]
+
+
 class BookSerializer(BaseSyncSerializer):
     class Meta(BaseSyncSerializer.Meta):
         model = Book
@@ -418,6 +429,7 @@ ENTITY_SERIALIZERS = {
     'financeIncomes': IncomeSerializer,
     'financeFixedExpenses': FixedExpenseSerializer,
     'financeAuditLogs': FinanceAuditLogSerializer,
+    'financeInvestments': InvestmentSerializer,
     'books': BookSerializer,
     'readingLogs': ReadingLogSerializer,
     'pdfDocuments': PDFDocumentSerializer,
@@ -464,6 +476,7 @@ ENTITY_MODELS = {
     'financeIncomes': Income,
     'financeFixedExpenses': FixedExpense,
     'financeAuditLogs': FinanceAuditLog,
+    'financeInvestments': Investment,
     'books': Book,
     'readingLogs': ReadingLog,
     'pdfDocuments': PDFDocument,

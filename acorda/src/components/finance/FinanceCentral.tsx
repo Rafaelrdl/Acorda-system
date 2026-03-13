@@ -8,14 +8,16 @@ import {
   Transaction,
   Income,
   FixedExpense,
-  FinanceAuditLog
+  FinanceAuditLog,
+  Investment
 } from '@/lib/types'
 import { getSyncKey, getMonthKey } from '@/lib/helpers'
 import { OverviewTab } from './OverviewTab'
 import { TransactionsTab } from './TransactionsTab'
 import { IncomeExpensesTab } from './IncomeExpensesTab'
 import { SettingsTab } from './SettingsTab'
-import { Wallet, Receipt, TrendUp, Gear } from '@phosphor-icons/react'
+import { InvestmentsTab } from './InvestmentsTab'
+import { Wallet, Receipt, TrendUp, Gear, ChartLineUp } from '@phosphor-icons/react'
 
 interface FinanceCentralProps {
   userId: UserId
@@ -31,12 +33,13 @@ export function FinanceCentral({ userId }: FinanceCentralProps) {
   const [incomes, setIncomes] = useKV<Income[]>(getSyncKey(userId, 'financeIncomes'), [])
   const [fixedExpenses, setFixedExpenses] = useKV<FixedExpense[]>(getSyncKey(userId, 'financeFixedExpenses'), [])
   const [auditLogs, setAuditLogs] = useKV<FinanceAuditLog[]>(getSyncKey(userId, 'financeAuditLogs'), [])
+  const [investments, setInvestments] = useKV<Investment[]>(getSyncKey(userId, 'financeInvestments'), [])
 
   return (
     <div className="pb-24 px-4 max-w-5xl mx-auto overflow-x-hidden">
       <div className="space-y-4 pt-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Wallet className="w-4 h-4" />
               <span className="hidden sm:inline">Visão</span>
@@ -48,6 +51,10 @@ export function FinanceCentral({ userId }: FinanceCentralProps) {
             <TabsTrigger value="income-expenses" className="flex items-center gap-2">
               <TrendUp className="w-4 h-4" />
               <span className="hidden sm:inline">Fixos</span>
+            </TabsTrigger>
+            <TabsTrigger value="investments" className="flex items-center gap-2">
+              <ChartLineUp className="w-4 h-4" />
+              <span className="hidden sm:inline">Invest.</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Gear className="w-4 h-4" />
@@ -122,6 +129,33 @@ export function FinanceCentral({ userId }: FinanceCentralProps) {
               }}
               onAddTransaction={(transaction) => {
                 setTransactions(current => [...(current || []), transaction])
+              }}
+            />
+          </TabsContent>
+
+          <TabsContent value="investments" className="mt-4 space-y-4">
+            <InvestmentsTab
+              userId={userId}
+              investments={investments || []}
+              accounts={accounts || []}
+              onAddInvestment={(investment) => {
+                setInvestments(current => [...(current || []), investment])
+              }}
+              onUpdateInvestment={(investment) => {
+                setInvestments(current =>
+                  (current || []).map(i => i.id === investment.id ? investment : i)
+                )
+              }}
+              onDeleteInvestment={(id) => {
+                setInvestments(current => (current || []).filter(i => i.id !== id))
+              }}
+              onAddTransaction={(transaction) => {
+                setTransactions(current => [...(current || []), transaction])
+              }}
+              onUpdateAccount={(account) => {
+                setAccounts(current =>
+                  (current || []).map(a => a.id === account.id ? account : a)
+                )
               }}
             />
           </TabsContent>

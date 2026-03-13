@@ -296,6 +296,26 @@ export interface FinanceAuditLog {
   updatedAt: number
 }
 
+export type InvestmentType = 'cdb' | 'lci' | 'lca' | 'tesouro' | 'fundo' | 'acao' | 'fii' | 'crypto' | 'poupanca' | 'previdencia' | 'other'
+
+export interface Investment {
+  id: string
+  userId: UserId
+  name: string
+  type: InvestmentType
+  institution: string
+  amountInvested: number
+  currentValue: number
+  startDate: string
+  maturityDate: string
+  goalValue?: number | null
+  goalName: string
+  notes: string
+  isActive: boolean
+  createdAt: number
+  updatedAt: number
+}
+
 export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink' | 'purple'
 
 export interface Book {

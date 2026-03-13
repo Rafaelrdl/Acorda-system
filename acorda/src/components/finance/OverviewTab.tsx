@@ -232,61 +232,6 @@ export function OverviewTab({
         </Card>
       </div>
 
-      {/* Gráfico Receita vs Despesa (últimos 6 meses) */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Receita vs Despesa</CardTitle>
-          <p className="text-xs text-muted-foreground">Últimos 6 meses</p>
-        </CardHeader>
-        <CardContent>
-          {chartData.some(d => d.receitas > 0 || d.despesas > 0) ? (
-            <ChartContainer config={chartConfig} className="h-[220px] w-full">
-              <BarChart data={chartData} accessibilityLayer>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="label"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  className="text-xs"
-                />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={4}
-                  width={60}
-                  tickFormatter={(v: number) =>
-                    v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)
-                  }
-                  className="text-xs"
-                />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      formatter={(value) => formatCurrency(Number(value))}
-                    />
-                  }
-                />
-                <Bar
-                  dataKey="receitas"
-                  fill="var(--color-receitas)"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="despesas"
-                  fill="var(--color-despesas)"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ChartContainer>
-          ) : (
-            <div className="flex items-center justify-center h-[180px] text-muted-foreground text-sm">
-              Nenhuma transação registrada nos últimos 6 meses
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Resumo de Saldos por Conta */}
       <Card>
         <CardHeader>
@@ -338,6 +283,61 @@ export function OverviewTab({
           ) : (
             <div className="text-center py-8 text-muted-foreground text-sm">
               Nenhuma conta cadastrada. Adicione contas na aba Configurações.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Gráfico Receita vs Despesa (últimos 6 meses) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Receita vs Despesa</CardTitle>
+          <p className="text-xs text-muted-foreground">Últimos 6 meses</p>
+        </CardHeader>
+        <CardContent>
+          {chartData.some(d => d.receitas > 0 || d.despesas > 0) ? (
+            <ChartContainer config={chartConfig} className="h-[220px] w-full">
+              <BarChart data={chartData} accessibilityLayer>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="label"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  className="text-xs"
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={4}
+                  width={60}
+                  tickFormatter={(v: number) =>
+                    v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)
+                  }
+                  className="text-xs"
+                />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value) => formatCurrency(Number(value))}
+                    />
+                  }
+                />
+                <Bar
+                  dataKey="receitas"
+                  fill="var(--color-receitas)"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="despesas"
+                  fill="var(--color-despesas)"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ChartContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[180px] text-muted-foreground text-sm">
+              Nenhuma transação registrada nos últimos 6 meses
             </div>
           )}
         </CardContent>

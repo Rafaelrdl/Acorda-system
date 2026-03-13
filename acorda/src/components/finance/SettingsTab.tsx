@@ -143,8 +143,6 @@ export function SettingsTab({
                             <SelectItem value="checking">Conta Corrente</SelectItem>
                             <SelectItem value="cash">Dinheiro</SelectItem>
                             <SelectItem value="credit">Cartão de Crédito</SelectItem>
-                            <SelectItem value="savings">Poupança</SelectItem>
-                            <SelectItem value="investment">Investimento</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

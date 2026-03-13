@@ -441,6 +441,40 @@ class FinanceAuditLog(SyncableModel):
         ordering = ['-created_at']
 
 
+class Investment(SyncableModel):
+    """Finance investment."""
+
+    class InvestmentType(models.TextChoices):
+        CDB = 'cdb', 'CDB'
+        LCI = 'lci', 'LCI'
+        LCA = 'lca', 'LCA'
+        TESOURO = 'tesouro', 'Tesouro Direto'
+        FUNDO = 'fundo', 'Fundo de Investimento'
+        ACAO = 'acao', 'Ação'
+        FII = 'fii', 'FII'
+        CRYPTO = 'crypto', 'Criptomoeda'
+        POUPANCA = 'poupanca', 'Poupança'
+        PREVIDENCIA = 'previdencia', 'Previdência'
+        OTHER = 'other', 'Outro'
+
+    name = models.CharField('Nome', max_length=200)
+    type = models.CharField('Tipo', max_length=30, choices=InvestmentType.choices)
+    institution = models.CharField('Instituição', max_length=200, blank=True)
+    amount_invested = models.DecimalField('Valor investido', max_digits=14, decimal_places=2)
+    current_value = models.DecimalField('Valor atual', max_digits=14, decimal_places=2)
+    start_date = models.CharField('Data de início', max_length=10)
+    maturity_date = models.CharField('Data de vencimento', max_length=10, blank=True)
+    goal_value = models.DecimalField('Meta de valor', max_digits=14, decimal_places=2, null=True, blank=True)
+    goal_name = models.CharField('Nome da meta', max_length=200, blank=True)
+    notes = models.TextField('Notas', blank=True)
+    is_active = models.BooleanField('Ativo', default=True)
+
+    class Meta:
+        verbose_name = 'Investimento'
+        verbose_name_plural = 'Investimentos'
+        ordering = ['-created_at']
+
+
 class Book(SyncableModel):
     """Reading book."""
 
