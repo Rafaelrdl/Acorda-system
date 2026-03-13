@@ -4,6 +4,107 @@
 from django.db import migrations, models
 
 
+def _column_exists_sqlite(schema_editor, table_name: str, column_name: str) -> bool:
+    """
+    Check if a column exists on a SQLite table using PRAGMA table_info.
+    """
+    with schema_editor.connection.cursor() as cursor:
+        cursor.execute(f"PRAGMA table_info({table_name})")
+        for row in cursor.fetchall():
+            # row format: (cid, name, type, notnull, dflt_value, pk)
+            if row[1] == column_name:
+                return True
+    return False
+
+
+def _add_column_if_missing(schema_editor, table_name: str, column_name: str, column_sql_def: str) -> None:
+    """
+    Add a column if it does not already exist, in a backend-aware way.
+
+    `column_sql_def` is the column definition after the column name,
+    e.g. "varchar(20) NOT NULL DEFAULT ''".
+    """
+    vendor = schema_editor.connection.vendor
+    with schema_editor.connection.cursor() as cursor:
+        if vendor == "sqlite":
+            if _column_exists_sqlite(schema_editor, table_name, column_name):
+                return
+            cursor.execute(
+                f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_sql_def}"
+            )
+        else:
+            cursor.execute(
+                f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS {column_name} {column_sql_def}"
+            )
+
+
+def _drop_column_if_exists(schema_editor, table_name: str, column_name: str) -> None:
+    """
+    Drop a column if it exists, in a backend-aware way.
+    """
+    vendor = schema_editor.connection.vendor
+    with schema_editor.connection.cursor() as cursor:
+        if vendor == "sqlite":
+            if not _column_exists_sqlite(schema_editor, table_name, column_name):
+                return
+            cursor.execute(f"ALTER TABLE {table_name} DROP COLUMN {column_name}")
+        else:
+            cursor.execute(
+                f"ALTER TABLE {table_name} DROP COLUMN IF EXISTS {column_name}"
+            )
+
+
+def add_habit_preferred_time(apps, schema_editor):
+    _add_column_if_missing(
+        schema_editor,
+        table_name="core_habit",
+        column_name="preferred_time",
+        column_sql_def="varchar(20) NOT NULL DEFAULT ''",
+    )
+
+
+def drop_habit_preferred_time(apps, schema_editor):
+    _drop_column_if_exists(
+        schema_editor,
+        table_name="core_habit",
+        column_name="preferred_time",
+    )
+
+
+def add_studysession_final_notes(apps, schema_editor):
+    _add_column_if_missing(
+        schema_editor,
+        table_name="core_studysession",
+        column_name="final_notes",
+        column_sql_def="text NOT NULL DEFAULT ''",
+    )
+
+
+def drop_studysession_final_notes(apps, schema_editor):
+    _drop_column_if_exists(
+        schema_editor,
+        table_name="core_studysession",
+        column_name="final_notes",
+    )
+
+
+def add_task_source_inbox_item_id(apps, schema_editor):
+    _add_column_if_missing(
+        schema_editor,
+        table_name="core_task",
+        column_name="source_inbox_item_id",
+        column_sql_def="uuid NULL",
+    )
+
+
+def drop_task_source_inbox_item_id(apps, schema_editor):
+    _drop_column_if_exists(
+        schema_editor,
+        table_name="core_task",
+        column_name="source_inbox_item_id",
+    )
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -25,9 +126,9 @@ class Migration(migrations.Migration):
                 ),
             ],
             database_operations=[
-                migrations.RunSQL(
-                    sql="ALTER TABLE core_habit ADD COLUMN IF NOT EXISTS preferred_time varchar(20) NOT NULL DEFAULT '';",
-                    reverse_sql="ALTER TABLE core_habit DROP COLUMN IF EXISTS preferred_time;",
+                migrations.RunPython(
+                    code=add_habit_preferred_time,
+                    reverse_code=drop_habit_preferred_time,
                 ),
             ],
         ),
@@ -42,9 +143,9 @@ class Migration(migrations.Migration):
                 ),
             ],
             database_operations=[
-                migrations.RunSQL(
-                    sql="ALTER TABLE core_studysession ADD COLUMN IF NOT EXISTS final_notes text NOT NULL DEFAULT '';",
-                    reverse_sql="ALTER TABLE core_studysession DROP COLUMN IF EXISTS final_notes;",
+                migrations.RunPython(
+                    code=add_studysession_final_notes,
+                    reverse_code=drop_studysession_final_notes,
                 ),
             ],
         ),
@@ -59,9 +160,9 @@ class Migration(migrations.Migration):
                 ),
             ],
             database_operations=[
-                migrations.RunSQL(
-                    sql="ALTER TABLE core_task ADD COLUMN IF NOT EXISTS source_inbox_item_id uuid NULL;",
-                    reverse_sql="ALTER TABLE core_task DROP COLUMN IF EXISTS source_inbox_item_id;",
+                migrations.RunPython(
+                    code=add_task_source_inbox_item_id,
+                    reverse_code=drop_task_source_inbox_item_id,
                 ),
             ],
         ),
