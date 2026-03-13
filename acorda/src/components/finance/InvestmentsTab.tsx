@@ -442,7 +442,7 @@ export function InvestmentsTab({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>Valor investido *</Label>
+                <Label>Valor investido</Label>
                 <CurrencyInput value={amountInvested} onChange={setAmountInvested} />
               </div>
               <div className="space-y-2">
