@@ -576,8 +576,35 @@ export function createTransaction(
  * closingDay = dia do fechamento (ex: 20)
  * Fatura corrente: do dia (closingDay+1) do mês anterior até closingDay do mês atual.
  * Se hoje > closingDay, a fatura aberta é a do próximo mês.
+ *
+ * dueDay (opcional) = dia de vencimento da fatura.
+ * Regra de vencimento:
+ * - Se dueDay >= closingDay, o vencimento é no mesmo mês do fechamento.
+ * - Se dueDay < closingDay, o vencimento é no mês seguinte ao fechamento.
+ * O dia de vencimento é "clampado" para o último dia válido do mês, caso necessário.
+ *
+ * Assinaturas suportadas (para compatibilidade retroativa):
+ * - getInvoicePeriod(closingDay)
+ * - getInvoicePeriod(closingDay, referenceDate)
+ * - getInvoicePeriod(closingDay, dueDay, referenceDate)
  */
-export function getInvoicePeriod(closingDay: number, referenceDate: Date = new Date()): { start: string; end: string; dueDate: string; label: string } {
+export function getInvoicePeriod(
+  closingDay: number,
+  arg2?: number | Date,
+  arg3?: Date
+): { start: string; end: string; dueDate: string; label: string } {
+  let dueDay: number | undefined
+  let referenceDate: Date
+
+  if (arg2 instanceof Date) {
+    // Assinatura antiga: (closingDay, referenceDate)
+    referenceDate = arg2
+  } else {
+    // Nova assinatura: (closingDay, dueDay?, referenceDate?)
+    dueDay = arg2
+    referenceDate = arg3 ?? new Date()
+  }
+
   const year = referenceDate.getFullYear()
   const month = referenceDate.getMonth() // 0-indexed
   const day = referenceDate.getDate()
@@ -620,7 +647,32 @@ export function getInvoicePeriod(closingDay: number, referenceDate: Date = new D
   const closeDate = new Date(closeYear, closeMonth, 1)
   const label = closeDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
 
-  return { start, end, dueDate: end, label }
+  // Cálculo do vencimento
+  let dueDate: string
+  if (dueDay == null) {
+    // Compatibilidade: se dueDay não for informado, mantém comportamento antigo
+    dueDate = end
+  } else {
+    // Define mês/ano de vencimento com base na relação entre dueDay e closingDay
+    let dueMonth = closeMonth
+    let dueYear = closeYear
+
+    if (dueDay < closingDay) {
+      // Vencimento cai no mês seguinte ao fechamento
+      dueMonth = closeMonth + 1
+      if (dueMonth > 11) {
+        dueMonth = 0
+        dueYear++
+      }
+    }
+
+    // Clamp do dia de vencimento para o último dia do mês de vencimento
+    const lastDayOfDueMonth = new Date(dueYear, dueMonth + 1, 0).getDate()
+    const clampedDueDay = Math.min(dueDay, lastDayOfDueMonth)
+    dueDate = `${dueYear}-${String(dueMonth + 1).padStart(2, '0')}-${String(clampedDueDay).padStart(2, '0')}`
+  }
+
+  return { start, end, dueDate, label }
 }
 
 /**
