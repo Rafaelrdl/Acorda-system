@@ -458,7 +458,7 @@ export function InvestmentsTab({
               <Input id="investment-name" placeholder="Ex: CDB Banco Inter" value={name} onChange={e => setName(e.target.value)} />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Tipo *</Label>
                 <Select value={type} onValueChange={v => setType(v as InvestmentType)}>
@@ -476,7 +476,7 @@ export function InvestmentsTab({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Valor investido</Label>
                 <CurrencyInput value={amountInvested} onChange={setAmountInvested} />
@@ -487,7 +487,7 @@ export function InvestmentsTab({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Data início</Label>
                 <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
@@ -500,7 +500,7 @@ export function InvestmentsTab({
 
             <div className="border-t pt-4 space-y-3">
               <p className="text-sm font-medium text-muted-foreground">Meta (opcional)</p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Nome da meta</Label>
                   <Input placeholder="Ex: Reserva de emergência" value={goalName} onChange={e => setGoalName(e.target.value)} />

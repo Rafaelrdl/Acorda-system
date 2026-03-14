@@ -66,8 +66,8 @@ export function AppHeader({
         </div>
 
         {/* Contexto atual - sutil */}
-        <div className="absolute left-1/2 -translate-x-1/2">
-          <span className="text-xs text-muted-foreground">
+        <div className="absolute left-1/2 -translate-x-1/2 max-w-[40%] hidden sm:block">
+          <span className="text-xs text-muted-foreground truncate block">
             {contextTitle}
           </span>
         </div>

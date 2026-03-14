@@ -587,30 +587,34 @@ export function LandingPage() {
           </p>
 
           <div className="rounded-2xl border border-border/40 overflow-hidden">
-            <div className="grid grid-cols-3 bg-muted/30 border-b border-border/30">
-              <div className="p-3 text-xs font-semibold text-muted-foreground">Funcionalidade</div>
-              <div className="p-3 text-xs font-semibold text-center text-primary">
-                <span className="flex items-center justify-center gap-1.5">
-                  <img src={LOGO} alt="" className="h-4 w-4" />
-                  Acorda
-                </span>
+            <div className="overflow-x-auto">
+              <div className="min-w-[420px]">
+                <div className="grid grid-cols-3 bg-muted/30 border-b border-border/30">
+                  <div className="p-3 text-xs font-semibold text-muted-foreground">Funcionalidade</div>
+                  <div className="p-3 text-xs font-semibold text-center text-primary">
+                    <span className="flex items-center justify-center gap-1.5">
+                      <img src={LOGO} alt="" className="h-4 w-4" />
+                      Acorda
+                    </span>
+                  </div>
+                  <div className="p-3 text-xs font-semibold text-center text-muted-foreground">Outros</div>
+                </div>
+                {COMPARISON_ITEMS.map((item, i) => (
+                  <div
+                    key={item.feature}
+                    className={`grid grid-cols-3 ${i < COMPARISON_ITEMS.length - 1 ? 'border-b border-border/20' : ''} ${i % 2 === 0 ? 'bg-card/30' : ''}`}
+                  >
+                    <div className="p-3 text-sm text-muted-foreground">{item.feature}</div>
+                    <div className="p-3 flex items-center justify-center">
+                      <CheckCircle size={18} weight="fill" className="text-green-500" />
+                    </div>
+                    <div className="p-3 flex items-center justify-center">
+                      <span className="text-xs text-muted-foreground/70">{item.others}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="p-3 text-xs font-semibold text-center text-muted-foreground">Outros</div>
             </div>
-            {COMPARISON_ITEMS.map((item, i) => (
-              <div
-                key={item.feature}
-                className={`grid grid-cols-3 ${i < COMPARISON_ITEMS.length - 1 ? 'border-b border-border/20' : ''} ${i % 2 === 0 ? 'bg-card/30' : ''}`}
-              >
-                <div className="p-3 text-sm text-muted-foreground">{item.feature}</div>
-                <div className="p-3 flex items-center justify-center">
-                  <CheckCircle size={18} weight="fill" className="text-green-500" />
-                </div>
-                <div className="p-3 flex items-center justify-center">
-                  <span className="text-xs text-muted-foreground/70">{item.others}</span>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
