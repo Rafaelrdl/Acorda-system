@@ -13,7 +13,7 @@ const OLD_KEY_PATTERN_UNDERSCORE = /^user_([^_]+)_(.+)$/
 
 // Entities that should stay in localStorage only (not sync with backend)
 // Currently empty - all entities are synced to backend
-const LOCAL_ONLY_ENTITIES: string[] = []
+const LOCAL_ONLY_ENTITIES: string[] = ['workoutUiState']
 
 // Entity types that should be migrated and normalized for sync
 const SYNCABLE_ENTITIES = [

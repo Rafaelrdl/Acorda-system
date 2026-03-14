@@ -325,6 +325,7 @@ class SyncManager {
   private onOnline() {
     if (import.meta.env.DEV) console.log('[Sync] Back online, triggering sync...')
     this.sync()
+    this.startAutoSync()
   }
   
   private onOffline() {
