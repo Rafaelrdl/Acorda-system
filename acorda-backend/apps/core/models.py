@@ -6,6 +6,12 @@ import uuid
 from decimal import Decimal
 from django.db import models
 from django.conf import settings
+from django.core.validators import RegexValidator
+
+date_format_validator = RegexValidator(
+    regex=r'^\d{4}-\d{2}-\d{2}$',
+    message='Data deve estar no formato YYYY-MM-DD.',
+)
 
 
 class SyncableModel(models.Model):
@@ -144,7 +150,7 @@ class HabitLog(SyncableModel):
     """Log of habit completion."""
     
     habit_id = models.UUIDField('Hábito', db_index=True)
-    date = models.CharField('Data', max_length=10, db_index=True)  # YYYY-MM-DD
+    date = models.CharField('Data', max_length=10, db_index=True, validators=[date_format_validator])  # YYYY-MM-DD
     completed_at = models.BigIntegerField('Concluído em')
     notes = models.TextField('Notas', blank=True)
     
@@ -210,7 +216,7 @@ class PomodoroSession(SyncableModel):
     duration_minutes = models.IntegerField('Duração (minutos)', null=True, blank=True)
     started_at = models.BigIntegerField('Iniciado em')
     ended_at = models.BigIntegerField('Finalizado em', null=True, blank=True)
-    date = models.CharField('Data', max_length=10, blank=True)  # YYYY-MM-DD
+    date = models.CharField('Data', max_length=10, blank=True, validators=[date_format_validator])  # YYYY-MM-DD
     preset_id = models.UUIDField('Preset', null=True, blank=True, db_index=True)
     planned_minutes = models.IntegerField('Planejado (minutos)', null=True, blank=True)
     actual_minutes = models.IntegerField('Realizado (minutos)', null=True, blank=True)
@@ -231,7 +237,7 @@ class CalendarBlock(SyncableModel):
     
     title = models.CharField('Título', max_length=200)
     description = models.TextField('Descrição', blank=True)
-    date = models.CharField('Data', max_length=10, db_index=True)  # YYYY-MM-DD
+    date = models.CharField('Data', max_length=10, db_index=True, validators=[date_format_validator])  # YYYY-MM-DD
     start_time = models.IntegerField('Início (minutos desde meia-noite)')
     end_time = models.IntegerField('Fim (minutos desde meia-noite)')
     type = models.CharField('Tipo', max_length=20, blank=True)
@@ -249,13 +255,20 @@ class CalendarBlock(SyncableModel):
 class DailyNote(SyncableModel):
     """Daily note."""
 
-    date = models.CharField('Data', max_length=10, db_index=True)
+    date = models.CharField('Data', max_length=10, db_index=True, validators=[date_format_validator])
     content = models.TextField('Conteudo', blank=True)
 
     class Meta:
         verbose_name = 'Nota Diaria'
         verbose_name_plural = 'Notas Diarias'
         ordering = ['-date']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'date'],
+                condition=models.Q(deleted_at__isnull=True),
+                name='unique_active_dailynote_per_user_date',
+            ),
+        ]
 
 
 

@@ -140,7 +140,7 @@ def _mark_webhook_processed(request) -> None:
     """Mark a webhook x-request-id as processed (anti-replay)."""
     x_request_id = request.headers.get('x-request-id', '')
     if x_request_id:
-        django_cache.set(f"mp_webhook_dedup:{x_request_id}", 1, 600)
+        django_cache.set(f"mp_webhook_dedup:{x_request_id}", 1, 172800)  # 48h — matches MP retry window
 
 
 class PlansView(APIView):
@@ -471,13 +471,12 @@ class WebhookView(APIView):
             except Plan.DoesNotExist:
                 pass
         
-        # Fallback: try to match by amount
+        # Fallback: try to match by amount (use filter+first to avoid ambiguity)
         amount = metadata.get('transaction_amount') if isinstance(metadata, dict) else None
         if amount:
-            try:
-                return Plan.objects.get(price=amount, is_active=True)
-            except (Plan.DoesNotExist, Plan.MultipleObjectsReturned):
-                pass
+            plan = Plan.objects.filter(price=amount, is_active=True).first()
+            if plan:
+                return plan
         
         return None
     

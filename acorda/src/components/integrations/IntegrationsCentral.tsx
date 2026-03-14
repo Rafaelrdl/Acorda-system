@@ -134,10 +134,6 @@ export function IntegrationsCentral({
         connected: true,
         connectedAt: result.connected_at || now,
         updatedAt: now,
-        // Tokens are NOT stored locally — they live only on the backend
-        accessToken: undefined,
-        refreshToken: undefined,
-        expiresAt: undefined,
       }))
 
       // Pull full state from backend via sync
@@ -189,9 +185,6 @@ export function IntegrationsCentral({
         ...(current || createGoogleCalendarConnection(userId)),
         connected: false,
         disconnectedAt: now,
-        accessToken: undefined,
-        refreshToken: undefined,
-        expiresAt: undefined,
         updatedAt: now,
       }))
       onUpdateEvents([])
