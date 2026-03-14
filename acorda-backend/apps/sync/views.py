@@ -76,6 +76,23 @@ class SyncPushView(APIView):
                 {'success': False, 'error': 'changes deve ser um objeto.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        # ── Limit total items to prevent abuse ─────────────────────────
+        MAX_ITEMS_PER_ENTITY = 500
+        MAX_ITEMS_TOTAL = 2000
+        total_items = 0
+        for entity_type, items in changes.items():
+            if isinstance(items, list):
+                if len(items) > MAX_ITEMS_PER_ENTITY:
+                    return Response(
+                        {'success': False, 'error': f'Máximo de {MAX_ITEMS_PER_ENTITY} itens por entidade.'},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                total_items += len(items)
+        if total_items > MAX_ITEMS_TOTAL:
+            return Response(
+                {'success': False, 'error': f'Máximo de {MAX_ITEMS_TOTAL} itens por push.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         results = {}
         current_time = int(time.time() * 1000)
@@ -94,6 +111,27 @@ class SyncPushView(APIView):
             
             model = ENTITY_MODELS[entity_type]
             serializer_class = ENTITY_SERIALIZERS[entity_type]
+            
+            # Bulk-prefetch existing items to avoid N+1 queries
+            item_ids = [
+                item_data.get('id')
+                for item_data in items
+                if isinstance(item_data, dict) and item_data.get('id')
+            ]
+            # Filter/normalize item_ids to valid UUID instances to avoid ValueError
+            valid_item_ids = []
+            for raw_id in item_ids:
+                try:
+                    valid_item_ids.append(_uuid.UUID(str(raw_id)))
+                except (ValueError, TypeError, AttributeError):
+                    # Ignore invalid UUIDs; they won't be found in existing_map
+                    continue
+            existing_map = {}
+            if valid_item_ids:
+                existing_map = {
+                    str(obj.id): obj
+                    for obj in model.objects.filter(id__in=valid_item_ids, user=request.user)
+                }
             
             created = 0
             updated = 0
@@ -149,9 +187,9 @@ class SyncPushView(APIView):
                         item_data['updated_at'] = item_deleted_at or item_data['created_at']
                         item_updated_at = item_data['updated_at']
                     
-                    # Try to find existing item
-                    try:
-                        existing = model.objects.get(id=item_id, user=request.user)
+                    # Look up existing item from prefetched map
+                    existing = existing_map.get(str(item_id))
+                    if existing:
                         
                         # Last-write-wins: only update if client version is newer
                         if existing.updated_at < item_updated_at:
@@ -174,7 +212,7 @@ class SyncPushView(APIView):
                                     errors.append({'id': item_id, 'errors': serializer.errors})
                         # else: server version is newer, ignore client change
                         
-                    except model.DoesNotExist:
+                    else:
                         # Create new item
                         if not item_deleted_at:  # Don't create deleted items
                             item_data['user'] = request.user.id

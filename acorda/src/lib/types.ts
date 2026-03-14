@@ -44,6 +44,7 @@ export interface InboxItem {
   processedAt?: number
   createdAt: number
   updatedAt: number
+  deleted_at?: number
 }
 
 export interface Task {

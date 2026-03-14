@@ -452,6 +452,7 @@ class RefreshTokenView(APIView):
     """Refresh access token - reads from cookie or body."""
     
     permission_classes = [AllowAny]
+    throttle_classes = [AuthAnonThrottle]
     
     def post(self, request):
         # Try to get refresh token from cookie first, then from request body

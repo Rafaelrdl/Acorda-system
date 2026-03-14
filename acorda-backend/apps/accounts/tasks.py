@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 from django.conf import settings
 
 
-@shared_task
+@shared_task(autoretry_for=(Exception,), retry_backoff=60, retry_kwargs={'max_retries': 3})
 def send_activation_email(user_id: str, token: str):
     """Send account activation email."""
     from .models import User
@@ -39,7 +39,7 @@ def send_activation_email(user_id: str, token: str):
     )
 
 
-@shared_task
+@shared_task(autoretry_for=(Exception,), retry_backoff=60, retry_kwargs={'max_retries': 3})
 def send_password_reset_email(user_id: str, token: str):
     """Send password reset email."""
     from .models import User
@@ -71,7 +71,7 @@ def send_password_reset_email(user_id: str, token: str):
     )
 
 
-@shared_task
+@shared_task(autoretry_for=(Exception,), retry_backoff=60, retry_kwargs={'max_retries': 3})
 def send_welcome_email(user_id: str):
     """Send welcome email after activation."""
     from .models import User
