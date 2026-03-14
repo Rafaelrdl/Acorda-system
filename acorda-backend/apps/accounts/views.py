@@ -12,6 +12,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from django.utils import timezone
+from rest_framework.exceptions import Throttled
 from django.core.files.base import ContentFile
 from django.conf import settings
 from django.middleware.csrf import get_token
@@ -41,13 +42,37 @@ logger = logging.getLogger(__name__)
 
 
 class AuthAnonThrottle(AnonRateThrottle):
-    """Strict rate limit for authentication endpoints."""
+    """Strict rate limit for authentication endpoints.
+    
+    Gracefully degrades if the cache backend (e.g. Redis) is unavailable,
+    instead of returning 500, while keeping a safe default throttle policy.
+    """
     rate = '10/min'
+
+    def allow_request(self, request, view):
+        try:
+            return super().allow_request(request, view)
+        except (ConnectionError, TimeoutError) as exc:
+            logger.error('Throttle cache unavailable for AuthAnonThrottle', exc_info=exc)
+            # Fail closed: raise 429 instead of disabling rate limiting entirely.
+            raise Throttled(detail='Rate limiting temporarily unavailable, please try again later.')
 
 
 class PasswordResetThrottle(AnonRateThrottle):
-    """Strict rate limit for password reset / forgot password."""
+    """Strict rate limit for password reset / forgot password.
+    
+    Gracefully degrades if the cache backend (e.g. Redis) is unavailable,
+    instead of returning 500, while keeping a safe default throttle policy.
+    """
     rate = '5/hour'
+
+    def allow_request(self, request, view):
+        try:
+            return super().allow_request(request, view)
+        except (ConnectionError, TimeoutError) as exc:
+            logger.error('Throttle cache unavailable for PasswordResetThrottle', exc_info=exc)
+            # Fail closed: raise 429 instead of disabling rate limiting entirely.
+            raise Throttled(detail='Rate limiting temporarily unavailable, please try again later.')
 
 
 class LoginView(APIView):

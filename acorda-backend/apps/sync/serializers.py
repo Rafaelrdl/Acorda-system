@@ -181,7 +181,7 @@ class FinanceAccountSerializer(BaseSyncSerializer):
     class Meta(BaseSyncSerializer.Meta):
         model = FinanceAccount
         fields = BaseSyncSerializer.Meta.fields + [
-            'name', 'type', 'balance', 'color', 'icon'
+            'name', 'type', 'balance', 'limit', 'color', 'icon', 'closing_day', 'due_day'
         ]
 
 
@@ -191,6 +191,7 @@ class TransactionSerializer(BaseSyncSerializer):
         fields = BaseSyncSerializer.Meta.fields + [
             'type', 'amount', 'date', 'category_id', 'account_id',
             'description', 'notes', 'is_recurring', 'parent_transaction_id',
+            'installment_current', 'installment_total',
             'ai_suggested', 'ai_metadata'
         ]
 

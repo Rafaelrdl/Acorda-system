@@ -12,7 +12,7 @@ import { Progress } from '@/components/ui/progress'
 import { Textarea } from '@/components/ui/textarea'
 import type { UserId, Investment, InvestmentType, FinanceAccount, Transaction } from '@/lib/types'
 import { formatCurrency, createInvestment, createTransaction, updateTimestamp, getDateKey } from '@/lib/helpers'
-import { Plus, Trash, TrendUp, Target, Bank, PencilSimple, Vault, ArrowFatLineDown, ArrowFatLineUp } from '@phosphor-icons/react'
+import { Plus, Trash, TrendUp, Target, Bank, PencilSimple, Vault, ArrowFatLineDown, ArrowFatLineUp, CurrencyDollar } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
 const INVESTMENT_TYPES: { value: InvestmentType; label: string }[] = [
@@ -90,12 +90,15 @@ export function InvestmentsTab({
   const [movementAccountId, setMovementAccountId] = useState('')
   const [movementDate, setMovementDate] = useState(getDateKey(new Date()))
 
+  // Update value dialog state
+  const [updateValueInvestment, setUpdateValueInvestment] = useState<Investment | null>(null)
+  const [updateValueAmount, setUpdateValueAmount] = useState('')
+
   // Form state
   const [name, setName] = useState('')
   const [type, setType] = useState<InvestmentType>('cdb')
   const [institution, setInstitution] = useState('')
   const [amountInvested, setAmountInvested] = useState('')
-  const [currentValue, setCurrentValue] = useState('')
   const [startDate, setStartDate] = useState(getDateKey(new Date()))
   const [maturityDate, setMaturityDate] = useState('')
   const [goalValue, setGoalValue] = useState('')
@@ -135,7 +138,6 @@ export function InvestmentsTab({
     setType('cdb')
     setInstitution('')
     setAmountInvested('')
-    setCurrentValue('')
     setStartDate(getDateKey(new Date()))
     setMaturityDate('')
     setGoalValue('')
@@ -155,7 +157,6 @@ export function InvestmentsTab({
     setType(inv.type)
     setInstitution(inv.institution)
     setAmountInvested(String(inv.amountInvested))
-    setCurrentValue(String(inv.currentValue))
     setStartDate(inv.startDate)
     setMaturityDate(inv.maturityDate)
     setGoalValue(inv.goalValue != null ? String(inv.goalValue) : '')
@@ -170,6 +171,33 @@ export function InvestmentsTab({
     setMovementAmount('')
     setMovementAccountId('')
     setMovementDate(getDateKey(new Date()))
+  }
+
+  function openUpdateValue(inv: Investment) {
+    setUpdateValueInvestment(inv)
+    setUpdateValueAmount(String(inv.currentValue))
+  }
+
+  function handleUpdateValue() {
+    if (!updateValueInvestment) return
+    const newValue = parseCurrencyToNumber(updateValueAmount)
+    if (newValue < 0) {
+      toast.error('O valor não pode ser negativo')
+      return
+    }
+    onUpdateInvestment(updateTimestamp({
+      ...updateValueInvestment,
+      currentValue: newValue,
+    }))
+    const diff = newValue - updateValueInvestment.currentValue
+    if (diff > 0) {
+      toast.success(`Valor atualizado: +${formatCurrency(diff)} de rendimento`)
+    } else if (diff < 0) {
+      toast.success(`Valor atualizado: ${formatCurrency(diff)}`)
+    } else {
+      toast.success('Valor atualizado')
+    }
+    setUpdateValueInvestment(null)
   }
 
   function handleMovement() {
@@ -228,9 +256,6 @@ export function InvestmentsTab({
       return
     }
     const investedNum = parseCurrencyToNumber(amountInvested)
-
-    const rawCurrentNum = parseCurrencyToNumber(currentValue)
-    const currentNum = currentValue !== '' ? rawCurrentNum : investedNum
     const goalNum = parseCurrencyToNumber(goalValue)
 
     if (editingInvestment) {
@@ -240,7 +265,6 @@ export function InvestmentsTab({
         type,
         institution: institution.trim(),
         amountInvested: investedNum,
-        currentValue: currentNum,
         startDate,
         maturityDate,
         goalValue: goalNum > 0 ? goalNum : null,
@@ -251,7 +275,6 @@ export function InvestmentsTab({
     } else {
       onAddInvestment(createInvestment(userId, name.trim(), type, investedNum, startDate, {
         institution: institution.trim(),
-        currentValue: currentNum,
         maturityDate,
         goalValue: goalNum > 0 ? goalNum : null,
         goalName: goalName.trim(),
@@ -368,6 +391,10 @@ export function InvestmentsTab({
               Resgatar
             </Button>
           </div>
+          <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => openUpdateValue(inv)}>
+            <CurrencyDollar className="w-3.5 h-3.5 mr-1 text-blue-500" />
+            Atualizar rendimento
+          </Button>
         </CardContent>
       </Card>
     )
@@ -476,15 +503,9 @@ export function InvestmentsTab({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Valor investido</Label>
-                <CurrencyInput value={amountInvested} onChange={setAmountInvested} />
-              </div>
-              <div className="space-y-2">
-                <Label>Valor atual</Label>
-                <CurrencyInput value={currentValue} onChange={setCurrentValue} />
-              </div>
+            <div className="space-y-2">
+              <Label>Valor investido</Label>
+              <CurrencyInput value={amountInvested} onChange={setAmountInvested} />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -556,6 +577,61 @@ export function InvestmentsTab({
             </div>
             <Button className="w-full" onClick={handleMovement}>
               {movementType === 'deposit' ? 'Confirmar investimento' : 'Confirmar resgate'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de atualizar rendimento */}
+      <Dialog open={!!updateValueInvestment} onOpenChange={(open) => { if (!open) setUpdateValueInvestment(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Atualizar valor de {updateValueInvestment?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-muted-foreground">
+              Informe o valor atual que seu banco/corretora mostra para este investimento. A diferença em relação ao valor investido será calculada como rendimento.
+            </p>
+            {updateValueInvestment && (
+              <div className="grid grid-cols-2 gap-3 text-sm bg-muted/50 rounded-lg p-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Total investido</p>
+                  <p className="font-medium">{formatCurrency(updateValueInvestment.amountInvested)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Valor atual registrado</p>
+                  <p className="font-medium">{formatCurrency(updateValueInvestment.currentValue)}</p>
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>Novo valor atual *</Label>
+              <CurrencyInput value={updateValueAmount} onChange={setUpdateValueAmount} />
+            </div>
+            {updateValueInvestment && (() => {
+              const newVal = parseCurrencyToNumber(updateValueAmount)
+              const diff = newVal - updateValueInvestment.currentValue
+              const totalReturn = newVal - updateValueInvestment.amountInvested
+              const totalPct = updateValueInvestment.amountInvested > 0 ? (totalReturn / updateValueInvestment.amountInvested) * 100 : 0
+              return (
+                <div className="text-sm space-y-1 bg-muted/50 rounded-lg p-3">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Variação desta atualização</span>
+                    <span className={diff >= 0 ? 'text-emerald-500 font-medium' : 'text-red-500 font-medium'}>
+                      {diff >= 0 ? '+' : ''}{formatCurrency(diff)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Rendimento total</span>
+                    <span className={totalReturn >= 0 ? 'text-emerald-500 font-medium' : 'text-red-500 font-medium'}>
+                      {totalReturn >= 0 ? '+' : ''}{formatCurrency(totalReturn)} ({totalPct >= 0 ? '+' : ''}{totalPct.toFixed(1)}%)
+                    </span>
+                  </div>
+                </div>
+              )
+            })()}
+            <Button className="w-full" onClick={handleUpdateValue}>
+              Confirmar atualização
             </Button>
           </div>
         </DialogContent>
