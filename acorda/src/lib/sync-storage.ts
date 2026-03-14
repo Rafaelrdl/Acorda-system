@@ -311,6 +311,11 @@ class SyncManager {
   private syncInterval: ReturnType<typeof setInterval> | null = null
   private _onOnline = () => this.onOnline()
   private _onOffline = () => this.onOffline()
+  private _onServiceWorkerMessage = (event: MessageEvent) => {
+    if (event.data?.type === 'SYNC_READY') {
+      this.sync()
+    }
+  }
   
   constructor() {
     // Listen for online/offline events
@@ -321,11 +326,7 @@ class SyncManager {
     
     // Listen for service worker sync messages
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data?.type === 'SYNC_READY') {
-          this.sync()
-        }
-      })
+      navigator.serviceWorker.addEventListener('message', this._onServiceWorkerMessage)
     }
   }
 
@@ -334,6 +335,9 @@ class SyncManager {
     if (typeof window !== 'undefined') {
       window.removeEventListener('online', this._onOnline)
       window.removeEventListener('offline', this._onOffline)
+    }
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.removeEventListener('message', this._onServiceWorkerMessage)
     }
   }
   
