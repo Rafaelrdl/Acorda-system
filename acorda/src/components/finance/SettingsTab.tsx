@@ -344,7 +344,7 @@ export function SettingsTab({
                       <div>
                         <p className="font-medium text-sm">{account.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          Limite: {formatCurrency(Number(account.limit || account.balance || 0))}
+                          Limite: {formatCurrency(Number(account.limit ?? 0))}
                         </p>
                         {account.closingDay && account.dueDay && (
                           <p className="text-[11px] text-muted-foreground">
