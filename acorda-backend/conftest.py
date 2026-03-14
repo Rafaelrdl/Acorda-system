@@ -16,7 +16,8 @@ if _prod_mode:
 else:
     # Default tests run with DEBUG=True (prevents RuntimeError on insecure key)
     os.environ.setdefault('DEBUG', 'True')
-
+    # Force Redis off in hermetic tests so settings.py can't enable it via REDIS_URL
+    os.environ['REDIS_URL'] = ''
 
 def pytest_configure():
     """Configure Django settings for tests.
