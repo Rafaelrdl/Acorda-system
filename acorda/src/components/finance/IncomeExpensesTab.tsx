@@ -654,7 +654,7 @@ export function IncomeExpensesTab({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="income-frequency">Frequência</Label>
                     <Select value={incomeFrequency} onValueChange={(v) => setIncomeFrequency(v as RecurrenceFrequency)}>
@@ -877,7 +877,7 @@ export function IncomeExpensesTab({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="expense-frequency">Frequência</Label>
                     <Select value={expenseFrequency} onValueChange={(v) => setExpenseFrequency(v as RecurrenceFrequency)}>
@@ -1086,7 +1086,7 @@ export function IncomeExpensesTab({
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-income-frequency">Frequência</Label>
                 <Select value={incomeFrequency} onValueChange={(v) => setIncomeFrequency(v as RecurrenceFrequency)}>
@@ -1199,7 +1199,7 @@ export function IncomeExpensesTab({
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-expense-frequency">Frequência</Label>
                 <Select value={expenseFrequency} onValueChange={(v) => setExpenseFrequency(v as RecurrenceFrequency)}>

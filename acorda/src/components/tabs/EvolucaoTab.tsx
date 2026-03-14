@@ -729,7 +729,7 @@ export function EvolucaoTab({
           {/* ── Dieta ─────────────────────────────────────── */}
           {hasDietData && (
             <TabsContent value="dieta" className="space-y-4 mt-0">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <SummaryCard
                   icon={<ForkKnife size={18} className="text-lime-600" weight="duotone" />}
                   value={`${dietAdherence}%`}
@@ -853,7 +853,7 @@ export function EvolucaoTab({
           {/* ── Leitura ───────────────────────────────────── */}
           {hasReadingData && (
             <TabsContent value="leitura" className="space-y-4 mt-0">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <SummaryCard
                   icon={<BookOpen size={18} className="text-teal-500" weight="duotone" />}
                   value={pagesRead.current}
@@ -1042,7 +1042,7 @@ export function EvolucaoTab({
           {hasWellnessData && (
             <TabsContent value="bemestar" className="space-y-4 mt-0">
               {/* Summary Cards */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <SummaryCard
                   icon={<Moon size={18} className="text-blue-500" weight="duotone" />}
                   value={`${wellnessStatsData.avgSleep}h`}

@@ -106,7 +106,7 @@ export function BooksTab({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
         <div className="relative flex-1">
           <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -117,7 +117,7 @@ export function BooksTab({
           />
         </div>
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'title' | 'progress' | 'recent')}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-full sm:w-[140px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -161,7 +161,7 @@ export function BooksTab({
                     <h3 className="font-medium">{book.title}</h3>
                     <p className="text-sm text-muted-foreground">{book.author}</p>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 flex-wrap">
                     <Button 
                       size="sm" 
                       variant="outline"
@@ -242,7 +242,7 @@ export function BooksTab({
                     <p className="text-sm text-muted-foreground">{book.author}</p>
                     <p className="text-xs text-muted-foreground mt-1">{book.totalPages} páginas</p>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 flex-wrap">
                     <Button 
                       size="sm" 
                       variant="outline"

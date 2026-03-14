@@ -196,7 +196,7 @@ export function TransactionsTab({
                   onChange={setIncomeAmount}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="income-date">Data</Label>
                   <Popover>
@@ -295,7 +295,7 @@ export function TransactionsTab({
                   onChange={setExpenseAmount}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="expense-date">Data</Label>
                   <Popover>

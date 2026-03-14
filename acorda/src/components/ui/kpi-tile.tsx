@@ -35,9 +35,10 @@ export function KpiTile({
   
   return (
     <Component
+      {...(onClick ? { type: 'button' } : {})}
       onClick={onClick}
       className={cn(
-        'flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50',
+        'flex flex-col gap-2 p-3 rounded-xl bg-card border border-border/50',
         'min-w-0 w-full text-left',
         onClick && [
           'cursor-pointer transition-all duration-200',
@@ -48,25 +49,27 @@ export function KpiTile({
         className
       )}
     >
-      <IconBadge variant={tone === 'default' ? 'muted' : tone} size="md">
-        {icon}
-      </IconBadge>
-      
-      <div className="flex flex-col min-w-0 flex-1">
-        <span className={cn(
-          'text-lg font-semibold leading-tight truncate',
-          toneStyles[tone]
-        )}>
-          {value}
-        </span>
-        <span className="text-xs text-muted-foreground truncate">
-          {label}
-        </span>
-        {hint && (
-          <span className="text-[10px] text-muted-foreground/70 truncate mt-0.5">
-            {hint}
+      <div className="flex items-center gap-3 min-w-0">
+        <IconBadge variant={tone === 'default' ? 'muted' : tone} size="md">
+          {icon}
+        </IconBadge>
+        
+        <div className="flex flex-col min-w-0 flex-1">
+          <span className={cn(
+            'text-lg font-semibold leading-tight truncate',
+            toneStyles[tone]
+          )}>
+            {value}
           </span>
-        )}
+          <span className="text-xs text-muted-foreground truncate">
+            {label}
+          </span>
+          {hint && (
+            <span className="text-[10px] text-muted-foreground/70 truncate mt-0.5">
+              {hint}
+            </span>
+          )}
+        </div>
       </div>
       
       {action && (
