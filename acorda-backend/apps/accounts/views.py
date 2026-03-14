@@ -12,6 +12,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from django.utils import timezone
+from rest_framework.exceptions import Throttled
 from django.core.files.base import ContentFile
 from django.conf import settings
 from django.middleware.csrf import get_token
@@ -51,9 +52,10 @@ class AuthAnonThrottle(AnonRateThrottle):
     def allow_request(self, request, view):
         try:
             return super().allow_request(request, view)
-        except Exception:
-            logger.warning('Throttle cache unavailable, allowing request')
-            return True
+        except Exception as exc:
+            logger.error('Throttle cache unavailable or error during throttling', exc_info=exc)
+            # Fail closed for authentication endpoints to avoid rate limit bypass.
+            raise Throttled(detail='Rate limiting temporarily unavailable, please try again later.')
 
 
 class PasswordResetThrottle(AnonRateThrottle):
@@ -67,9 +69,10 @@ class PasswordResetThrottle(AnonRateThrottle):
     def allow_request(self, request, view):
         try:
             return super().allow_request(request, view)
-        except Exception:
-            logger.warning('Throttle cache unavailable, allowing request')
-            return True
+        except Exception as exc:
+            logger.error('Throttle cache unavailable or error during password reset throttling', exc_info=exc)
+            # Fail closed for password reset endpoints to avoid rate limit bypass.
+            raise Throttled(detail='Rate limiting temporarily unavailable, please try again later.')
 
 
 class LoginView(APIView):
