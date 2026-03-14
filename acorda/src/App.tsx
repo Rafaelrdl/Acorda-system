@@ -226,10 +226,12 @@ function MainApp({ user }: { user: User }) {
           ? updateTimestamp({ ...item, isProcessed: true, processedAt: Date.now() }) 
           : item
       )
-      // Cleanup: remove itens processados há mais de 30 dias
+      // Cleanup: soft-delete itens processados há mais de 30 dias
       const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
-      return updated.filter(item => 
-        !item.isProcessed || (item.processedAt && item.processedAt > thirtyDaysAgo)
+      return updated.map(item => 
+        item.isProcessed && (!item.processedAt || item.processedAt <= thirtyDaysAgo) && !item.deleted_at
+          ? softDelete(item)
+          : item
       )
     })
   }

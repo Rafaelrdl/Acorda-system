@@ -465,12 +465,22 @@ export function getHabitConsistencyForPeriod(
     const date = new Date(today)
     date.setDate(date.getDate() - i)
     const dateKey = getDateKey(date)
+    const dayOfWeek = date.getDay() // 0=Sun, 1=Mon, ..., 6=Sat
     
-    // Conta quantos hábitos eram esperados nesse dia e quantos foram completados
-    totalExpected += activeHabits.length
-    totalCompleted += habitLogs.filter(log => 
-      log.userId === userId && log.date === dateKey
-    ).length
+    // Only count habits that were expected on this day of the week
+    for (const habit of activeHabits) {
+      const isExpectedToday = habit.targetDays && habit.targetDays.length > 0
+        ? habit.targetDays.includes(dayOfWeek)
+        : true // daily habit or no targetDays = expected every day
+      
+      if (isExpectedToday) {
+        totalExpected++
+        const completed = habitLogs.some(log =>
+          log.userId === userId && log.habitId === habit.id && log.date === dateKey
+        )
+        if (completed) totalCompleted++
+      }
+    }
   }
   
   return totalExpected > 0 ? Math.round((totalCompleted / totalExpected) * 100) : 0

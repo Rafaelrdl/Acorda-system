@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -181,7 +181,12 @@ export function IncomeExpensesTab({
   }, [activeExpenses, todayKey])
 
   // Processar lançamentos automáticos
+  const autoConfirmRanRef = useRef('')
   useEffect(() => {
+    // Guard: only run once per todayKey to prevent duplicate transactions on re-render
+    if (autoConfirmRanRef.current === todayKey) return
+    autoConfirmRanRef.current = todayKey
+
     activeIncomes.forEach(income => {
       if (!income.autoConfirm) return
       if (!shouldConfirmRecurrence(
@@ -239,8 +244,8 @@ export function IncomeExpensesTab({
       
       toast.success(`Despesa "${expense.name}" lançada automaticamente`)
     })
-  // Effect runs once per day (todayKey). The shouldConfirmRecurrence check
-  // prevents double-posting via lastConfirmedMonth.
+  // Effect runs once per day (todayKey). The ref guard + shouldConfirmRecurrence
+  // prevent double-posting even on re-render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayKey])
 
