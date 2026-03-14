@@ -449,7 +449,13 @@ function MainApp({ user }: { user: User }) {
     
     setHabitLogs(current => {
       const allLogs = current || []
-      const existing = allLogs.find(log => log.habitId === habitId && log.date === today && !log.deleted_at)
+      const existing = allLogs.find(
+        log =>
+          log.habitId === habitId &&
+          log.date === today &&
+          !log.deleted_at &&
+          !(log as any).deletedAt
+      )
       
       if (existing) {
         return allLogs.map(log => log.id === existing.id ? softDelete(log) : log)
