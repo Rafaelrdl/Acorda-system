@@ -44,34 +44,34 @@ logger = logging.getLogger(__name__)
 class AuthAnonThrottle(AnonRateThrottle):
     """Strict rate limit for authentication endpoints.
     
-    Gracefully degrades to allow the request if the cache backend
-    (e.g. Redis) is unavailable, instead of returning 500.
+    Gracefully degrades if the cache backend (e.g. Redis) is unavailable,
+    instead of returning 500, while keeping a safe default throttle policy.
     """
     rate = '10/min'
 
     def allow_request(self, request, view):
         try:
             return super().allow_request(request, view)
-        except Exception as exc:
-            logger.error('Throttle cache unavailable or error during throttling', exc_info=exc)
-            # Fail closed for authentication endpoints to avoid rate limit bypass.
+        except (ConnectionError, TimeoutError) as exc:
+            logger.error('Throttle cache unavailable for AuthAnonThrottle', exc_info=exc)
+            # Fail closed: raise 429 instead of disabling rate limiting entirely.
             raise Throttled(detail='Rate limiting temporarily unavailable, please try again later.')
 
 
 class PasswordResetThrottle(AnonRateThrottle):
     """Strict rate limit for password reset / forgot password.
     
-    Gracefully degrades to allow the request if the cache backend
-    (e.g. Redis) is unavailable, instead of returning 500.
+    Gracefully degrades if the cache backend (e.g. Redis) is unavailable,
+    instead of returning 500, while keeping a safe default throttle policy.
     """
     rate = '5/hour'
 
     def allow_request(self, request, view):
         try:
             return super().allow_request(request, view)
-        except Exception as exc:
-            logger.error('Throttle cache unavailable or error during password reset throttling', exc_info=exc)
-            # Fail closed for password reset endpoints to avoid rate limit bypass.
+        except (ConnectionError, TimeoutError) as exc:
+            logger.error('Throttle cache unavailable for PasswordResetThrottle', exc_info=exc)
+            # Fail closed: raise 429 instead of disabling rate limiting entirely.
             raise Throttled(detail='Rate limiting temporarily unavailable, please try again later.')
 
 
