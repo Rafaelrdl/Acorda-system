@@ -79,7 +79,6 @@ export function FinanceCentral({ userId }: FinanceCentralProps) {
               categories={categories || []}
               accounts={accounts || []}
               transactions={transactions || []}
-              auditLogs={auditLogs || []}
               onAddTransaction={(transaction) => {
                 setTransactions(current => [...(current || []), transaction])
               }}
