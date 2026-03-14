@@ -6,7 +6,7 @@ import uuid
 from decimal import Decimal
 from django.db import models
 from django.conf import settings
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
 
 date_format_validator = RegexValidator(
     regex=r'^\d{4}-\d{2}-\d{2}$',
@@ -375,9 +375,26 @@ class FinanceAccount(SyncableModel):
     balance = models.DecimalField('Saldo', max_digits=12, decimal_places=2, default=Decimal("0"))
     color = models.CharField('Cor', max_length=20, blank=True)
     icon = models.CharField('Ícone', max_length=50, blank=True)
-    closing_day = models.PositiveSmallIntegerField('Dia de Fechamento', null=True, blank=True)
-    due_day = models.PositiveSmallIntegerField('Dia de Vencimento', null=True, blank=True)
-    limit = models.DecimalField('Limite', max_digits=12, decimal_places=2, null=True, blank=True)
+    closing_day = models.PositiveSmallIntegerField(
+        'Dia de Fechamento',
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(31)],
+    )
+    due_day = models.PositiveSmallIntegerField(
+        'Dia de Vencimento',
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(31)],
+    )
+    limit = models.DecimalField(
+        'Limite',
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+    )
 
     class Meta:
         verbose_name = 'Conta Financeira'
