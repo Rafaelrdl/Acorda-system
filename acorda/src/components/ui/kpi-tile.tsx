@@ -38,7 +38,7 @@ export function KpiTile({
       {...(onClick ? { type: 'button' } : {})}
       onClick={onClick}
       className={cn(
-        'flex flex-col gap-2 p-3 rounded-xl bg-card border border-border/50',
+        'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-xl bg-card border border-border/50',
         'min-w-0 w-full text-left',
         onClick && [
           'cursor-pointer transition-all duration-200',
@@ -49,7 +49,7 @@ export function KpiTile({
         className
       )}
     >
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-3 min-w-0 sm:flex-1">
         <IconBadge variant={tone === 'default' ? 'muted' : tone} size="md">
           {icon}
         </IconBadge>
