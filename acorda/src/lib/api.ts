@@ -21,6 +21,8 @@ class ApiClient {
   private _isAuthenticated = false
   // CSRF token for double-submit cookie protection
   private _csrfToken: string | null = null
+  // Dedup concurrent refresh attempts to avoid token rotation conflicts
+  private _refreshPromise: Promise<boolean> | null = null
 
   constructor() {
     // Check if we have a session by calling /auth/me/ on init
@@ -196,27 +198,35 @@ class ApiClient {
    * Refresh the access token using the refresh cookie.
    * The server reads the refresh token from the cookie and sets new cookies.
    */
-  private async refreshAccessToken(): Promise<boolean> {
-    try {
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-        ...(this._csrfToken ? { 'X-CSRFToken': this._csrfToken } : {}),
-      }
-      const response = await fetch(`${API_BASE_URL}/auth/refresh/`, {
-        method: 'POST',
-        headers,
-        credentials: 'include',
-      })
+  private refreshAccessToken(): Promise<boolean> {
+    if (this._refreshPromise) return this._refreshPromise
 
-      if (response.ok) {
-        // Refresh CSRF token in case the cookie rotated
-        await this.fetchCsrfToken()
-      }
+    this._refreshPromise = (async () => {
+      try {
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+          ...(this._csrfToken ? { 'X-CSRFToken': this._csrfToken } : {}),
+        }
+        const response = await fetch(`${API_BASE_URL}/auth/refresh/`, {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+        })
 
-      return response.ok
-    } catch {
-      return false
-    }
+        if (response.ok) {
+          // Refresh CSRF token in case the cookie rotated
+          await this.fetchCsrfToken()
+        }
+
+        return response.ok
+      } catch {
+        return false
+      } finally {
+        this._refreshPromise = null
+      }
+    })()
+
+    return this._refreshPromise
   }
 
   /**

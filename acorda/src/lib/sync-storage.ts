@@ -311,6 +311,7 @@ class SyncManager {
   private syncInterval: ReturnType<typeof setInterval> | null = null
   private _onOnline = () => this.onOnline()
   private _onOffline = () => this.onOffline()
+  private _cachedUserId: string | null = null
   
   constructor() {
     // Listen for online/offline events
@@ -367,6 +368,10 @@ class SyncManager {
       this.syncInterval = null
       if (import.meta.env.DEV) console.log('[Sync] Auto-sync stopped')
     }
+  }
+
+  clearUserCache() {
+    this._cachedUserId = null
   }
   
   // Add pending change
@@ -691,11 +696,13 @@ class SyncManager {
   }
   
   /**
-   * Resolve userId once and cache for the sync cycle.
-   * Throws if unable to determine userId — prevents writing to wrong key.
+   * Resolve userId once and cache it for this storage instance (until explicitly cleared).
+   * Throws if unable to determine userId — prevents writing to the wrong user-specific key.
    */
   private async resolveUserId(): Promise<string> {
+    if (this._cachedUserId) return this._cachedUserId
     const user = await api.getMe()
+    this._cachedUserId = user.id
     return user.id
   }
   

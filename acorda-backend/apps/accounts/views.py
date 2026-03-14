@@ -452,6 +452,7 @@ class RefreshTokenView(APIView):
     """Refresh access token - reads from cookie or body."""
     
     permission_classes = [AllowAny]
+    throttle_classes = [AuthAnonThrottle]
     
     def post(self, request):
         # Try to get refresh token from cookie first, then from request body
@@ -469,11 +470,7 @@ class RefreshTokenView(APIView):
             # Validate and rotate refresh token
             old_refresh = RefreshToken(refresh_token)  # type: ignore[arg-type]
             
-            # Blacklist old token if rotation is enabled
-            if settings.SIMPLE_JWT.get('ROTATE_REFRESH_TOKENS', False):
-                old_refresh.blacklist()
-            
-            # Create new tokens
+            # Validate user BEFORE blacklisting old token
             user_id = old_refresh.payload.get('user_id')
             user = User.objects.get(id=user_id)
 
@@ -485,6 +482,10 @@ class RefreshTokenView(APIView):
                 )
                 clear_auth_cookies(resp)
                 return resp
+
+            # Blacklist old token only after user validation passes
+            if settings.SIMPLE_JWT.get('ROTATE_REFRESH_TOKENS', False):
+                old_refresh.blacklist()
 
             new_refresh = RefreshToken.for_user(user)
             

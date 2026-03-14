@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar'
 import type { UserId } from '@/lib/types'
 import { Transaction, FinanceCategory, FinanceAccount } from '@/lib/types'
-import { formatCurrency, createTransaction, getDateKey } from '@/lib/helpers'
+import { formatCurrency, createTransaction, getDateKey, filterDeleted } from '@/lib/helpers'
 import { Plus, TrendUp, TrendDown, Trash, Sparkle, CalendarBlank } from '@phosphor-icons/react'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -55,7 +55,7 @@ export function TransactionsTab({
   const [showAll, setShowAll] = useState(false)
 
   const recentTransactions = useMemo(() => 
-    [...transactions].sort((a, b) => b.createdAt - a.createdAt), 
+    filterDeleted(transactions).sort((a, b) => b.createdAt - a.createdAt), 
     [transactions]
   )
 

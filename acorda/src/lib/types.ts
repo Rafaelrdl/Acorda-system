@@ -44,6 +44,7 @@ export interface InboxItem {
   processedAt?: number
   createdAt: number
   updatedAt: number
+  deleted_at?: number
 }
 
 export interface Task {
@@ -155,6 +156,8 @@ export interface HabitLog {
   notes?: string
   createdAt: number
   updatedAt: number
+  deleted_at?: number | null
+  deletedAt?: number | null
 }
 
 export interface PomodoroPreset {
