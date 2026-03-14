@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,9 @@ import {
 } from '@/components/ui/alert-dialog'
 import type { UserId } from '@/lib/types'
 import { InboxItem, Task, Goal, KeyResult, CalendarBlock, Project, Reference, Habit, HabitLog, GoogleCalendarEvent } from '@/lib/types'
-import { Trash, PencilSimple, Target, ListChecks, Plus, Star, Tray, Square, CheckSquare, CalendarBlank, Play, NotePencil, Link, Lightning, Clock, Hourglass, CheckCircle, FolderSimple, CaretDown, CaretRight } from '@phosphor-icons/react'
+import { Trash, PencilSimple, Target, ListChecks, Plus, Star, Tray, Square, CheckSquare, CalendarBlank, Play, NotePencil, Link, Lightning, Clock, Hourglass, CheckCircle, FolderSimple, CaretDown, CaretRight, MagnifyingGlass, Funnel, X } from '@phosphor-icons/react'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ProcessInboxDialog } from '../dialogs/ProcessInboxDialog'
 import { TaskDialog } from '../dialogs/TaskDialog'
 import { GoalWizardDialog } from '../dialogs/GoalWizardDialog'
@@ -134,13 +136,57 @@ export function PlanejarTab({
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set())
   const [showArchivedProjects, setShowArchivedProjects] = useState(false)
 
+  // Task filters
+  const [taskSearch, setTaskSearch] = useState('')
+  const [taskFilterProject, setTaskFilterProject] = useState<string>('all')
+  const [taskFilterEnergy, setTaskFilterEnergy] = useState<string>('all')
+  const [taskFilterTag, setTaskFilterTag] = useState<string>('all')
+  const [taskFilterPriority, setTaskFilterPriority] = useState<string>('all')
+  const [showFilters, setShowFilters] = useState(false)
+
   // Filtrar itens deletados
   const activeInboxItems = filterDeleted(inboxItems)
   const activeTasks = filterDeleted(tasks)
   const activeReferences = filterDeleted(references)
   
   const unprocessedInbox = activeInboxItems.filter(item => !item.isProcessed)
-  const pendingTasks = activeTasks.filter(t => t.status !== 'done')
+
+  // Collect unique tags from all tasks for the filter dropdown
+  const allTags = useMemo(() => {
+    const tags = new Set<string>()
+    activeTasks.forEach(t => t.tags?.forEach(tag => tags.add(tag)))
+    return Array.from(tags).sort()
+  }, [activeTasks])
+
+  const hasActiveFilters = taskSearch || taskFilterProject !== 'all' || taskFilterEnergy !== 'all' || taskFilterTag !== 'all' || taskFilterPriority !== 'all'
+
+  // Apply filters to tasks
+  const filteredTasks = useMemo(() => {
+    let result = activeTasks
+    if (taskSearch) {
+      const q = taskSearch.toLowerCase()
+      result = result.filter(t => t.title.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q))
+    }
+    if (taskFilterProject !== 'all') {
+      result = taskFilterProject === 'none'
+        ? result.filter(t => !t.projectId)
+        : result.filter(t => t.projectId === taskFilterProject)
+    }
+    if (taskFilterEnergy !== 'all') {
+      result = result.filter(t => t.energyLevel === taskFilterEnergy)
+    }
+    if (taskFilterTag !== 'all') {
+      result = result.filter(t => t.tags?.includes(taskFilterTag))
+    }
+    if (taskFilterPriority !== 'all') {
+      result = taskFilterPriority === 'priority'
+        ? result.filter(t => t.isTopPriority)
+        : result.filter(t => !t.isTopPriority)
+    }
+    return result
+  }, [activeTasks, taskSearch, taskFilterProject, taskFilterEnergy, taskFilterTag, taskFilterPriority])
+
+  const pendingTasks = filteredTasks.filter(t => t.status !== 'done')
   const nextTasks = pendingTasks.filter(t => t.status === 'next').sort((a, b) => {
     // Prioritárias primeiro
     if (a.isTopPriority && !b.isTopPriority) return -1
@@ -154,7 +200,9 @@ export function PlanejarTab({
   })
   const waitingTasks = pendingTasks.filter(t => t.status === 'waiting')
   const somedayTasks = pendingTasks.filter(t => t.status === 'someday')
-  const completedTasks = activeTasks.filter(t => t.status === 'done')
+  const completedTasks = filteredTasks.filter(t => t.status === 'done')
+  // Unfiltered pending tasks for calendar view
+  const allPendingTasks = activeTasks.filter(t => t.status !== 'done')
   const activeHabits = filterDeleted(habits).filter(h => h.isActive)
   const allProjects = filterDeleted(projects)
   const activeProjectsList = allProjects.filter(p => p.status === 'active')
@@ -300,20 +348,127 @@ export function PlanejarTab({
         </TabsContent>
 
         <TabsContent value="tarefas" className="space-y-4">
-          {/* Header com botões de ação */}
-          <div className="flex justify-end gap-2">
-            <Button size="sm" onClick={() => setShowTaskDialog(true)}>
-              <Plus size={16} className="mr-1" />
-              Tarefa
-            </Button>
+          {/* Header com filtros e ação */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar tarefas..."
+                  value={taskSearch}
+                  onChange={(e) => setTaskSearch(e.target.value)}
+                  className="pl-9 h-9 text-sm"
+                />
+                {taskSearch && (
+                  <button onClick={() => setTaskSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+              <Button
+                size="sm"
+                variant={showFilters ? 'secondary' : 'outline'}
+                onClick={() => setShowFilters(!showFilters)}
+                className={`h-9 shrink-0 ${hasActiveFilters ? 'border-primary text-primary' : ''}`}
+              >
+                <Funnel size={16} className={hasActiveFilters ? 'mr-1' : ''} weight={hasActiveFilters ? 'fill' : 'regular'} />
+                {hasActiveFilters && <span className="text-xs">Filtros</span>}
+              </Button>
+              <Button size="sm" className="h-9 shrink-0" onClick={() => setShowTaskDialog(true)}>
+                <Plus size={16} className="mr-1" />
+                Tarefa
+              </Button>
+            </div>
+
+            {showFilters && (
+              <div className="flex flex-wrap gap-2 items-center">
+                <Select value={taskFilterProject} onValueChange={setTaskFilterProject}>
+                  <SelectTrigger className="h-8 text-xs w-[140px]">
+                    <SelectValue placeholder="Projeto" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os projetos</SelectItem>
+                    <SelectItem value="none">Sem projeto</SelectItem>
+                    {allProjects.filter(p => p.status === 'active').map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={taskFilterEnergy} onValueChange={setTaskFilterEnergy}>
+                  <SelectTrigger className="h-8 text-xs w-[130px]">
+                    <SelectValue placeholder="Energia" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toda energia</SelectItem>
+                    <SelectItem value="low">Baixa</SelectItem>
+                    <SelectItem value="medium">Média</SelectItem>
+                    <SelectItem value="high">Alta</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {allTags.length > 0 && (
+                  <Select value={taskFilterTag} onValueChange={setTaskFilterTag}>
+                    <SelectTrigger className="h-8 text-xs w-[130px]">
+                      <SelectValue placeholder="Tag" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas as tags</SelectItem>
+                      {allTags.map(tag => (
+                        <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
+                <Select value={taskFilterPriority} onValueChange={setTaskFilterPriority}>
+                  <SelectTrigger className="h-8 text-xs w-[130px]">
+                    <SelectValue placeholder="Prioridade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="priority">Prioritárias</SelectItem>
+                    <SelectItem value="normal">Normais</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {hasActiveFilters && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 text-xs text-muted-foreground"
+                    onClick={() => {
+                      setTaskSearch('')
+                      setTaskFilterProject('all')
+                      setTaskFilterEnergy('all')
+                      setTaskFilterTag('all')
+                      setTaskFilterPriority('all')
+                    }}
+                  >
+                    <X size={14} className="mr-1" />
+                    Limpar filtros
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           {pendingTasks.length === 0 && completedTasks.length === 0 ? (
             <Card className="p-8">
               <div className="text-center">
-                <ListChecks size={48} className="mx-auto text-muted-foreground/30 mb-3" weight="light" />
-                <p className="text-muted-foreground font-medium">Nenhuma tarefa</p>
-                <p className="text-sm text-muted-foreground/70 mt-1">Adicione sua primeira tarefa</p>
+                {hasActiveFilters ? (
+                  <>
+                    <Funnel size={48} className="mx-auto text-muted-foreground/30 mb-3" weight="light" />
+                    <p className="text-muted-foreground font-medium">Nenhuma tarefa encontrada</p>
+                    <p className="text-sm text-muted-foreground/70 mt-1">Tente ajustar os filtros</p>
+                  </>
+                ) : (
+                  <>
+                    <ListChecks size={48} className="mx-auto text-muted-foreground/30 mb-3" weight="light" />
+                    <p className="text-muted-foreground font-medium">Nenhuma tarefa</p>
+                    <p className="text-sm text-muted-foreground/70 mt-1">Adicione sua primeira tarefa</p>
+                  </>
+                )}
               </div>
             </Card>
           ) : (
@@ -516,7 +671,7 @@ export function PlanejarTab({
             <WeeklyCalendar
               userId={userId}
               calendarBlocks={filterDeleted(calendarBlocks)}
-              tasks={pendingTasks}
+              tasks={allPendingTasks}
               habits={activeHabits}
               weekStartsOn={weekStartsOn}
               googleCalendarEvents={googleCalendarEvents}
