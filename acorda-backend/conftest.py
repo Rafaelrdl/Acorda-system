@@ -21,19 +21,35 @@ else:
 def pytest_configure():
     """Configure Django settings for tests.
     
-    By default tests run with DEBUG=True. To run with production-like
-    settings set the ACORDA_TEST_PROD environment variable:
+    By default tests run with DEBUG=True and use SQLite + LocMemCache
+    so they don't depend on external PostgreSQL/Redis instances.
+    To run with production-like settings set the ACORDA_TEST_PROD
+    environment variable:
         ACORDA_TEST_PROD=1 pytest
     """
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
     if not _prod_mode:
         os.environ.setdefault('DEBUG', 'True')
+        # Force SQLite for hermetic tests (no external DB dependency)
+        os.environ.setdefault('DATABASE_URL', 'sqlite:///test_db.sqlite3')
 
     # Reconfigure Django settings if already configured
     if settings.configured:
         settings.DEBUG = not _prod_mode
         settings.SECURE_SSL_REDIRECT = False  # Never redirect in test runner
+
+        if not _prod_mode:
+            # Force lightweight backends so tests pass without PostgreSQL/Redis
+            settings.DATABASES['default'] = {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': ':memory:',
+            }
+            settings.CACHES = {
+                'default': {
+                    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                }
+            }
 
     # Ensure STATIC_ROOT directory exists so whitenoise doesn't warn
     import pathlib

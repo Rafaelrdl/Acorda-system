@@ -70,6 +70,9 @@ export function FinanceCentral({ userId }: FinanceCentralProps) {
               transactions={transactions || []}
               selectedMonth={selectedMonth}
               onMonthChange={setSelectedMonth}
+              onAddTransaction={(transaction) => {
+                setTransactions(current => [...(current || []), transaction])
+              }}
             />
           </TabsContent>
 

@@ -7,9 +7,12 @@ import { Button } from '@/components/ui/button'
 import { SectionCard, EmptyState } from '@/components/ui/section-card'
 import { KpiTile } from '@/components/ui/kpi-tile'
 import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import { useKV } from '@/lib/sync-storage'
 import type { UserId, WellnessProgramType } from '@/lib/types'
-import { Task, Habit, HabitLog, CalendarBlock, PomodoroSession, DailyNote, FixedExpense, Transaction, FinanceCategory, ReviewScheduleItem, StudySession, Subject, Book, ReadingLog, WellnessProgram, WellnessCheckIn, WellnessDayAction, WorkoutPlan, WorkoutPlanItem, WorkoutSession, WorkoutPlanDayStatus, WorkoutUiState } from '@/lib/types'
+import { Task, Habit, HabitLog, CalendarBlock, PomodoroSession, DailyNote, FixedExpense, Transaction, FinanceCategory, FinanceAccount, ReviewScheduleItem, StudySession, Subject, Book, ReadingLog, WellnessProgram, WellnessCheckIn, WellnessDayAction, WorkoutPlan, WorkoutPlanItem, WorkoutSession, WorkoutPlanDayStatus, WorkoutUiState } from '@/lib/types'
 import { 
   Timer, 
   CheckCircle, 
@@ -23,13 +26,14 @@ import {
   CurrencyCircleDollar,
   Warning,
   Check,
+  CreditCard,
   GraduationCap,
   BookOpenText,
   Heart,
   Circle,
   Barbell
 } from '@phosphor-icons/react'
-import { filterDeleted, getDateKey, isSameDay, getSyncKey, formatCurrency, createTransaction, updateTimestamp, getMonthKey, createWorkoutPlanDayStatus } from '@/lib/helpers'
+import { filterDeleted, getDateKey, isSameDay, getSyncKey, formatCurrency, createTransaction, updateTimestamp, getMonthKey, createWorkoutPlanDayStatus, getInvoicePeriod, getInvoiceTotal } from '@/lib/helpers'
 import { getHabitsForDay, getTotalFocusMinutes, getHabitStreak } from '@/lib/queries'
 import { getProgramTitle } from '@/constants/wellness'
 import { getCheckInInsight, type CheckInInsight } from '@/lib/wellness/checkInInsights'
@@ -77,6 +81,7 @@ export function HojeTab({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- setTransactions used in handleConfirmExpense
   const [transactions, setTransactions] = useKV<Transaction[]>(getSyncKey(userId, 'financeTransactions'), [])
   const [categories] = useKV<FinanceCategory[]>(getSyncKey(userId, 'financeCategories'), [])
+  const [accounts] = useKV<FinanceAccount[]>(getSyncKey(userId, 'financeAccounts'), [])
   
   // Carregar dados de revisões de estudo
   const [reviewScheduleItems] = useKV<ReviewScheduleItem[]>(getSyncKey(userId, 'reviewScheduleItems'), [])
@@ -113,6 +118,10 @@ export function HojeTab({
   const [workoutSessions] = useKV<WorkoutSession[]>(getSyncKey(userId, 'workoutSessions'), [])
   const [workoutPlanDayStatuses, setWorkoutPlanDayStatuses] = useKV<WorkoutPlanDayStatus[]>(getSyncKey(userId, 'workoutPlanDayStatuses'), [])
   const [workoutUiState, setWorkoutUiState] = useKV<WorkoutUiState>(getSyncKey(userId, 'workoutUiState'), { updatedAt: 0 })
+
+  // Estado do dialog "Pagar Fatura"
+  const [payInvoiceAccountId, setPayInvoiceAccountId] = useState<string | null>(null)
+  const [payInvoiceSourceId, setPayInvoiceSourceId] = useState('')
 
   const activeTasks = filterDeleted(tasks || [])
   const topPriorities = activeTasks.filter(t => t.isTopPriority && t.status !== 'done').slice(0, 3)
@@ -333,6 +342,50 @@ export function HojeTab({
       return dayA - dayB
     })
   }, [fixedExpenses, currentDay, currentMonth])
+
+  // Faturas de cartão de crédito
+  const creditCardInvoices = useMemo(() => {
+    const creditAccounts = (accounts || []).filter(a => a.type === 'credit' && a.closingDay && a.dueDay)
+    return creditAccounts.map(account => {
+      const period = getInvoicePeriod(account.closingDay!, new Date())
+      const total = getInvoiceTotal(transactions || [], account.id, period.start, period.end)
+      return { account, period, total }
+    })
+  }, [accounts, transactions])
+
+  const handlePayInvoice = (creditAccountId: string, sourceAccountId: string) => {
+    const invoice = creditCardInvoices.find(inv => inv.account.id === creditAccountId)
+    if (!invoice) return
+
+    const amount = invoice.total
+    const creditAccount = invoice.account
+
+    // Despesa na conta de origem (conta corrente)
+    const expenseTx = createTransaction(
+      userId,
+      'expense',
+      amount,
+      todayKey,
+      sourceAccountId,
+      `Fatura ${creditAccount.name} - ${invoice.period.label}`,
+    )
+    setTransactions(current => [...(current || []), expenseTx])
+
+    // Receita no cartão (abater o saldo devedor)
+    const incomeTx = createTransaction(
+      userId,
+      'income',
+      amount,
+      todayKey,
+      creditAccountId,
+      `Pagamento fatura - ${invoice.period.label}`,
+    )
+    setTransactions(current => [...(current || []), incomeTx])
+
+    setPayInvoiceAccountId(null)
+    setPayInvoiceSourceId('')
+    toast.success(`Fatura de ${formatCurrency(amount)} paga com sucesso`)
+  }
 
   const handleConfirmExpense = (expense: FixedExpense) => {
     // Criar transação
@@ -877,6 +930,58 @@ export function HojeTab({
             </SectionCard>
           )}
 
+          {/* Faturas de Cartão de Crédito */}
+          {creditCardInvoices.length > 0 && (
+            <SectionCard
+              title="Faturas de Cartão"
+              icon={<CreditCard size={18} weight="duotone" />}
+              action={
+                <span className="text-xs text-muted-foreground">
+                  {creditCardInvoices.length} fatura{creditCardInvoices.length > 1 ? 's' : ''}
+                </span>
+              }
+            >
+              <div className="space-y-2">
+                {creditCardInvoices.map(({ account, period, total }) => (
+                  <div
+                    key={account.id}
+                    className="p-3 rounded-lg border bg-accent/10 border-accent/20 hover:border-accent/40 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium truncate">{account.name}</p>
+                      <p className={`font-semibold text-sm whitespace-nowrap shrink-0 ${total > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {formatCurrency(total)}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                      <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                        {period.label}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        Fecha dia {account.closingDay} · Vence dia {account.dueDay}
+                      </span>
+                    </div>
+                    <div className="flex justify-end mt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 px-3"
+                        disabled={total <= 0}
+                        onClick={() => {
+                          setPayInvoiceAccountId(account.id)
+                          setPayInvoiceSourceId('')
+                        }}
+                      >
+                        <Check size={14} className="mr-1" />
+                        Pagar Fatura
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </SectionCard>
+          )}
+
           {/* Revisões de Estudo Pendentes */}
           {pendingReviews.length > 0 && (
             <SectionCard
@@ -1057,6 +1162,52 @@ export function HojeTab({
           )}
         </div>
       </div>
+
+      {/* Modal Pagar Fatura */}
+      <Dialog open={!!payInvoiceAccountId} onOpenChange={(open) => { if (!open) { setPayInvoiceAccountId(null); setPayInvoiceSourceId('') } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard size={20} />
+              Pagar Fatura
+            </DialogTitle>
+          </DialogHeader>
+          {(() => {
+            const invoice = creditCardInvoices.find(inv => inv.account.id === payInvoiceAccountId)
+            if (!invoice) return null
+            const nonCreditAccounts = (accounts || []).filter(a => a.type !== 'credit')
+            return (
+              <div className="space-y-4 mt-2">
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <p className="text-sm font-medium">{invoice.account.name}</p>
+                  <p className="text-lg font-bold text-destructive mt-1">{formatCurrency(invoice.total)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{invoice.period.label}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Pagar com qual conta?</Label>
+                  <Select value={payInvoiceSourceId} onValueChange={setPayInvoiceSourceId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a conta" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {nonCreditAccounts.map(a => (
+                        <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  className="w-full"
+                  disabled={!payInvoiceSourceId}
+                  onClick={() => handlePayInvoice(invoice.account.id, payInvoiceSourceId)}
+                >
+                  Confirmar Pagamento
+                </Button>
+              </div>
+            )
+          })()}
+        </DialogContent>
+      </Dialog>
 
       {/* Modal de Check-in */}
       <CheckInDialog

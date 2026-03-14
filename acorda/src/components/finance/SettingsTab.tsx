@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import type { UserId } from '@/lib/types'
 import { FinanceCategory, FinanceAccount, Transaction } from '@/lib/types'
 import { createFinanceCategory, createFinanceAccount, formatCurrency } from '@/lib/helpers'
-import { Plus, Trash, Wallet, Tag } from '@phosphor-icons/react'
+import { Plus, Trash, Wallet, Tag, CreditCard } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
 interface SettingsTabProps {
@@ -39,6 +39,7 @@ export function SettingsTab({
 }: SettingsTabProps) {
   const [showCategoryDialog, setShowCategoryDialog] = useState(false)
   const [showAccountDialog, setShowAccountDialog] = useState(false)
+  const [showCreditCardDialog, setShowCreditCardDialog] = useState(false)
   
   const [categoryName, setCategoryName] = useState('')
   const [categoryType, setCategoryType] = useState<'income' | 'expense'>('expense')
@@ -48,6 +49,12 @@ export function SettingsTab({
   const [accountBalance, setAccountBalance] = useState('')
   const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null)
   const [deleteAccountId, setDeleteAccountId] = useState<string | null>(null)
+
+  // Credit card form state
+  const [creditCardName, setCreditCardName] = useState('')
+  const [creditCardLimit, setCreditCardLimit] = useState('')
+  const [creditCardClosingDay, setCreditCardClosingDay] = useState('')
+  const [creditCardDueDay, setCreditCardDueDay] = useState('')
 
   const handleAddCategory = () => {
     if (!categoryName.trim()) {
@@ -82,6 +89,38 @@ export function SettingsTab({
     setAccountBalance('')
     setShowAccountDialog(false)
     toast.success('Conta criada')
+  }
+
+  const handleAddCreditCard = () => {
+    if (!creditCardName.trim()) {
+      toast.error('Digite o nome do cartão')
+      return
+    }
+
+    const closingDay = parseInt(creditCardClosingDay) || undefined
+    const dueDay = parseInt(creditCardDueDay) || undefined
+
+    if (!closingDay || !dueDay) {
+      toast.error('Informe o dia de fechamento e vencimento')
+      return
+    }
+
+    const limit = parseFloat(creditCardLimit) || 0
+
+    const account = createFinanceAccount(userId, creditCardName.trim(), 'credit', {
+      balance: 0,
+      limit,
+      closingDay,
+      dueDay,
+    })
+    onAddAccount(account)
+    
+    setCreditCardName('')
+    setCreditCardLimit('')
+    setCreditCardClosingDay('')
+    setCreditCardDueDay('')
+    setShowCreditCardDialog(false)
+    toast.success('Cartão de crédito adicionado')
   }
 
   const incomeCategories = categories.filter(c => c.type === 'income')
@@ -162,7 +201,6 @@ export function SettingsTab({
                           <SelectContent>
                             <SelectItem value="checking">Conta Corrente</SelectItem>
                             <SelectItem value="cash">Dinheiro</SelectItem>
-                            <SelectItem value="credit">Cartão de Crédito</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -183,9 +221,9 @@ export function SettingsTab({
               </div>
             </CardHeader>
             <CardContent>
-              {accounts.length > 0 ? (
+              {accounts.filter(a => a.type !== 'credit').length > 0 ? (
                 <div className="space-y-2">
-                  {accounts.map(account => (
+                  {accounts.filter(a => a.type !== 'credit').map(account => (
                     <div
                       key={account.id}
                       className="flex items-center justify-between p-3 rounded border border-border"
@@ -195,7 +233,6 @@ export function SettingsTab({
                         <p className="text-xs text-muted-foreground capitalize">
                           {account.type === 'checking' && 'Conta Corrente'}
                           {account.type === 'cash' && 'Dinheiro'}
-                          {account.type === 'credit' && 'Cartão de Crédito'}
                           {account.type === 'savings' && 'Poupança'}
                           {account.type === 'investment' && 'Investimento'}
                         </p>
@@ -220,6 +257,118 @@ export function SettingsTab({
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-4">
                   Nenhuma conta criada
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Card de Cartões de Crédito */}
+          <Card className="mt-3">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CreditCard size={16} />
+                  Cartões de Crédito
+                </CardTitle>
+                <Dialog open={showCreditCardDialog} onOpenChange={setShowCreditCardDialog}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Novo
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Novo Cartão de Crédito</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="cc-name">Nome</Label>
+                        <Input
+                          id="cc-name"
+                          value={creditCardName}
+                          onChange={(e) => setCreditCardName(e.target.value)}
+                          placeholder="Ex: Nubank, Inter, C6"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="cc-limit">Limite</Label>
+                        <CurrencyInput
+                          id="cc-limit"
+                          value={creditCardLimit}
+                          onChange={setCreditCardLimit}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="cc-closing-day">Dia de Fechamento</Label>
+                          <Input
+                            id="cc-closing-day"
+                            type="number"
+                            min={1}
+                            max={31}
+                            value={creditCardClosingDay}
+                            onChange={(e) => setCreditCardClosingDay(e.target.value)}
+                            placeholder="Ex: 6"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="cc-due-day">Dia de Vencimento</Label>
+                          <Input
+                            id="cc-due-day"
+                            type="number"
+                            min={1}
+                            max={31}
+                            value={creditCardDueDay}
+                            onChange={(e) => setCreditCardDueDay(e.target.value)}
+                            placeholder="Ex: 12"
+                          />
+                        </div>
+                      </div>
+                      <Button onClick={handleAddCreditCard} className="w-full">
+                        Adicionar Cartão
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {accounts.filter(a => a.type === 'credit').length > 0 ? (
+                <div className="space-y-2">
+                  {accounts.filter(a => a.type === 'credit').map(account => (
+                    <div
+                      key={account.id}
+                      className="flex items-center justify-between p-3 rounded border border-border"
+                    >
+                      <div>
+                        <p className="font-medium text-sm">{account.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Limite: {formatCurrency(Number(account.limit || account.balance || 0))}
+                        </p>
+                        {account.closingDay && account.dueDay && (
+                          <p className="text-[11px] text-muted-foreground">
+                            Fecha dia {account.closingDay} · Vence dia {account.dueDay}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-10 w-10"
+                          onClick={() => setDeleteAccountId(account.id)}
+                          aria-label="Excluir cartão"
+                        >
+                          <Trash className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Nenhum cartão de crédito cadastrado
                 </p>
               )}
             </CardContent>

@@ -223,8 +223,11 @@ export interface FinanceAccount {
   name: string
   type: 'cash' | 'checking' | 'credit' | 'savings' | 'investment'
   balance: number
+  limit?: number
   color?: string
   icon?: string
+  closingDay?: number
+  dueDay?: number
   createdAt: number
   updatedAt: number
 }
@@ -241,6 +244,8 @@ export interface Transaction {
   notes?: string
   isRecurring: boolean
   parentTransactionId?: string
+  installmentCurrent?: number
+  installmentTotal?: number
   createdAt: number
   updatedAt: number
   aiSuggested?: boolean

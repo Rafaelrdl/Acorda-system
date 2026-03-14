@@ -5,17 +5,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { CurrencyInput } from '@/components/ui/currency-input'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Calendar } from '@/components/ui/calendar'
+
 import type { UserId } from '@/lib/types'
 import { Transaction, FinanceCategory, FinanceAccount } from '@/lib/types'
 import { formatCurrency, createTransaction, getDateKey, filterDeleted } from '@/lib/helpers'
-import { Plus, TrendUp, TrendDown, Trash, Sparkle, CalendarBlank } from '@phosphor-icons/react'
-import { format, parseISO } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { Plus, TrendUp, TrendDown, Trash, Sparkle } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
 interface TransactionsTabProps {
@@ -51,6 +49,8 @@ export function TransactionsTab({
   const [expenseCategoryId, setExpenseCategoryId] = useState('')
   const [expenseAccountId, setExpenseAccountId] = useState('')
   const [expenseDate, setExpenseDate] = useState(getDateKey(new Date()))
+  const [isInstallment, setIsInstallment] = useState(false)
+  const [installmentCount, setInstallmentCount] = useState('')
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [showAll, setShowAll] = useState(false)
 
@@ -116,20 +116,50 @@ export function TransactionsTab({
       return
     }
 
-    const transaction = createTransaction(
-      userId,
-      'expense',
-      parseFloat(expenseAmount),
-      expenseDate,
-      expenseAccountId,
-      expenseDescription.trim(),
-      {
-        categoryId: expenseCategoryId || undefined,
-      }
-    )
-    
-    onAddTransaction(transaction)
-    toast.success('Despesa registrada')
+    const selectedAccount = accounts.find(a => a.id === expenseAccountId)
+    const totalAmount = parseFloat(expenseAmount)
+    const parcelas = isInstallment && selectedAccount?.type === 'credit' ? parseInt(installmentCount) || 1 : 1
+
+    if (isInstallment && parcelas < 2) {
+      toast.error('Informe pelo menos 2 parcelas')
+      return
+    }
+
+    const perInstallment = Math.round((totalAmount / parcelas) * 100) / 100
+    const baseDesc = expenseDescription.trim()
+    const baseDate = new Date(expenseDate + 'T00:00:00')
+    let parentId: string | undefined
+
+    for (let i = 0; i < parcelas; i++) {
+      const installmentDate = new Date(baseDate)
+      installmentDate.setMonth(installmentDate.getMonth() + i)
+      const dateStr = getDateKey(installmentDate)
+      const desc = parcelas > 1 ? `${baseDesc} (${i + 1}/${parcelas})` : baseDesc
+
+      // Last installment absorbs rounding difference
+      const amount = (i === parcelas - 1 && parcelas > 1)
+        ? Math.round((totalAmount - perInstallment * (parcelas - 1)) * 100) / 100
+        : perInstallment
+
+      const transaction = createTransaction(
+        userId,
+        'expense',
+        amount,
+        dateStr,
+        expenseAccountId,
+        desc,
+        {
+          categoryId: expenseCategoryId || undefined,
+          parentTransactionId: parentId,
+          ...(parcelas > 1 ? { installmentCurrent: i + 1, installmentTotal: parcelas } : {}),
+        }
+      )
+
+      if (i === 0) parentId = transaction.id
+      onAddTransaction(transaction)
+    }
+
+    toast.success(parcelas > 1 ? `${parcelas} parcelas registradas` : 'Despesa registrada')
     
     // Reset form
     setExpenseDescription('')
@@ -137,6 +167,8 @@ export function TransactionsTab({
     setExpenseCategoryId('')
     setExpenseAccountId('')
     setExpenseDate(getDateKey(new Date()))
+    setIsInstallment(false)
+    setInstallmentCount('')
     setShowExpenseDialog(false)
   }
 
@@ -199,22 +231,7 @@ export function TransactionsTab({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="income-date">Data</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left font-normal">
-                        <CalendarBlank className="mr-2 h-4 w-4" />
-                        {incomeDate ? format(parseISO(incomeDate), "dd/MM/yyyy") : "Selecione"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={incomeDate ? parseISO(incomeDate) : undefined}
-                        onSelect={(date) => date && setIncomeDate(format(date, 'yyyy-MM-dd'))}
-                        locale={ptBR}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <Input type="date" value={incomeDate} onChange={e => setIncomeDate(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="income-account">Conta</Label>
@@ -298,22 +315,7 @@ export function TransactionsTab({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="expense-date">Data</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left font-normal">
-                        <CalendarBlank className="mr-2 h-4 w-4" />
-                        {expenseDate ? format(parseISO(expenseDate), "dd/MM/yyyy") : "Selecione"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={expenseDate ? parseISO(expenseDate) : undefined}
-                        onSelect={(date) => date && setExpenseDate(format(date, 'yyyy-MM-dd'))}
-                        locale={ptBR}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <Input type="date" value={expenseDate} onChange={e => setExpenseDate(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="expense-account">Conta</Label>
@@ -346,6 +348,37 @@ export function TransactionsTab({
                   </SelectContent>
                 </Select>
               </div>
+              {accounts.find(a => a.id === expenseAccountId)?.type === 'credit' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="installment-toggle">Parcelado?</Label>
+                    <Switch
+                      id="installment-toggle"
+                      checked={isInstallment}
+                      onCheckedChange={setIsInstallment}
+                    />
+                  </div>
+                  {isInstallment && (
+                    <div className="space-y-2">
+                      <Label htmlFor="installment-count">Nº de parcelas</Label>
+                      <Input
+                        id="installment-count"
+                        type="number"
+                        min={2}
+                        max={48}
+                        value={installmentCount}
+                        onChange={(e) => setInstallmentCount(e.target.value)}
+                        placeholder="Ex: 12"
+                      />
+                      {expenseAmount && installmentCount && parseInt(installmentCount) >= 2 && (
+                        <p className="text-xs text-muted-foreground">
+                          {parseInt(installmentCount)}x de {formatCurrency(Math.round((parseFloat(expenseAmount) / parseInt(installmentCount)) * 100) / 100)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
               <Button onClick={handleAddExpense} className="w-full" variant="destructive">
                 <Plus className="w-4 h-4 mr-2" />
                 Registrar Despesa
@@ -403,6 +436,11 @@ export function TransactionsTab({
                       {category && (
                         <Badge variant="secondary" className="text-xs">
                           {category.name}
+                        </Badge>
+                      )}
+                      {transaction.installmentCurrent && transaction.installmentTotal && (
+                        <Badge variant="outline" className="text-xs">
+                          {transaction.installmentCurrent}/{transaction.installmentTotal}
                         </Badge>
                       )}
                       <span className="text-xs text-muted-foreground">

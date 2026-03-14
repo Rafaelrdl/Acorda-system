@@ -507,8 +507,11 @@ export function createFinanceAccount(
   type: FinanceAccount['type'],
   options: {
     balance?: number
+    limit?: number
     color?: string
     icon?: string
+    closingDay?: number
+    dueDay?: number
   } = {}
 ): FinanceAccount {
   const now = Date.now()
@@ -518,8 +521,11 @@ export function createFinanceAccount(
     name,
     type,
     balance: options.balance || 0,
+    limit: options.limit,
     color: options.color,
     icon: options.icon,
+    closingDay: options.closingDay,
+    dueDay: options.dueDay,
     createdAt: now,
     updatedAt: now,
   }
@@ -537,6 +543,8 @@ export function createTransaction(
     notes?: string
     isRecurring?: boolean
     parentTransactionId?: string
+    installmentCurrent?: number
+    installmentTotal?: number
     aiSuggested?: boolean
     aiMetadata?: Transaction['aiMetadata']
   } = {}
@@ -554,11 +562,76 @@ export function createTransaction(
     notes: options.notes,
     isRecurring: options.isRecurring || false,
     parentTransactionId: options.parentTransactionId,
+    installmentCurrent: options.installmentCurrent,
+    installmentTotal: options.installmentTotal,
     aiSuggested: options.aiSuggested,
     aiMetadata: options.aiMetadata,
     createdAt: now,
     updatedAt: now,
   }
+}
+
+/**
+ * Retorna o período da fatura atual de um cartão de crédito.
+ * closingDay = dia do fechamento (ex: 20)
+ * Fatura corrente: do dia (closingDay+1) do mês anterior até closingDay do mês atual.
+ * Se hoje > closingDay, a fatura aberta é a do próximo mês.
+ */
+export function getInvoicePeriod(closingDay: number, referenceDate: Date = new Date()): { start: string; end: string; dueDate: string; label: string } {
+  const year = referenceDate.getFullYear()
+  const month = referenceDate.getMonth() // 0-indexed
+  const day = referenceDate.getDate()
+
+  let closeMonth: number
+  let closeYear: number
+
+  if (day <= closingDay) {
+    closeMonth = month
+    closeYear = year
+  } else {
+    closeMonth = month + 1
+    closeYear = year
+    if (closeMonth > 11) {
+      closeMonth = 0
+      closeYear++
+    }
+  }
+
+  // Start: closingDay+1 do mês anterior ao fechamento
+  let startMonth = closeMonth - 1
+  let startYear = closeYear
+  if (startMonth < 0) {
+    startMonth = 11
+    startYear--
+  }
+
+  // Clamp start day to the last day of startMonth
+  const startDay = closingDay + 1
+  const lastDayOfStartMonth = new Date(startYear, startMonth + 1, 0).getDate()
+  const clampedStartDay = Math.min(startDay, lastDayOfStartMonth)
+  const start = `${startYear}-${String(startMonth + 1).padStart(2, '0')}-${String(clampedStartDay).padStart(2, '0')}`
+
+  // Clamp end day to the last day of closeMonth
+  const lastDayOfCloseMonth = new Date(closeYear, closeMonth + 1, 0).getDate()
+  const clampedEndDay = Math.min(closingDay, lastDayOfCloseMonth)
+  const end = `${closeYear}-${String(closeMonth + 1).padStart(2, '0')}-${String(clampedEndDay).padStart(2, '0')}`
+
+  // Label: mês de referência (mês do fechamento)
+  const closeDate = new Date(closeYear, closeMonth, 1)
+  const label = closeDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+
+  return { start, end, dueDate: end, label }
+}
+
+/**
+ * Calcula o valor da fatura de um cartão de crédito para o período dado.
+ * Soma despesas e subtrai pagamentos (income) no mesmo período.
+ */
+export function getInvoiceTotal(transactions: Transaction[], accountId: string, start: string, end: string): number {
+  const periodTx = transactions.filter(t => t.accountId === accountId && t.date >= start && t.date <= end)
+  const expenses = periodTx.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0)
+  const payments = periodTx.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount), 0)
+  return Math.max(expenses - payments, 0)
 }
 
 export function createIncome(

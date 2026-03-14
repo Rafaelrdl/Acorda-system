@@ -41,13 +41,35 @@ logger = logging.getLogger(__name__)
 
 
 class AuthAnonThrottle(AnonRateThrottle):
-    """Strict rate limit for authentication endpoints."""
+    """Strict rate limit for authentication endpoints.
+    
+    Gracefully degrades to allow the request if the cache backend
+    (e.g. Redis) is unavailable, instead of returning 500.
+    """
     rate = '10/min'
+
+    def allow_request(self, request, view):
+        try:
+            return super().allow_request(request, view)
+        except Exception:
+            logger.warning('Throttle cache unavailable, allowing request')
+            return True
 
 
 class PasswordResetThrottle(AnonRateThrottle):
-    """Strict rate limit for password reset / forgot password."""
+    """Strict rate limit for password reset / forgot password.
+    
+    Gracefully degrades to allow the request if the cache backend
+    (e.g. Redis) is unavailable, instead of returning 500.
+    """
     rate = '5/hour'
+
+    def allow_request(self, request, view):
+        try:
+            return super().allow_request(request, view)
+        except Exception:
+            logger.warning('Throttle cache unavailable, allowing request')
+            return True
 
 
 class LoginView(APIView):
