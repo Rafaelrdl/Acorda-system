@@ -191,6 +191,11 @@ async function initDB(): Promise<IDBDatabase> {
     
     request.onsuccess = () => {
       dbInstance = request.result
+      // Reset instance if browser closes the connection unexpectedly
+      dbInstance.onclose = () => {
+        dbInstance = null
+        dbPromise = null
+      }
       if (import.meta.env.DEV) console.log('[DB] Database opened successfully')
       resolve(dbInstance)
     }
@@ -304,22 +309,36 @@ function notifySyncUpdated() {
 class SyncManager {
   private syncInProgress = false
   private syncInterval: ReturnType<typeof setInterval> | null = null
+  private _onOnline = () => this.onOnline()
+  private _onOffline = () => this.onOffline()
   private _cachedUserId: string | null = null
+  private _onServiceWorkerMessage = (event: MessageEvent) => {
+    if (event.data?.type === 'SYNC_READY') {
+      this.sync()
+    }
+  }
   
   constructor() {
     // Listen for online/offline events
     if (typeof window !== 'undefined') {
-      window.addEventListener('online', () => this.onOnline())
-      window.addEventListener('offline', () => this.onOffline())
+      window.addEventListener('online', this._onOnline)
+      window.addEventListener('offline', this._onOffline)
     }
     
     // Listen for service worker sync messages
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data?.type === 'SYNC_READY') {
-          this.sync()
-        }
-      })
+      navigator.serviceWorker.addEventListener('message', this._onServiceWorkerMessage)
+    }
+  }
+
+  destroy() {
+    this.stopAutoSync()
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('online', this._onOnline)
+      window.removeEventListener('offline', this._onOffline)
+    }
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.removeEventListener('message', this._onServiceWorkerMessage)
     }
   }
   

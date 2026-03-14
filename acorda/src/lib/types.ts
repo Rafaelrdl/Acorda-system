@@ -488,12 +488,6 @@ export interface GoogleCalendarConnection {
   connectedAt?: number
   disconnectedAt?: number
   lastSyncAt?: number
-  /** @deprecated Tokens are stored only on the backend (Code Model). */
-  accessToken?: string
-  /** @deprecated Tokens are stored only on the backend (Code Model). */
-  refreshToken?: string
-  /** @deprecated Tokens are stored only on the backend (Code Model). */
-  expiresAt?: number
   createdAt: number
   updatedAt: number
 }

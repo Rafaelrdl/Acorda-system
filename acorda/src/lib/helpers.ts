@@ -979,7 +979,6 @@ export function createGoogleCalendarConnection(
       id: generateId(),
       userId,
       connected: false,
-      expiresAt: undefined,
       createdAt: now,
       updatedAt: now,
     }

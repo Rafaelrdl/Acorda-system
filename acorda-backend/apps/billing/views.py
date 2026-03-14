@@ -140,7 +140,7 @@ def _mark_webhook_processed(request) -> None:
     """Mark a webhook x-request-id as processed (anti-replay)."""
     x_request_id = request.headers.get('x-request-id', '')
     if x_request_id:
-        django_cache.set(f"mp_webhook_dedup:{x_request_id}", 1, 600)
+        django_cache.set(f"mp_webhook_dedup:{x_request_id}", 1, 172800)  # 48h — matches MP retry window
 
 
 class PlansView(APIView):
@@ -470,15 +470,28 @@ class WebhookView(APIView):
                 )
             except Plan.DoesNotExist:
                 pass
-        
-        # Fallback: try to match by amount
+
+        # Fallback: try to match by amount (and currency, when available)
         amount = metadata.get('transaction_amount') if isinstance(metadata, dict) else None
-        if amount:
-            try:
-                return Plan.objects.get(price=amount, is_active=True)
-            except (Plan.DoesNotExist, Plan.MultipleObjectsReturned):
-                pass
-        
+        if amount and isinstance(metadata, dict):
+            # Mercado Pago usually sends currency information; use it to disambiguate.
+            currency = metadata.get('currency') or metadata.get('currency_id')
+
+            qs = Plan.objects.filter(price=amount, is_active=True)
+            if currency:
+                qs = qs.filter(currency__iexact=currency)
+
+            count = qs.count()
+            if count == 1:
+                return qs.first()
+            if count > 1:
+                logger.warning(
+                    "Ambiguous plan match by amount fallback: amount=%s, currency=%s, matches=%s",
+                    amount,
+                    currency,
+                    count,
+                )
+
         return None
     
     @transaction.atomic
