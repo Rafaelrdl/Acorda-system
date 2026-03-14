@@ -91,8 +91,9 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     if (import.meta.env.DEV) console.log('[Auth] Cleaning up data for user:', userId)
     
     try {
-      // Stop auto-sync
+      // Stop auto-sync and clear cached user
       syncManager.stopAutoSync()
+      syncManager.clearUserCache()
       
       // Clear IndexedDB data
       await storage.clearUserData(userId)

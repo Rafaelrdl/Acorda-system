@@ -155,6 +155,7 @@ export interface HabitLog {
   notes?: string
   createdAt: number
   updatedAt: number
+  deleted_at?: number
 }
 
 export interface PomodoroPreset {

@@ -449,10 +449,10 @@ function MainApp({ user }: { user: User }) {
     
     setHabitLogs(current => {
       const allLogs = current || []
-      const existing = allLogs.find(log => log.habitId === habitId && log.date === today)
+      const existing = allLogs.find(log => log.habitId === habitId && log.date === today && !log.deleted_at)
       
       if (existing) {
-        return allLogs.filter(log => log.id !== existing.id)
+        return allLogs.map(log => log.id === existing.id ? softDelete(log) : log)
       } else {
         const newLog = createHabitLog(userId, habitId, today)
         return [...allLogs, newLog]
@@ -812,7 +812,7 @@ function MainApp({ user }: { user: User }) {
 
   // Mostrar onboarding no primeiro login
   if (needsOnboarding) {
-    console.log('[Onboarding] Rendering OnboardingFlow')
+    if (import.meta.env.DEV) console.log('[Onboarding] Rendering OnboardingFlow')
     return (
       <Suspense fallback={
         <div className="flex items-center justify-center h-screen bg-background">

@@ -304,6 +304,7 @@ function notifySyncUpdated() {
 class SyncManager {
   private syncInProgress = false
   private syncInterval: ReturnType<typeof setInterval> | null = null
+  private _cachedUserId: string | null = null
   
   constructor() {
     // Listen for online/offline events
@@ -352,6 +353,10 @@ class SyncManager {
       this.syncInterval = null
       if (import.meta.env.DEV) console.log('[Sync] Auto-sync stopped')
     }
+  }
+
+  clearUserCache() {
+    this._cachedUserId = null
   }
   
   // Add pending change
@@ -680,7 +685,9 @@ class SyncManager {
    * Throws if unable to determine userId — prevents writing to wrong key.
    */
   private async resolveUserId(): Promise<string> {
+    if (this._cachedUserId) return this._cachedUserId
     const user = await api.getMe()
+    this._cachedUserId = user.id
     return user.id
   }
   
