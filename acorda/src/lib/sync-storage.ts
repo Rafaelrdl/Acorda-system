@@ -681,8 +681,8 @@ class SyncManager {
   }
   
   /**
-   * Resolve userId once and cache for the sync cycle.
-   * Throws if unable to determine userId — prevents writing to wrong key.
+   * Resolve userId once and cache it for this storage instance (until explicitly cleared).
+   * Throws if unable to determine userId — prevents writing to the wrong user-specific key.
    */
   private async resolveUserId(): Promise<string> {
     if (this._cachedUserId) return this._cachedUserId
