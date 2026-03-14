@@ -470,14 +470,28 @@ class WebhookView(APIView):
                 )
             except Plan.DoesNotExist:
                 pass
-        
-        # Fallback: try to match by amount (use filter+first to avoid ambiguity)
+
+        # Fallback: try to match by amount (and currency, when available)
         amount = metadata.get('transaction_amount') if isinstance(metadata, dict) else None
-        if amount:
-            plan = Plan.objects.filter(price=amount, is_active=True).first()
-            if plan:
-                return plan
-        
+        if amount and isinstance(metadata, dict):
+            # Mercado Pago usually sends currency information; use it to disambiguate.
+            currency = metadata.get('currency') or metadata.get('currency_id')
+
+            qs = Plan.objects.filter(price=amount, is_active=True)
+            if currency:
+                qs = qs.filter(currency__iexact=currency)
+
+            count = qs.count()
+            if count == 1:
+                return qs.first()
+            if count > 1:
+                logger.warning(
+                    "Ambiguous plan match by amount fallback: amount=%s, currency=%s, matches=%s",
+                    amount,
+                    currency,
+                    count,
+                )
+
         return None
     
     @transaction.atomic
