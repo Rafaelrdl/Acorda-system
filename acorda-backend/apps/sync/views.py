@@ -118,11 +118,19 @@ class SyncPushView(APIView):
                 for item_data in items
                 if isinstance(item_data, dict) and item_data.get('id')
             ]
+            # Filter/normalize item_ids to valid UUID instances to avoid ValueError
+            valid_item_ids = []
+            for raw_id in item_ids:
+                try:
+                    valid_item_ids.append(_uuid.UUID(str(raw_id)))
+                except (ValueError, TypeError, AttributeError):
+                    # Ignore invalid UUIDs; they won't be found in existing_map
+                    continue
             existing_map = {}
-            if item_ids:
+            if valid_item_ids:
                 existing_map = {
                     str(obj.id): obj
-                    for obj in model.objects.filter(id__in=item_ids, user=request.user)
+                    for obj in model.objects.filter(id__in=valid_item_ids, user=request.user)
                 }
             
             created = 0
