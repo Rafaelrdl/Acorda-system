@@ -150,6 +150,12 @@ export function getHabitStreak(habitLogs: HabitLog[], userId: UserId, habitId: s
   let streak = 0
   const currentDate = new Date()
   
+  // If the most recent log is not today, start checking from yesterday
+  const mostRecentLog = new Date(logs[0].date)
+  if (!isSameDay(mostRecentLog, currentDate)) {
+    currentDate.setDate(currentDate.getDate() - 1)
+  }
+  
   for (const log of logs) {
     const logDate = new Date(log.date)
     if (isSameDay(logDate, currentDate)) {

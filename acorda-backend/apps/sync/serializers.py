@@ -24,7 +24,7 @@ class BaseSyncSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField()
     
     # Expose user_id for sync - frontend needs this to filter by userId
-    user_id = serializers.UUIDField(source='user.id', read_only=True)
+    user_id = serializers.UUIDField(read_only=True)
     
     class Meta:
         fields = ['id', 'user_id', 'created_at', 'updated_at', 'deleted_at', 'sync_version']

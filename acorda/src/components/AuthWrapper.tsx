@@ -91,8 +91,9 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     if (import.meta.env.DEV) console.log('[Auth] Cleaning up data for user:', userId)
     
     try {
-      // Stop auto-sync
+      // Stop auto-sync and clear cached user
       syncManager.stopAutoSync()
+      syncManager.clearUserCache()
       
       // Clear IndexedDB data
       await storage.clearUserData(userId)
@@ -137,7 +138,9 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
       } catch {
         // refresh also failed – fall through
       }
-      // Cookie expired or invalid - clear auth state
+      // Cookie expired or invalid - clear auth and sync state
+      syncManager.stopAutoSync()
+      syncManager.clearUserCache()
       api.clearAuth()
       setUser(null)
     } finally {
