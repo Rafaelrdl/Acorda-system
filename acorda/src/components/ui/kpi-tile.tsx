@@ -35,6 +35,7 @@ export function KpiTile({
   
   return (
     <Component
+      {...(onClick ? { type: 'button' } : {})}
       onClick={onClick}
       className={cn(
         'flex flex-col gap-2 p-3 rounded-xl bg-card border border-border/50',
