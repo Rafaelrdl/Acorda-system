@@ -181,22 +181,25 @@ export function IncomeExpensesTab({
   }, [activeExpenses, todayKey])
 
   // Processar lançamentos automáticos
-  const autoConfirmRanRef = useRef('')
+  // Guard per item (todayKey + id) para evitar duplicatas sem bloquear execuções tardias
+  const autoConfirmedIdsRef = useRef<Set<string>>(new Set())
   useEffect(() => {
-    // Guard: only run once per todayKey to prevent duplicate transactions on re-render
-    if (autoConfirmRanRef.current === todayKey) return
-    autoConfirmRanRef.current = todayKey
-
     activeIncomes.forEach(income => {
       if (!income.autoConfirm) return
-      if (!shouldConfirmRecurrence(
-        income.frequency,
-        income.dayOfMonth || 1,
-        income.lastConfirmedMonth,
-        income.createdAt,
-        today,
-      )) return
-      
+      if (
+        !shouldConfirmRecurrence(
+          income.frequency,
+          income.dayOfMonth || 1,
+          income.lastConfirmedMonth,
+          income.createdAt,
+          today,
+        )
+      ) return
+
+      const key = `${todayKey}:${income.id}`
+      if (autoConfirmedIdsRef.current.has(key)) return
+      autoConfirmedIdsRef.current.add(key)
+
       const transaction = createTransaction(
         userId,
         'income',
@@ -207,25 +210,31 @@ export function IncomeExpensesTab({
         { categoryId: income.categoryId }
       )
       onAddTransaction(transaction)
-      
+
       onUpdateIncome(updateTimestamp({
         ...income,
         lastConfirmedMonth: getConfirmationMarker(income.frequency, today),
       }))
-      
+
       toast.success(`Receita "${income.name}" lançada automaticamente`)
     })
 
     activeExpenses.forEach(expense => {
       if (!expense.autoConfirm) return
-      if (!shouldConfirmRecurrence(
-        expense.frequency,
-        expense.dayOfMonth || 1,
-        expense.lastConfirmedMonth,
-        expense.createdAt,
-        today,
-      )) return
-      
+      if (
+        !shouldConfirmRecurrence(
+          expense.frequency,
+          expense.dayOfMonth || 1,
+          expense.lastConfirmedMonth,
+          expense.createdAt,
+          today,
+        )
+      ) return
+
+      const key = `${todayKey}:${expense.id}`
+      if (autoConfirmedIdsRef.current.has(key)) return
+      autoConfirmedIdsRef.current.add(key)
+
       const transaction = createTransaction(
         userId,
         'expense',
@@ -236,15 +245,16 @@ export function IncomeExpensesTab({
         { categoryId: expense.categoryId }
       )
       onAddTransaction(transaction)
-      
+
       onUpdateFixedExpense(updateTimestamp({
         ...expense,
         lastConfirmedMonth: getConfirmationMarker(expense.frequency, today),
       }))
-      
+
       toast.success(`Despesa "${expense.name}" lançada automaticamente`)
     })
-  // Effect runs once per day (todayKey). The ref guard + shouldConfirmRecurrence
+  // Effect roda quando o dia ou as listas de lançamentos automáticos mudam.
+  // O guard por item (todayKey + id) previne duplicatas mesmo com múltiplos renders.
   // prevent double-posting even on re-render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayKey])
