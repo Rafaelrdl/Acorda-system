@@ -454,36 +454,47 @@ export function getHabitConsistencyForPeriod(
   userId: UserId, 
   days: number
 ): number {
-  const activeHabits = habits.filter(h => h.userId === userId && h.isActive)
+  const activeHabits = filterDeleted(habits).filter(
+    (h) => h.userId === userId && h.isActive,
+  )
   if (activeHabits.length === 0) return 0
-  
+
+  const userHabitLogs = filterDeleted(habitLogs).filter(
+    (log) => log.userId === userId,
+  )
+
   const today = new Date()
   let totalExpected = 0
   let totalCompleted = 0
-  
+
   for (let i = 0; i < days; i++) {
     const date = new Date(today)
     date.setDate(date.getDate() - i)
     const dateKey = getDateKey(date)
     const dayOfWeek = date.getDay() // 0=Sun, 1=Mon, ..., 6=Sat
-    
+
     // Only count habits that were expected on this day of the week
     for (const habit of activeHabits) {
-      const isExpectedToday = habit.targetDays && habit.targetDays.length > 0
-        ? habit.targetDays.includes(dayOfWeek)
-        : true // daily habit or no targetDays = expected every day
-      
+      const isExpectedToday =
+        habit.targetDays && habit.targetDays.length > 0
+          ? habit.targetDays.includes(dayOfWeek)
+          : true // daily habit or no targetDays = expected every day
+
       if (isExpectedToday) {
         totalExpected++
-        const completed = habitLogs.some(log =>
-          log.userId === userId && log.habitId === habit.id && log.date === dateKey
+        const completed = userHabitLogs.some(
+          (log) =>
+            log.habitId === habit.id &&
+            habitLogMatchesDate(log, dateKey),
         )
         if (completed) totalCompleted++
       }
     }
   }
-  
-  return totalExpected > 0 ? Math.round((totalCompleted / totalExpected) * 100) : 0
+
+  return totalExpected > 0
+    ? Math.round((totalCompleted / totalExpected) * 100)
+    : 0
 }
 
 // ===============================
